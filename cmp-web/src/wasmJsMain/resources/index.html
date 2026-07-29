@@ -2,12 +2,30 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>kmp-app-template</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Siddharth Pandalai — Compose Multiplatform CV</title>
+    <meta name="description" content="A Compose Multiplatform (Kotlin/Wasm) port of cv-siddharth.vercel.app — Senior Android Engineer, Pune.">
+    <!-- A wasm canvas is not crawlable. The canonical indexed portfolio is the React site; this
+         build is a demo, so point crawlers there rather than letting them index an empty <body>. -->
+    <link rel="canonical" href="https://cv-siddharth.vercel.app/">
+    <meta name="robots" content="noindex">
     <style>
-        html, body { margin: 0; padding: 0; height: 100%; }
+        /* --color-void from the source site's @theme. Set on html so the multi-MB skiko payload
+           downloads over the site's own ground instead of a white flash. */
+        html, body { margin: 0; padding: 0; height: 100%; background: #05070a; }
+        #boot {
+            position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+            font: 400 13px/1.6 "JetBrains Mono", ui-monospace, monospace;
+            color: #8b909a; letter-spacing: 0.08em; text-transform: uppercase;
+        }
+        #boot b { color: #3ddc84; font-weight: 400; }
+        /* Compose appends its canvas to <body>; once that exists the boot line has done its job. */
+        body:has(canvas) #boot { display: none; }
     </style>
 </head>
 <body>
+    <!-- Doubles as the no-JS / no-wasm fallback: a browser that can't run this still renders a line. -->
+    <div id="boot">loading <b>compose multiplatform</b> · kotlin/wasm</div>
     <script src="cmpWeb.js"></script>
 </body>
 </html>
