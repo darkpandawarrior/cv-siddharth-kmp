@@ -29,14 +29,15 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import com.siddharth.cv.shared.chat.FloatingChat
 import com.siddharth.cv.shared.detail.ProjectDetailScreen
 import com.siddharth.cv.shared.detail.ResumeScreen
 import com.siddharth.cv.shared.home.HomeScreen
 import com.siddharth.cv.shared.home.homeSections
 import com.siddharth.cv.shared.media.InstallCvImageLoader
 import com.siddharth.cv.shared.terminal.TerminalScreen
-import com.siddharth.cv.shared.theme.AmbientBackground
 import com.siddharth.cv.shared.theme.CvTheme
+import com.siddharth.cv.shared.theme.ShaderOrGradientBackground
 import com.siddharth.cv.shared.theme.cvColors
 import com.siddharth.cv.shared.theme.cvType
 
@@ -45,9 +46,9 @@ import com.siddharth.cv.shared.theme.cvType
  * the iOS UIViewController and the wasm `main` all just call [App] — platform code stays a shell.
  *
  * This is the nav host the rest of the port is written against: it owns the one [CvNavState], hands
- * it down through [LocalNav], paints [AmbientBackground] once behind everything, and holds the
- * homepage's [LazyListState] so the top bar's scroll-spy and `CvNavState.goSection()` both drive the
- * same scroll position.
+ * it down through [LocalNav], paints [ShaderOrGradientBackground] once behind everything, overlays
+ * [FloatingChat] once in front of everything, and holds the homepage's [LazyListState] so the top
+ * bar's scroll-spy and `CvNavState.goSection()` both drive the same scroll position.
  */
 @Composable
 fun App(
@@ -72,7 +73,9 @@ fun App(
     CvTheme {
         CompositionLocalProvider(LocalNav provides nav) {
             Box(Modifier.fillMaxSize()) {
-                AmbientBackground(Modifier.fillMaxSize())
+                // The GPU wash where Skia can run SkSL, the CPU starfield everywhere else — the
+                // wrapper decides by compiling the shader once, so there is no platform branch here.
+                ShaderOrGradientBackground(Modifier.fillMaxSize())
 
                 // Screens that re-theme (résumé paper, per-project accent) nest their own CvTheme,
                 // so the ambient layer behind them keeps the site's dark palette by construction.
@@ -85,6 +88,14 @@ fun App(
                 }
 
                 TopBar(nav, homeList)
+
+                // Last child, so the open panel is never clipped by the top bar or by a screen that
+                // paints its own opaque ground (the résumé does). It fills the window but only
+                // consumes pointer input where the launcher/panel actually sit, so the page stays
+                // clickable underneath. Inside the LocalNav provider: the greeting and quick prompts
+                // are rendered from the current route, which is the whole reason it lives here
+                // rather than inside each screen.
+                FloatingChat()
             }
         }
     }

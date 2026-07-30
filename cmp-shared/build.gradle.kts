@@ -111,6 +111,39 @@ kotlin {
     }
 }
 
+// ---------------------------------------------------------------------------------------------
+// prerenderSite — the static crawlable layer, generated from the same Kotlin data the app renders.
+//
+// It writes INTO the wasm distribution on purpose. Every generated page carries the same
+// `#compose` mount point and `<script type="module" src="/cmpWeb.js">` as the hand-written
+// template, so the app boots over a prerendered page exactly as it boots over `index.html` — the
+// generated root page is a strict superset of the template it replaces. Emitting somewhere else
+// would mean a second copy step before deploy, which is one more thing to forget.
+//
+// Hence `dependsOn` rather than `mustRunAfter`: the distribution task writes `index.html` into the
+// same directory, so running it afterwards would silently undo this. Making the ordering a hard
+// dependency means `./gradlew prerenderSite` alone produces the complete deployable directory.
+//
+// Classpath is `jvmJar` + the `jvmRuntimeClasspath` configuration rather than the KotlinCompilation
+// object: both are stable public Gradle handles, and `files(TaskProvider)` carries the build
+// dependency, so no explicit dependsOn on the compile is needed.
+// ponytail: the origin defaults to the Vercel URL baked into Prerender.kt. Pass -Pprerender.origin
+// (or CV_SITE_ORIGIN) when deploying anywhere else — a wrong <link rel="canonical"> is worse than
+// none, so make this a required property the day this is deployed from CI.
+val prerenderSite by tasks.registering(JavaExec::class) {
+    group = "distribution"
+    description = "Generates static per-route HTML + sitemap.xml + robots.txt into the wasm distribution."
+    dependsOn(":cmp-web:wasmJsBrowserDistribution")
+
+    mainClass.set("com.siddharth.cv.shared.prerender.Prerender")
+    classpath = files(tasks.named("jvmJar"), configurations.named("jvmRuntimeClasspath"))
+
+    val outDir = providers.gradleProperty("prerender.out")
+        .getOrElse("${rootProject.projectDir}/cmp-web/build/dist/wasmJs/productionExecutable")
+    val origin = providers.gradleProperty("prerender.origin").orNull
+    argumentProviders.add(CommandLineArgumentProvider { listOfNotNull(outDir, origin) })
+}
+
 // Compose Resources hardcodes commonMain as the home of the generated Res class, but
 // components-resources publishes no watchOS/iosX64 artifacts — leaving Res.kt in commonMain
 // fails those targets with "Unresolved reference 'org'". Re-point the generated sources at

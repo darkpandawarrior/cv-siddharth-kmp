@@ -43,6 +43,7 @@ import com.siddharth.cv.shared.data.resumeSkills
 import com.siddharth.cv.shared.theme.CvResumeColors
 import com.siddharth.cv.shared.theme.CvTheme
 import com.siddharth.cv.shared.theme.GhostButton
+import com.siddharth.cv.shared.theme.PrimaryButton
 import com.siddharth.cv.shared.theme.TagChip
 import com.siddharth.cv.shared.theme.cvColors
 import com.siddharth.cv.shared.theme.cvType
@@ -54,9 +55,11 @@ import com.siddharth.cv.shared.theme.cvType
  * [CvResumeColors] instead of a project palette. Everything below re-resolves through the shadowed
  * CompositionLocal — no `if (resumeMode)` branch exists anywhere.
  *
- * No print path. `window.print()` has no wasm equivalent and a `<canvas>` gives the browser's print
- * engine nothing to lay out, so instead of a button that would do nothing this ships a link to the
- * React site's printable résumé and says why in the footnote.
+ * The print path does NOT print this canvas. `window.print()` against a single `<canvas>` gives the
+ * browser's print engine nothing to paginate, so [printResume] hands it a real HTML document
+ * instead — [buildResumeHtml] rebuilds the page below out of the same `data/` values, and the web
+ * actual writes it into a hidden iframe with its own box tree. Selectable text, real page breaks,
+ * Save-as-PDF.
  */
 @Composable
 fun ResumeScreen(modifier: Modifier = Modifier) {
@@ -90,10 +93,22 @@ private fun ResumeBody(modifier: Modifier = Modifier) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 GhostButton(text = "Back to portfolio", onClick = { nav.goSection("top") })
-                GhostButton(
-                    text = "Printable version",
-                    onClick = { uri.openUri(profile.portfolio.trimEnd('/') + "/resume") },
-                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    GhostButton(
+                        text = "Open on the React site",
+                        onClick = { uri.openUri(profile.portfolio.trimEnd('/') + "/resume") },
+                    )
+                    // ponytail: shown on every platform, but only the web actual does anything —
+                    // the JVM/Android/iOS actuals are documented no-ops (each needs a Context, a
+                    // UIViewController or a temp-file lifecycle `printResume(html)` has no handle
+                    // on). Web is the only surface that ships this screen today. Upgrade path: an
+                    // `expect val resumePrintSupported: Boolean` next to `printResume`, and hide
+                    // the button where it is false — five files for one boolean, so not yet.
+                    PrimaryButton(
+                        text = "Print / Save as PDF",
+                        onClick = { printResume(buildResumeHtml()) },
+                    )
+                }
             }
 
             Spacer(Modifier.height(16.dp))
@@ -134,9 +149,10 @@ private fun ResumeBody(modifier: Modifier = Modifier) {
                 Spacer(Modifier.height(28.dp))
                 BasicText(
                     text =
-                        "No PDF button here on purpose — this build renders into a single canvas, so " +
-                            "the browser's print engine has no document to paginate. \"Printable version\" " +
-                            "opens the same résumé on the React site, where Save-as-PDF works.",
+                        "\"Print / Save as PDF\" does not print this canvas — a canvas has nothing " +
+                            "for the print engine to paginate. It rebuilds the résumé above as an " +
+                            "HTML document from the same data and prints that, so the PDF has " +
+                            "selectable text and real page breaks.",
                     style = cvType.metaMono.copy(color = colors.muted),
                 )
             }

@@ -233,8 +233,9 @@ private fun ProjectBody(project: Project, modifier: Modifier = Modifier) {
                 Section(eyebrow = "// architecture", title = "How it's built") {
                     BasicText(
                         text =
-                            "Mermaid source, unrendered — there is no Kotlin Mermaid renderer, so v1 " +
-                                "shows the diagram exactly as it is authored rather than faking a picture of it.",
+                            "Mermaid flowcharts, drawn natively on the Compose canvas — same source " +
+                                "as the README, laid out and painted in Kotlin with no JS renderer " +
+                                "on the page.",
                         style = cvType.bodySmall,
                     )
                     Spacer(Modifier.height(16.dp))
@@ -588,24 +589,22 @@ private fun RoleGrid(roles: List<ProjectRole>) {
 }
 
 // -------------------------------------------------------------------------------------------
-// 8 — Diagrams (raw Mermaid source)
+// 8 — Diagrams (rendered Mermaid flowcharts)
 // -------------------------------------------------------------------------------------------
 
+/**
+ * [MermaidFlow] owns its own card, padding and horizontal scrolling — it has to measure the
+ * available width to decide between scaling the diagram down and scrolling it, and a wrapping
+ * `horizontalScroll` here would hand it an infinite constraint and defeat that. So this is a bare
+ * expander around a bare call; anything it does not recognise falls back to the mono source card
+ * it shipped with, inside the same frame.
+ */
 @Composable
 private fun DiagramList(diagrams: List<Diagram>) {
-    val colors = cvColors
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         diagrams.forEach { d ->
             ExpanderSection(title = d.title, modifier = Modifier.fillMaxWidth()) {
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .background(colors.card, RoundedCornerShape(12.dp))
-                        .padding(16.dp)
-                        .horizontalScroll(rememberScrollState()),
-                ) {
-                    BasicText(text = d.code, style = cvType.mono, softWrap = false)
-                }
+                MermaidFlow(source = d.code)
             }
         }
     }
