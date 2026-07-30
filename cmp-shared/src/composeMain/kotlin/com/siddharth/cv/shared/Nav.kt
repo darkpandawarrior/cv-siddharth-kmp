@@ -68,8 +68,47 @@ class CvNavState {
         if (canGoBack) stack.removeAt(stack.lastIndex)
     }
 
+    /**
+     * Replace the whole stack — the browser Back button's counterpart.
+     *
+     * Distinct from [go] because a `popstate` is the browser telling us where we now *are*, not a
+     * request to navigate. Routing it through [go] would push a second entry and fight the history
+     * API for control of the stack.
+     */
+    fun reset(route: Route) {
+        popToHome()
+        if (route != Route.Home) stack.add(route)
+    }
+
     private fun popToHome() {
         while (stack.size > 1) stack.removeAt(stack.lastIndex)
+    }
+}
+
+/**
+ * Route <-> URL path, kept here rather than in the web module so the mapping is testable on every
+ * target and can't drift from [Route] itself. Pure string work — no browser API — so this stays
+ * legal in composeMain. The web shell owns the actual `history.pushState` call.
+ *
+ * Paths mirror the React site exactly, so a link that works on cv-siddharth.vercel.app works here.
+ */
+fun Route.toPath(): String = when (this) {
+    Route.Home -> "/"
+    Route.Resume -> "/resume"
+    Route.Terminal -> "/terminal"
+    is Route.ProjectDetail -> "/project/$slug"
+}
+
+fun routeFromPath(path: String): Route {
+    val clean = path.substringBefore('?').substringBefore('#').trimEnd('/')
+    return when {
+        clean.isEmpty() -> Route.Home
+        clean == "/resume" || clean == "/resume/" -> Route.Resume
+        clean == "/terminal" -> Route.Terminal
+        clean.startsWith("/project/") -> Route.ProjectDetail(clean.removePrefix("/project/"))
+        // Unknown path -> home rather than a 404 screen: the prerendered HTML shell is what a
+        // crawler sees, and a human who mistypes is better served by the homepage.
+        else -> Route.Home
     }
 }
 
@@ -103,4 +142,19 @@ internal fun navSelfCheck() {
     check(nav.pendingSection == "skills") { "goSection raises the request" }
     nav.consumeSection()
     check(nav.pendingSection == null) { "one-shot" }
+
+    // reset() is popstate's path: it must land on the route without growing the stack past it.
+    nav.reset(Route.ProjectDetail("kursi"))
+    check(nav.current == Route.ProjectDetail("kursi")) { "reset lands on the route" }
+    check(nav.canGoBack) { "reset keeps home underneath so back still means home" }
+    nav.reset(Route.Home)
+    check(nav.current == Route.Home && !nav.canGoBack) { "reset home collapses to the floor" }
+
+    // Path mapping must round-trip, or the URL bar and the router disagree after a refresh.
+    listOf(Route.Home, Route.Resume, Route.Terminal, Route.ProjectDetail("mileway")).forEach {
+        check(routeFromPath(it.toPath()) == it) { "round-trip ${it.toPath()}" }
+    }
+    check(routeFromPath("/project/mileway/") == Route.ProjectDetail("mileway")) { "trailing slash" }
+    check(routeFromPath("/project/mileway?utm=x") == Route.ProjectDetail("mileway")) { "query stripped" }
+    check(routeFromPath("/nonsense") == Route.Home) { "unknown path falls back home" }
 }

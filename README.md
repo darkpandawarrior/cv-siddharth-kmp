@@ -71,38 +71,55 @@ site's 51 surfaces port natively; the rest degrade or were dropped for the reaso
 | Contact + copy-email | Clipboard write + 2 s `AnimatedContent` confirmation |
 | Project detail | Full port including per-project theming — `CompositionLocal` shadowing is the precise analogue of the CSS custom-property cascade |
 | **Terminal** | Full port: ~25 commands over the compiled-in data, history, Tab completion, CRT chrome. Best-value surface in the port. |
+| **Real screenshots** | Coil 3.5.0 + `coil-network-ktor3` + Ktor 3.5.1 on wasmJs, streaming the live site's CDN. Falls back to the generated gradient while loading or on failure. |
+| **Real typefaces** | Space Grotesk + DM Mono vendored through `compose.components.resources`. Skia never sees CSS fonts, so the bytes have to ship — `FontFamily.SansSerif` was a placeholder, not a choice. |
+| **Real URLs + deep links** | `history.pushState` / `popstate` via `kotlinx-browser`. `/resume`, `/terminal`, `/project/<slug>` are shareable, refreshable, and Back works. |
+| **Crawlable fallback** | Compose mounts into `#compose`, so a sibling `#seo` block of semantic HTML survives boot and serves crawlers, JS-off readers, and wasm-incapable browsers. |
 
 ### Degraded — ported, but not at parity
 
 | Surface | What was lost, and why |
 |---|---|
-| Projects grid | Generated gradient panels instead of authored hero art — 196 gallery rasters on top of a bundle already carrying ~3 MB of skiko isn't defensible. First item for v2. |
-| Résumé | Layout ports fine under a light theme override; **`window.print()` has no wasm equivalent** — a canvas gives the print engine nothing to lay out. Links out to the React site's printable résumé rather than shipping a dead button. |
-| Mermaid diagrams | No Kotlin renderer. Shows raw diagram source in a collapsed mono card. |
-| Ambient background | One seeded `Canvas` starfield + radial blooms. The three.js depth and postprocessing are gone. |
-| Footer | Static sitemap; the live Spotify / GitHub polling strip needs an HTTP client. |
-| Accessibility | CMP-web a11y is a synthesised bridge, materially weaker than DOM semantics, and the committed axe suite has no wasm equivalent. Mitigated in-port: real focus indicators, `semantics {}` on icon-only controls, reduced-motion honoured at every animation source. |
+| Résumé | Layout ports fine under a light theme override; **`window.print()` has no wasm equivalent** — a canvas gives the print engine nothing to lay out. Links out to the React site's printable résumé rather than shipping a dead button. A hidden-iframe print path is proven and queued. |
+| Mermaid diagrams | No Kotlin renderer. Shows raw diagram source in a collapsed mono card. Parsing the flowchart subset and laying it out on Canvas is tractable and queued. |
+| Ambient background | One seeded `Canvas` starfield + radial blooms. The three.js depth and postprocessing are gone. GPU fragment shaders via Skiko `RuntimeEffect` are verified available and queued. |
+| Footer | Static sitemap; the live Spotify / GitHub polling strip is now unblocked by Ktor but not yet wired. |
+| Accessibility | Weaker than the DOM original, but **not** the "synthesised bridge" first assumed: CMP 1.12 emits a live `#cmp_a11y_root` DOM tree mirroring the layout with correct bounding boxes. It sits inside a shadow root, so assistive tech reaches it and crawlers generally do not. The committed axe suite still has no wasm equivalent. |
 | Glass / glow | No `backdrop-filter`; every `box-shadow` glow becomes a hand-drawn radial gradient. |
 
 ### Dropped — deliberately, with reasons
 
 | Surface | Why |
 |---|---|
-| Blueprint3D (tldraw + three.js) | **Impossible.** No scene graph, no OrbitControls, no HTML-in-3D, no postprocessing, no tldraw equivalent at any level. Substituting honestly beats faking it badly. |
-| SEO / SSR / JSON-LD / sitemap / link previews | **Impossible.** A wasmJs app is one `<canvas>` — nothing crawlable, no per-route `<head>`, no find-in-page, multi-MB before first paint. Not papered over: `index.html` carries `noindex` plus a canonical link back to the React site. |
-| Floating AI chat | Costs a Ktor wasm engine, serialization, an SSE parser, the `[[directive]]` card renderer and a `kotlinx-io` webpack workaround — five moving parts for a low-priority feature. The Vercel endpoint is untouched and still live. |
+| Blueprint3D (tldraw + three.js) | **Impossible as composited UI.** Compose paints into one canvas inside a shadow root; there is no Compose-side DOM tree, so a DOM/WebGL widget can only be *overlaid* (owning all input in its rect), never laid out inside the Compose tree. Layering a second canvas *behind* it was tested and refuted — Compose clears its container and the app's own background occludes it. |
+| Server-side rendering of Compose UI | **No library exists and none is coming.** Compose on web is Skia-on-canvas: there is no DOM-emitting renderer, no `renderToString`. The `#seo` shell is the answer, not SSR. |
+| Typed WebGPU | **No library exists.** `kotlin-browser`'s `web.gpu` package ships exactly `GPUCanvasContext` and `GPUCanvasConfiguration` — no `GPUDevice`, so it is not a WebGPU path at all. WebGL2 bindings do exist. |
+| AVIF images | **Platform limitation.** `strings` over the shipped skiko wasm finds jpeg, png, gif, ico, webp, wbmp — no AVIF decoder. Sidestepped rather than suffered: every one of the site's 166 avif assets has a webp sibling, so the gallery uses `.webp`. |
+| Floating AI chat | Deferred, no longer blocked — Ktor, serialization and the SSE plugin are now on the classpath and the `import.meta` webpack trap is solved (see `index.html`). Needs the client, the SSE parser and the `[[directive]]` renderer. The Vercel endpoint is untouched and still live. |
 | Compose Playground (`/compose`) | **Deferred, and the strongest argument for the whole exercise** — a real interpreter rendering real composables instead of styled `div`s. 470-line interpreter port plus a syntax-highlighting editor. Flagship v2 item. |
 | Lab bench (9 experiments), `/map`, `/forge`, `/playground`, ⌘K palette | Deferred on scope only — 7 of 9 labs are pure Canvas + frame-loop work that ports cleanly. SignalLab's Leaflet map never ports; its engine does. |
 
 ## The honest cost
 
+Measured, not estimated — `brotli -q 11` over the actual production distribution. Quote the brotli
+column: Vercel and every other edge host compress `application/wasm` automatically, so the raw number
+is not what anyone downloads.
+
+| file | raw | gzip -9 | **brotli** |
+|---|---:|---:|---:|
+| skiko runtime | 8,640,316 | 3,324,704 | **2,618,182** |
+| app wasm (the whole portfolio) | 3,640,914 | 1,195,648 | **907,765** |
+| JS glue | 538,048 | 100,764 | **82,170** |
+| **total** | 12,819,278 | 4,621,116 | **3,608,117** |
+
 | | React site | this build |
 |---|---|---|
-| Payload before first paint | ~hundreds of KB | **12.3 MB** — 8.6 MB skiko + 3.2 MB app wasm + 529 KB JS |
-| Crawlable | yes | **no** — one canvas |
-| Routes | 13 | 4 |
+| Over the wire, first paint | ~hundreds of KB | **3.6 MB brotli** |
+| Crawlable | fully | `#seo` shell only — the Compose UI is a canvas |
+| Routes | 13 | 4, with real URLs and deep links |
 
-An empty Compose Multiplatform hello-world already costs **10.1 MB** here; the entire portfolio added
-only 1.2 MB on top. That ratio is the real finding — **the framework floor dominates and the content
+An empty Compose Multiplatform hello-world already costs **2.62 MB brotli** here; the entire
+portfolio — every screen, all the content, real fonts, Coil and Ktor — adds **908 KB** on top. That
+ratio is the finding worth keeping: **the framework floor dominates and the content
 is nearly free**, which is exactly backwards from the web, and exactly why this belongs at a sub-path
 as a demo rather than at the apex domain.

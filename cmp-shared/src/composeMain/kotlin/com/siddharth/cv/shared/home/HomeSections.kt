@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -64,7 +66,8 @@ import com.siddharth.cv.shared.theme.AnimatedCounter
 import com.siddharth.cv.shared.theme.CvCard
 import com.siddharth.cv.shared.theme.ExpanderSection
 import com.siddharth.cv.shared.theme.GhostButton
-import com.siddharth.cv.shared.theme.MediaPanel
+import com.siddharth.cv.shared.data.CvGallery
+import com.siddharth.cv.shared.media.ProjectShot
 import com.siddharth.cv.shared.theme.MetricGauge
 import com.siddharth.cv.shared.theme.MonoMeta
 import com.siddharth.cv.shared.theme.PrimaryButton
@@ -393,7 +396,13 @@ private fun ProjectCard(project: Project) {
             }
         },
     ) {
-        MediaPanel(seed = project.slug, label = project.name)
+        // Real screenshot from the live site's CDN, falling back to the generated gradient while
+        // it loads or if the fetch fails — see ProjectShot.
+        ProjectShot(
+            url = CvGallery.hero(project.slug),
+            label = project.name,
+            modifier = Modifier.fillMaxWidth().height(180.dp).clip(RoundedCornerShape(10.dp)),
+        )
 
         Spacer(Modifier.height(16.dp))
         BasicText(text = project.name, style = cvType.cardTitle)

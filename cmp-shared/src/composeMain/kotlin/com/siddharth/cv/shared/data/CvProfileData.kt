@@ -186,7 +186,11 @@ val caseStudies = listOf(
     ),
     CaseStudy(
         slug = "compose-migration",
-        title = "Zero-regression migration to a Compose theme platform",
+        // Verbatim from profile.ts. This previously read "Zero-regression migration…", which the
+        // source never says and the claim-audit gate forbids outright: 31 unit tests against
+        // 2,517 source files is not evidence of zero regressions. The defensible claim — used
+        // everywhere else in this record — is per-screen parity against the XML baseline.
+        title = "The theme platform behind a ~964k-LOC Compose migration",
         metric = "~87% UI-layer Compose",
         summary = """Migrated a ~960k-LOC app to Jetpack Compose verified per-screen against the legacy XML baseline and built a theme engine the whole team ships on.""",
         problem = """XML views made UI changes slow and inconsistent, and design's theming requests meant touching dozens of files.""",

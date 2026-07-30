@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -32,6 +33,7 @@ import com.siddharth.cv.shared.detail.ProjectDetailScreen
 import com.siddharth.cv.shared.detail.ResumeScreen
 import com.siddharth.cv.shared.home.HomeScreen
 import com.siddharth.cv.shared.home.homeSections
+import com.siddharth.cv.shared.media.InstallCvImageLoader
 import com.siddharth.cv.shared.terminal.TerminalScreen
 import com.siddharth.cv.shared.theme.AmbientBackground
 import com.siddharth.cv.shared.theme.CvTheme
@@ -48,11 +50,24 @@ import com.siddharth.cv.shared.theme.cvType
  * same scroll position.
  */
 @Composable
-fun App() {
-    val nav = remember { CvNavState() }
+fun App(
+    nav: CvNavState = remember { CvNavState() },
+    /**
+     * Fired whenever the route changes. Only the web shell passes anything — it turns each change
+     * into a `history.pushState` so the address bar, Back button and shareable links all work.
+     * Every other platform ignores it, which is why the default is a no-op rather than an expect.
+     */
+    onRouteChanged: (Route) -> Unit = {},
+) {
     // Hoisted rather than owned by HomeScreen: the top bar reads it to highlight the active section,
     // and it must survive a trip to a project page so that returning home lands where you left.
     val homeList = rememberLazyListState()
+
+    LaunchedEffect(nav.current) { onRouteChanged(nav.current) }
+
+    // Must run before anything calls ProjectShot — without the Ktor fetcher registered, every
+    // remote image resolves to blank with no error.
+    InstallCvImageLoader()
 
     CvTheme {
         CompositionLocalProvider(LocalNav provides nav) {

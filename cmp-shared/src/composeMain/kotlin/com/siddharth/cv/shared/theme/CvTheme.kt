@@ -18,6 +18,13 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.siddharth.cv.shared.data.ProjectTheme
+import com.siddharth.cv.shared.resources.Res
+import com.siddharth.cv.shared.resources.dm_mono_medium
+import com.siddharth.cv.shared.resources.space_grotesk_bold
+import com.siddharth.cv.shared.resources.space_grotesk_medium
+import com.siddharth.cv.shared.resources.space_grotesk_regular
+import com.siddharth.cv.shared.resources.space_grotesk_semibold
+import org.jetbrains.compose.resources.Font
 
 /**
  * Kotlin translation of the `@theme` token block in cv-siddharth/src/index.css.
@@ -144,16 +151,45 @@ fun fluidSp(minSp: Float, maxSp: Float, widthDp: Float): TextUnit {
     return (minSp + (maxSp - minSp) * t).sp
 }
 
-// ponytail: FontFamily.SansSerif / .Monospace stand in for Space Grotesk + DM Mono. Nothing is
-// vendored under composeResources yet and `compose.components.resources` is not on :cmp-shared's
-// classpath, so `Res.font.*` would not compile. Swap these two lines (plus the dependency and the
-// font files) and every style below picks the real faces up — that is the only change needed.
-private val DisplayFamily: FontFamily = FontFamily.SansSerif
-private val MonoFamily: FontFamily = FontFamily.Monospace
+/**
+ * The site's real typefaces, vendored under `composeResources/font/`.
+ *
+ * These must be built inside composition rather than as top-level vals: `Font(FontResource)` is
+ * itself `@Composable` (it suspends on the resource load), so it cannot be folded into a constant.
+ * That is also why [rememberCvTypography] takes the two families as parameters.
+ *
+ * Compose paints through Skia and never consults the browser's font stack, so a CSS `@font-face`
+ * or a `font-family` on `<body>` is invisible here — the bytes have to be in the bundle. That is
+ * the whole reason `compose.components.resources` is a dependency.
+ */
+@Composable
+private fun rememberDisplayFamily(): FontFamily = FontFamily(
+    Font(Res.font.space_grotesk_regular, FontWeight.Normal),
+    Font(Res.font.space_grotesk_medium, FontWeight.Medium),
+    Font(Res.font.space_grotesk_semibold, FontWeight.SemiBold),
+    Font(Res.font.space_grotesk_bold, FontWeight.Bold),
+    // No Black cut is vendored; ghostNumeral asks for W900 and Skia synthesises it from Bold.
+    // ponytail: add space_grotesk_black.ttf if the synthesised weight ever reads wrong.
+    Font(Res.font.space_grotesk_bold, FontWeight.Black),
+)
+
+/** DM Mono stands in for JetBrains Mono — same monospace feel, one weight, far fewer bytes. */
+@Composable
+private fun rememberMonoFamily(): FontFamily = FontFamily(
+    Font(Res.font.dm_mono_medium, FontWeight.Normal),
+    Font(Res.font.dm_mono_medium, FontWeight.Medium),
+)
 
 @Composable
-private fun rememberCvTypography(colors: CvColors, widthDp: Float): CvTypography =
-    remember(colors, widthDp) {
+private fun rememberCvTypography(
+    colors: CvColors,
+    widthDp: Float,
+    displayFamily: FontFamily,
+    monoFamily: FontFamily,
+): CvTypography =
+    remember(colors, widthDp, displayFamily, monoFamily) {
+        val DisplayFamily = displayFamily
+        val MonoFamily = monoFamily
         val hero = fluidSp(36f, 60f, widthDp)
         val h2 = fluidSp(28f, 36f, widthDp)
         val metric = fluidSp(30f, 40f, widthDp)
@@ -262,7 +298,8 @@ fun CvTheme(
     content: @Composable () -> Unit,
 ) {
     val widthDp = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp().value }
-    val typography = rememberCvTypography(colors, widthDp)
+    val typography =
+        rememberCvTypography(colors, widthDp, rememberDisplayFamily(), rememberMonoFamily())
     CompositionLocalProvider(
         LocalCvColors provides colors,
         LocalCvType provides typography,
