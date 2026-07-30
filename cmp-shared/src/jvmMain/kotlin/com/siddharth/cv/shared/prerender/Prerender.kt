@@ -11,6 +11,10 @@ import com.siddharth.cv.shared.labs.cvLabs
 import com.siddharth.cv.shared.labs.labScreenSelfCheck
 import com.siddharth.cv.shared.labs.labsSelfCheck
 import com.siddharth.cv.shared.palette.paletteSelfCheck
+import com.siddharth.cv.shared.playground.composeInterpreterSelfCheck
+import com.siddharth.cv.shared.playground.composePresets
+import com.siddharth.cv.shared.playground.composeRenderSelfCheck
+import com.siddharth.cv.shared.playground.playgroundScreenSelfCheck
 import com.siddharth.cv.shared.navSelfCheck
 import com.siddharth.cv.shared.playground.themeLabSelfCheck
 import com.siddharth.cv.shared.data.CvGallery
@@ -88,7 +92,7 @@ object Prerender {
 
         // Derived from Route, not hand-listed: a new route in Nav.kt shows up here or the `when`
         // in `render` stops compiling. That is the whole point of generating from Kotlin.
-        val routes: List<Route> = listOf(Route.Home, Route.Resume, Route.Terminal, Route.Lab, Route.Forge) +
+        val routes: List<Route> = listOf(Route.Home, Route.Resume, Route.Terminal, Route.Lab, Route.Forge, Route.Playground) +
             projects.map { Route.ProjectDetail(it.slug) }
 
         routes.forEach { route ->
@@ -178,6 +182,18 @@ private fun render(route: Route, origin: String): String = when (route) {
         // The bench itself is a canvas, so the crawlable body is the captions — which is the part
         // that carries the meaning anyway.
         body = labBody(),
+    )
+
+    Route.Playground -> page(
+        route = route,
+        origin = origin,
+        title = "Compose playground — ${profile.name}",
+        description = "Type a Compose subset and see it rendered by real composables in the same " +
+            "runtime — no server round-trip and no compile step.",
+        ogType = "website",
+        image = CvGallery.hero("mileway"),
+        jsonLd = personLd(origin, profile.intro),
+        body = playgroundBody(),
     )
 
     Route.Forge -> page(
@@ -372,6 +388,7 @@ private fun siteNav(current: Route): String = buildString {
         Route.Resume to "Résumé",
         Route.Terminal to "Terminal",
         Route.Lab to "Lab",
+        Route.Playground to "Playground",
         Route.Forge to "Forge",
     ) + projects.map { Route.ProjectDetail(it.slug) to it.slug }
 
@@ -551,6 +568,26 @@ private fun labBody(): String = buildString {
             raw = true,
         )
     }
+}
+
+/** The presets are the crawlable content — they are the only prose the canvas cannot expose. */
+private fun playgroundBody(): String = buildString {
+    h1("Compose playground")
+    p(
+        "A curated slice of Jetpack Compose, interpreted and handed to the same Compose runtime "
+            + "that renders this site. There is no Run button because there is no compile step: a "
+            + "real playground compiles Kotlin server-side, which needs a warm JVM and means "
+            + "building untrusted code. Interpreting a subset trades generality for instant "
+            + "feedback, and because the host is itself Compose, what renders is the real "
+            + "composable rather than a CSS approximation of one.",
+    )
+    h2("Starting points")
+    ul(composePresets.map { esc(it.label) })
+    h2("Supported subset")
+    p(
+        "Column, Row, Box, Card, Surface, Text, Button, Spacer, AnimatedVisibility and TextField, "
+            + "a modifier chain, and remember { mutableStateOf(...) }.",
+    )
 }
 
 private fun forgeBody(): String = buildString {
@@ -788,6 +825,7 @@ private fun sitemap(routes: List<Route>, origin: String): String = buildString {
             // Demos: worth indexing, but they should never outrank a case study in results.
             Route.Lab -> "0.4"
             Route.Forge -> "0.3"
+            Route.Playground -> "0.6"
         }
         append("  <url>\n")
         append("    <loc>${esc(loc)}</loc>\n")
@@ -896,6 +934,9 @@ internal fun selfCheck() {
     labsSelfCheck()
     labScreenSelfCheck()
     themeLabSelfCheck()
+    composeInterpreterSelfCheck()
+    composeRenderSelfCheck()
+    playgroundScreenSelfCheck()
     paletteSelfCheck()
     forgeSelfCheck()
 

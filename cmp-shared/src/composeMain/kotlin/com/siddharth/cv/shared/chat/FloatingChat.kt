@@ -517,6 +517,9 @@ private fun greetingFor(route: Route): String = when (route) {
     Route.Terminal -> "You're in **the terminal** — `help` lists what it does. Or just ask me here."
     Route.Lab -> "You're at **the lab bench** — each experiment is a real production problem, " +
         "simulated. Ask me what any of them is actually demonstrating."
+    Route.Playground -> "You're in **the playground** — type Compose on the left, watch it render " +
+        "with real composables on the right. Ask me what the subset covers, or why there is no " +
+        "compile step."
     Route.Forge -> "You're in **the forge** — a few thousand particles spring-tied to the wordmark. " +
         "Ask me anything about the rest of the site while you play with it."
     Route.Home -> HOME_GREETING

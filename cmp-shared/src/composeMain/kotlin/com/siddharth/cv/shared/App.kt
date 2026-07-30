@@ -52,6 +52,7 @@ import com.siddharth.cv.shared.forge.ParticleForge
 import com.siddharth.cv.shared.labs.LabScreen
 import com.siddharth.cv.shared.palette.CommandPalette
 import com.siddharth.cv.shared.palette.PaletteCommand
+import com.siddharth.cv.shared.playground.PlaygroundScreen
 import com.siddharth.cv.shared.detail.ProjectDetailScreen
 import com.siddharth.cv.shared.detail.ResumeScreen
 import com.siddharth.cv.shared.home.HomeScreen
@@ -142,6 +143,7 @@ fun App(
                     Route.Terminal -> TerminalScreen(content)
                     Route.Lab -> LabScreen(content)
                     Route.Forge -> ParticleForge(content)
+                    Route.Playground -> PlaygroundScreen(content)
                     is Route.ProjectDetail -> ProjectDetailScreen(route.slug, content)
                 }
 
@@ -196,6 +198,7 @@ private fun runPaletteCommand(
             "terminal" -> nav.go(Route.Terminal)
             "lab" -> nav.go(Route.Lab)
             "forge" -> nav.go(Route.Forge)
+            "compose", "playground" -> nav.go(Route.Playground)
             "home" -> nav.go(Route.Home)
         }
         "action" -> when (value) {

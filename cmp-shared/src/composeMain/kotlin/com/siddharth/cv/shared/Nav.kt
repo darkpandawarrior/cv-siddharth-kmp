@@ -8,9 +8,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 
 /**
- * The four surfaces that ported. The React site has thirteen routes; nine of them are WebGL, tldraw,
- * Leaflet or the chat backend and are documented as dropped/deferred in the README rather than
- * stubbed here — a `Route` entry with nothing behind it is a dead end, not a roadmap.
+ * The surfaces that ported. The React site has thirteen routes; the ones missing here are WebGL,
+ * tldraw or Leaflet surfaces documented as dropped/deferred in the README rather than stubbed — a
+ * `Route` entry with nothing behind it is a dead end, not a roadmap.
+ *
+ * Being a sealed interface is load-bearing: every `when` over a route is exhaustive, so adding an
+ * entry here fails the build in each place that has to handle it (the nav host, the chat's
+ * route-aware greeting, the prerenderer's page list, the sitemap priorities). A string-based router
+ * would have silently shipped a blank screen and a wrong greeting instead.
  */
 sealed interface Route {
     data object Home : Route
@@ -27,6 +32,9 @@ sealed interface Route {
 
     /** The particle forge. */
     data object Forge : Route
+
+    /** The Compose playground — interpreted subset, rendered with real composables. */
+    data object Playground : Route
 }
 
 /**
@@ -104,6 +112,7 @@ fun Route.toPath(): String = when (this) {
     Route.Terminal -> "/terminal"
     Route.Lab -> "/lab"
     Route.Forge -> "/forge"
+    Route.Playground -> "/compose"
     is Route.ProjectDetail -> "/project/$slug"
 }
 
@@ -115,6 +124,8 @@ fun routeFromPath(path: String): Route {
         clean == "/terminal" -> Route.Terminal
         clean == "/lab" -> Route.Lab
         clean == "/forge" -> Route.Forge
+        // "/compose" mirrors the React site's route name for this surface.
+        clean == "/compose" -> Route.Playground
         clean.startsWith("/project/") -> Route.ProjectDetail(clean.removePrefix("/project/"))
         // Unknown path -> home rather than a 404 screen: the prerendered HTML shell is what a
         // crawler sees, and a human who mistypes is better served by the homepage.
@@ -162,7 +173,7 @@ internal fun navSelfCheck() {
 
     // Path mapping must round-trip, or the URL bar and the router disagree after a refresh.
     listOf(
-        Route.Home, Route.Resume, Route.Terminal, Route.Lab, Route.Forge,
+        Route.Home, Route.Resume, Route.Terminal, Route.Lab, Route.Forge, Route.Playground,
         Route.ProjectDetail("mileway"),
     ).forEach {
         check(routeFromPath(it.toPath()) == it) { "round-trip ${it.toPath()}" }
