@@ -359,7 +359,7 @@ private fun AssistantBubble(text: String, streaming: Boolean) {
                 ThinkingIndicator()
             } else {
                 BasicText(
-                    text = chatMarkdown(text, colors.accent),
+                    text = chatMarkdown(stripDirectives(text), colors.accent),
                     style = cvType.bodySmall.copy(color = colors.onBackground),
                 )
             }
@@ -568,6 +568,30 @@ private val HOME_PROMPTS = listOf(
 )
 
 /**
+ * Removes the endpoint's generative-UI directives so they never reach the transcript as literal text.
+ *
+ * The shared system prompt tells the model it may emit `[[rooms]]`, `[[projects]]` and friends on
+ * their own line; the React client swaps each for a real component. This port doesn't render them
+ * (that's a whole widget subsystem), and the same prompt serves both clients — so the directives
+ * arrive here regardless and MUST be dropped. Leaving them visible was a real defect caught on
+ * screen: a reply about the site ended with a bare `[[rooms]]`.
+ *
+ * Only whole-line directives are stripped. Inline `[[…]]` inside a sentence is left alone — it is
+ * far more likely to be prose about the syntax than an instruction to the client.
+ *
+ * ponytail: when the widget renderer lands, this becomes the tokenizer that feeds it instead of a
+ * delete. Until then, dropping is strictly better than showing.
+ */
+internal fun stripDirectives(text: String): String =
+    text.lineSequence()
+        .filterNot { line ->
+            val t = line.trim()
+            t.length > 4 && t.startsWith("[[") && t.endsWith("]]") && !t.drop(2).dropLast(2).contains("[[")
+        }
+        .joinToString("\n")
+        .trim('\n')
+
+/**
  * The smallest markdown that keeps the model's replies readable: `**bold**` and `` `code` ``.
  *
  * The system prompt asks for those two and for bullet lists; bullets already render acceptably as
@@ -647,6 +671,14 @@ internal fun floatingChatSelfCheck() {
     check(flat("`unclosed") == "`unclosed")
     check(flat("**a** and `b`") == "a and b") { "multiple spans in one string" }
     check(flat("") == "")
+
+    // Directives must never reach the transcript — this shipped visibly broken once.
+    check(stripDirectives("Here you go.\n[[rooms]]") == "Here you go.") { "whole-line directive dropped" }
+    check(stripDirectives("[[rooms]]") == "") { "a reply that is only a directive collapses to empty" }
+    check(stripDirectives("a\n  [[projects]]  \nb") == "a\nb") { "indented/padded directive dropped" }
+    check(stripDirectives("see [[rooms]] inline") == "see [[rooms]] inline") { "inline is prose, keep it" }
+    check(stripDirectives("[[]]") == "[[]]") { "too short to be a directive" }
+    check(stripDirectives("no directives here") == "no directives here")
 
     // The prompt list must never re-offer a question already asked, or the panel nags.
     val asked = listOf(ChatMessage(ChatRole.User, HOME_PROMPTS.first()))

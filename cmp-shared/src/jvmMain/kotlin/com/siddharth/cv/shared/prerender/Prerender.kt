@@ -1,6 +1,10 @@
 package com.siddharth.cv.shared.prerender
 
 import com.siddharth.cv.shared.Route
+import com.siddharth.cv.shared.chat.floatingChatSelfCheck
+import com.siddharth.cv.shared.detail.mermaidParseSelfCheck
+import com.siddharth.cv.shared.detail.resumeHtmlSelfCheck
+import com.siddharth.cv.shared.navSelfCheck
 import com.siddharth.cv.shared.data.CvGallery
 import com.siddharth.cv.shared.data.Experience
 import com.siddharth.cv.shared.data.NamedLink
@@ -800,6 +804,17 @@ private fun StringBuilder.ul(items: List<String>, raw: Boolean = false) {
 // the route -> file mapping (a wrong path here means a 404 that only shows up in production).
 // ---------------------------------------------------------------------------------------------
 internal fun selfCheck() {
+    // The shared self-checks piggyback here because this is the ONLY entry point in the project
+    // that actually executes on the JVM. Everything under composeMain is `internal` and called
+    // from nowhere, so wasm DCE deletes it and the checks silently never run — a check that never
+    // runs is worse than no check, because it reads as coverage. `prerenderSite` is on the deploy
+    // path, so wiring them here makes them a real gate.
+    // ponytail: move all four into a proper commonTest module the day this project has one.
+    navSelfCheck()
+    floatingChatSelfCheck()
+    mermaidParseSelfCheck()
+    resumeHtmlSelfCheck()
+
     check(esc("a & b <c> \"d\" 'e'") == "a &amp; b &lt;c&gt; &quot;d&quot; &#39;e&#39;") { "escaping" }
     check(esc("Kursi — “Panda”") == "Kursi — “Panda”") { "non-ASCII passes through; the file is UTF-8" }
 
