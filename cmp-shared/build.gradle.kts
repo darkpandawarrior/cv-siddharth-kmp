@@ -84,10 +84,16 @@ kotlin {
                 implementation(libs.coil.network.ktor3)
             }
         }
+        // Skiko-backed targets. `org.jetbrains.skia.*` (RuntimeEffect / RuntimeShaderBuilder —
+        // GPU fragment shaders) exists on every Compose target EXCEPT Android, which renders
+        // through the platform's own pipeline and would need AGSL instead. Android therefore
+        // hangs off composeMain directly and supplies its own actual; everyone else shares one.
+        val skikoMain by creating { dependsOn(composeMain) }
+
         androidMain.get().dependsOn(composeMain)
-        jvmMain.get().dependsOn(composeMain)
+        jvmMain.get().dependsOn(skikoMain)
         getByName("wasmJsMain").apply {
-            dependsOn(composeMain)
+            dependsOn(skikoMain)
             dependencies {
                 // The wasmJs Ktor engine (declares SSECapability, streams every
                 // ReadableStream chunk). Pulls npm ws — run kotlinWasmUpgradeYarnLock once.
@@ -98,7 +104,7 @@ kotlin {
         // iosArm64/iosSimulatorArm64 only: the ComposeUIViewController entry point (UIKit API,
         // not available on watchOS/other Apple targets).
         val composeIosMain by creating {
-            dependsOn(composeMain)
+            dependsOn(skikoMain)
         }
         getByName("iosArm64Main").dependsOn(composeIosMain)
         getByName("iosSimulatorArm64Main").dependsOn(composeIosMain)
