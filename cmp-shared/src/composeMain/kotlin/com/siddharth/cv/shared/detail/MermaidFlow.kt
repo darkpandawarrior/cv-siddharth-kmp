@@ -52,12 +52,12 @@ import com.siddharth.cv.shared.theme.cvType
 /**
  * Draws a Mermaid flowchart natively instead of printing its source.
  *
- * The layout is Sugiyama's first two phases and nothing more: [FlowGraph.ranks] assigns each node a
- * layer by longest path from a root, and this file spreads each layer along the cross axis and
- * routes edges between them. Phase three — the barycenter sweep that minimises crossings — is
- * deliberately absent; see the ponytail note on [FlowGraph.ranks]. Every one of the twelve real
- * diagrams declares its siblings in the order it wants them drawn, so the sweep would be work with
- * no visible output.
+ * The layout is Sugiyama's first three phases: [FlowGraph.ranks] assigns each node a layer by
+ * longest path from a root and then orders each layer with a barycenter sweep, and this file spreads
+ * the ordered layers along the cross axis and routes edges between them. Phase four proper —
+ * coordinate assignment that pulls each node towards its neighbours' median — is not here; ranks are
+ * centred as blocks against the widest one, which for 3-7 nodes a rank reads the same and needs no
+ * priority/median pass.
  *
  * **This composable owns its own card.** The call site should hand it the raw string and nothing
  * else — no surrounding background, padding or `horizontalScroll`, because it needs to measure the

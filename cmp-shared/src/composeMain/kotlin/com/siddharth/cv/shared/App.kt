@@ -22,14 +22,36 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.foundation.focusable
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.ClipboardManager
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.siddharth.cv.shared.chat.FloatingChat
+import com.siddharth.cv.shared.data.profile
+import com.siddharth.cv.shared.forge.ParticleForge
+import com.siddharth.cv.shared.labs.LabScreen
+import com.siddharth.cv.shared.palette.CommandPalette
+import com.siddharth.cv.shared.palette.PaletteCommand
 import com.siddharth.cv.shared.detail.ProjectDetailScreen
 import com.siddharth.cv.shared.detail.ResumeScreen
 import com.siddharth.cv.shared.home.HomeScreen
@@ -50,6 +72,11 @@ import com.siddharth.cv.shared.theme.cvType
  * [FloatingChat] once in front of everything, and holds the homepage's [LazyListState] so the top
  * bar's scroll-spy and `CvNavState.goSection()` both drive the same scroll position.
  */
+// LocalClipboardManager rather than LocalClipboard, for the reason already documented above
+// ContactSection in home/HomeSections.kt: `Clipboard.setClipEntry` needs a ClipEntry and commonMain
+// has no String -> ClipEntry factory, so `setText` is the only common write path. Same suppression
+// here so the palette's copy-email does the same thing the contact button does.
+@Suppress("DEPRECATION", "DEPRECATION_ERROR")
 @Composable
 fun App(
     nav: CvNavState = remember { CvNavState() },
@@ -70,9 +97,38 @@ fun App(
     // remote image resolves to blank with no error.
     InstallCvImageLoader()
 
+    var paletteOpen by remember { mutableStateOf(false) }
+    val uriHandler = LocalUriHandler.current
+    val clipboard = LocalClipboardManager.current
+    val focus = remember { FocusRequester() }
+
+    // The chord is caught on a focusable root wrapping the whole app. onPreviewKeyEvent sees the
+    // event BEFORE any focused child, which is the point: the terminal and the chat composer are
+    // both text fields that would otherwise swallow ⌘K as ordinary input.
     CvTheme {
         CompositionLocalProvider(LocalNav provides nav) {
-            Box(Modifier.fillMaxSize()) {
+            Box(
+                Modifier.fillMaxSize()
+                    .focusRequester(focus)
+                    .focusable()
+                    .onPreviewKeyEvent { event ->
+                        if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                        when {
+                            event.key == Key.K && (event.isMetaPressed || event.isCtrlPressed) -> {
+                                paletteOpen = !paletteOpen
+                                true
+                            }
+                            // Only consume Escape when the palette is actually open, or it would
+                            // steal the key from every other surface that wants it.
+                            event.key == Key.Escape && paletteOpen -> {
+                                paletteOpen = false
+                                true
+                            }
+                            else -> false
+                        }
+                    },
+            ) {
+                LaunchedEffect(Unit) { focus.requestFocus() }
                 // The GPU wash where Skia can run SkSL, the CPU starfield everywhere else — the
                 // wrapper decides by compiling the shader once, so there is no platform branch here.
                 ShaderOrGradientBackground(Modifier.fillMaxSize())
@@ -84,10 +140,24 @@ fun App(
                     Route.Home -> HomeScreen(homeList, content)
                     Route.Resume -> ResumeScreen(content)
                     Route.Terminal -> TerminalScreen(content)
+                    Route.Lab -> LabScreen(content)
+                    Route.Forge -> ParticleForge(content)
                     is Route.ProjectDetail -> ProjectDetailScreen(route.slug, content)
                 }
 
                 TopBar(nav, homeList)
+
+                // ⌘K / Ctrl-K. Handled here rather than inside the palette so that exactly one
+                // place owns the chord, and so the palette itself stays a pure function of
+                // `visible` — which is also what makes it testable without a key-event harness.
+                CommandPalette(
+                    visible = paletteOpen,
+                    onDismiss = { paletteOpen = false },
+                    onCommand = { command ->
+                        paletteOpen = false
+                        runPaletteCommand(command, nav, uriHandler, clipboard)
+                    },
+                )
 
                 // Last child, so the open panel is never clipped by the top bar or by a screen that
                 // paints its own opaque ground (the résumé does). It fills the window but only
@@ -97,6 +167,41 @@ fun App(
                 // rather than inside each screen.
                 FloatingChat()
             }
+        }
+    }
+}
+
+/**
+ * Palette id -> action. The ids are strings rather than lambdas so `palette/CommandPalette.kt` needs
+ * no dependency on navigation, the clipboard or the URI handler — it just lists what exists and lets
+ * this decide what any of it means. `paletteSelfCheck` already asserts the ids are unique.
+ *
+ * An unrecognised id is deliberately a no-op rather than a crash: a stale id can only come from
+ * someone adding a command and forgetting this branch, and a palette entry that does nothing is a
+ * far better failure than a white screen.
+ */
+@Suppress("DEPRECATION", "DEPRECATION_ERROR")
+private fun runPaletteCommand(
+    command: PaletteCommand,
+    nav: CvNavState,
+    uriHandler: UriHandler,
+    clipboard: ClipboardManager,
+) {
+    val (kind, value) = command.id.split(':', limit = 2).let { it[0] to it.getOrElse(1) { "" } }
+    when (kind) {
+        "section" -> nav.goSection(value)
+        "project" -> nav.go(Route.ProjectDetail(value))
+        "route" -> when (value) {
+            "resume" -> nav.go(Route.Resume)
+            "terminal" -> nav.go(Route.Terminal)
+            "lab" -> nav.go(Route.Lab)
+            "forge" -> nav.go(Route.Forge)
+            "home" -> nav.go(Route.Home)
+        }
+        "action" -> when (value) {
+            "copy-email" -> clipboard.setText(AnnotatedString(profile.email))
+            "github" -> uriHandler.openUri(profile.github)
+            "linkedin" -> uriHandler.openUri(profile.linkedin)
         }
     }
 }

@@ -18,6 +18,12 @@ actual fun printResume(html: String) {
 }
 
 /**
+ * Unconditionally true: `window.print()` is in every browser that can run a wasm Compose build at
+ * all, and a browser that blocked it would still leave the iframe's document open to Ctrl-P.
+ */
+actual val resumePrintSupported: Boolean = true
+
+/**
  * Note the `readyState` fork. `doc.close()` normally settles the document synchronously, but
  * Safari finishes it on the load event instead, and calling `print()` before that prints a
  * blank page. Handling both is two lines; guessing is a bug that only reproduces on one

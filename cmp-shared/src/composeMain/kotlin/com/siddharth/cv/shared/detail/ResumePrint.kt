@@ -24,15 +24,44 @@ import com.siddharth.cv.shared.data.resumeSkills
  *  - [buildResumeHtml] — a pure `() -> String` that renders the same Kotlin data the on-screen
  *    résumé renders into print-styled HTML. No Compose, no platform API, no I/O; identical on
  *    every target and the part actually worth owning.
- *  - [printResume] — the two lines of platform glue that put that string in front of a print
- *    engine. Only the web has one worth using today.
+ *  - [printResume] — the platform glue that puts that string in front of a print engine. Every
+ *    target has one now; each reaches a *different* engine, because the only thing that renders
+ *    HTML on a platform is that platform's own browser/WebView/UIKit text stack:
+ *      - wasmJs — a hidden `<iframe>`, printed in place.
+ *      - jvm    — a temp `.html` handed to the OS browser via `Desktop.browse`.
+ *      - android — an offscreen `WebView` + `PrintManager`.
+ *      - ios    — `UIMarkupTextPrintFormatter` + `UIPrintInteractionController`.
  *
  * The HTML is deliberately self-contained: no webfont, no stylesheet, no image. An `<iframe>`
  * written via `document.write` starts with an empty cache context, so any external asset would
  * be a race against `print()` — and a résumé that prints with a fallback font that arrived late
- * is worse than one that never asked for a font at all.
+ * is worse than one that never asked for a font at all. That constraint pays off twice: it is
+ * also what lets `UIMarkupTextPrintFormatter` and a `null`-base-URL `WebView` render the same
+ * bytes without a network round-trip.
  */
 expect fun printResume(html: String)
+
+/**
+ * Whether [printResume] will actually reach a print engine on this target.
+ *
+ * The point of the flag is that the résumé's Print button can be *absent* rather than dead — a
+ * control that does nothing is a worse answer than no control. Callers should gate on this, not
+ * on a platform check, because "supported" is not purely a compile-time property: Android needs
+ * a host Activity installed first (see `installResumePrintHost`), so its actual is a getter.
+ *
+ * Read it from composition and it behaves: on every target the value is settled before the first
+ * frame, so it never needs to be observable state.
+ */
+expect val resumePrintSupported: Boolean
+
+/**
+ * Names the print job, and with it the file the platform's Save-as-PDF dialog proposes.
+ *
+ * Shared rather than duplicated per target so the PDF has one name everywhere; the web gets the
+ * same string through `<title>` in [buildResumeHtml].
+ */
+internal val resumePrintJobName: String
+    get() = "${profile.name} — ${profile.resumeTitle}"
 
 // -------------------------------------------------------------------------------------------
 // The document

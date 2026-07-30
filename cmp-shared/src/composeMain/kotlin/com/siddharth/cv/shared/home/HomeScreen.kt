@@ -42,6 +42,7 @@ import com.siddharth.cv.shared.LocalNav
 import com.siddharth.cv.shared.Route
 import com.siddharth.cv.shared.data.metrics
 import com.siddharth.cv.shared.data.profile
+import com.siddharth.cv.shared.playground.ThemeLabSection
 import com.siddharth.cv.shared.data.projectBySlug
 import com.siddharth.cv.shared.data.projectOrder
 import com.siddharth.cv.shared.theme.CircuitDivider
@@ -82,8 +83,9 @@ val homeSections: List<HomeSection> =
         HomeSection("source", "The Source", 3),
         HomeSection("experience", "Experience", 4),
         HomeSection("skills", "Skills", 5),
-        HomeSection("explore", "Explore", 6),
-        HomeSection("contact", "Contact", 7),
+        HomeSection("theme", "Theme Engine", 6),
+        HomeSection("explore", "Explore", 7),
+        HomeSection("contact", "Contact", 8),
     )
 
 @Composable
@@ -112,6 +114,10 @@ fun HomeScreen(listState: LazyListState, modifier: Modifier = Modifier) {
                     "source" -> SourceSection()
                     "experience" -> ExperienceSection()
                     "skills" -> SkillsSection()
+                    // The theme engine demonstrated rather than asserted: the preview re-skins
+                    // through a nested CvTheme, which is the same CompositionLocal mechanism the
+                    // production app uses per tenant.
+                    "theme" -> ThemeLabSection()
                     "explore" -> ExploreSection()
                     "contact" -> ContactSection()
                 }

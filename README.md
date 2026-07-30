@@ -24,7 +24,7 @@ same portfolio to web (Kotlin/Wasm), desktop, Android and iOS.
 > drawing conclusions from it.
 
 Forked from [`kmp-app-template`](https://github.com/darkpandawarrior/kmp-app-template).
-~9.6k LOC of Kotlin across the four modules.
+~13.9k LOC of Kotlin across the four modules.
 
 ## Toolchain
 
@@ -54,7 +54,7 @@ hand-built on Compose and Ktor primitives.
 ./gradlew :cmp-desktop:run                       # desktop JVM window
 ./gradlew :cmp-android:installDebug              # Android
 ./gradlew :cmp-web:wasmJsBrowserDistribution     # production web bundle
-./gradlew :cmp-shared:prerenderSite              # bundle + static HTML for all 9 routes
+./gradlew :cmp-shared:prerenderSite              # bundle + static HTML for all 11 routes
 open cmp-ios/iosApp.xcodeproj                    # iOS (arm64 + simulator-arm64 only)
 ```
 
@@ -67,9 +67,9 @@ origin; `<link rel="canonical">` and the sitemap depend on it.
 
 ## What ported
 
-Four route *kinds* ship — **home**, **résumé**, **project detail** (×6), **terminal** — for nine
-distinct URLs. Roughly 37 of the source site's 51 surfaces port natively; the rest degrade or were
-dropped for the reasons below.
+Six route *kinds* ship — **home**, **résumé**, **project detail** (×6), **terminal**, **lab bench**,
+**particle forge** — for eleven distinct URLs, each with a prerendered indexable page. Roughly 43 of
+the source site's 51 surfaces port natively; the rest degrade or were dropped for the reasons below.
 
 Every row in the Native table below was verified in a real browser against the production wasm
 distribution, not inferred from a green build.
@@ -91,19 +91,23 @@ distribution, not inferred from a green build.
 | **Real screenshots** | Coil 3.5.0 + `coil-network-ktor3` + Ktor 3.5.1 on wasmJs, streaming the live site's CDN. Falls back to the generated gradient while loading or on failure. |
 | **Real typefaces** | Space Grotesk + DM Mono vendored through `compose.components.resources`. Skia never sees CSS fonts, so the bytes have to ship — `FontFamily.SansSerif` was a placeholder, not a choice. |
 | **Real URLs + deep links** | `history.pushState` / `popstate` via `kotlinx-browser`. `/resume`, `/terminal`, `/project/<slug>` are shareable, refreshable, and Back works. |
-| **Crawlable fallback, generated** | Compose mounts into `#compose`, so a sibling `#seo` block of semantic HTML survives boot. `prerenderSite` writes one such page per route from `data/*.kt` — 9 pages, `sitemap.xml`, `robots.txt`, per-route `og:`/`twitter:` cards and JSON-LD, all read out of the same Kotlin the app renders. |
+| **Crawlable fallback, generated** | Compose mounts into `#compose`, so a sibling `#seo` block of semantic HTML survives boot. `prerenderSite` writes one such page per route from `data/*.kt` — 11 pages, `sitemap.xml`, `robots.txt`, per-route `og:`/`twitter:` cards and JSON-LD, all read out of the same Kotlin the app renders. |
 | **GPU ambient wash** | The background is one SkSL fragment program through Skiko `RuntimeEffect`: 4-octave value-noise fbm put through a two-tap domain warp, so the blooms wander instead of being the perfect ellipses a CSS radial gradient is limited to. Starfield is a hash threshold over 4px cells rather than ~120 `drawCircle` calls, so it is also the *cheaper* path. Verified live in-browser by the shader's per-pixel dither showing up in a screenshot (≈70% of adjacent background pixels differ by 1–4/255; a CPU gradient is smooth). |
-| **Mermaid diagrams, rendered** | Sugiyama phases 1–2 on the Compose canvas — longest-path ranking, cross-axis spread, curved edge routing with arrowheads, shrink-to-fit then scroll. All 12 diagrams in `data/` are `graph TD`/`graph LR` and all 12 parse and lay out; anything outside that subset degrades to its own source card rather than drawing a lie. The canvas has no text nodes, so each graph also emits a prose `contentDescription`. |
+| **Mermaid diagrams, rendered** | Sugiyama phases 1–3 on the Compose canvas — longest-path ranking, barycenter crossing reduction over four down-then-up sweeps, curved edge routing with arrowheads, shrink-to-fit then scroll. Crossings are counted before and after and the worse arrangement is discarded, so the sweep can never make a diagram worse. All 12 diagrams in `data/` parse and lay out; anything outside `graph`/`flowchart` `TD`/`LR` degrades to its own source card rather than drawing a lie. The canvas has no text nodes, so each graph also emits a prose `contentDescription`. |
 | **Floating AI chat** | Streams from the same live Vercel endpoint as the React site. The SSE frames are parsed by hand off `bodyAsChannel()` rather than through Ktor's `SSE` plugin — deliberately: the plugin collapses a non-2xx into an `SSEClientException` whose status and body are awkward to recover, and this endpoint says useful things in its error bodies. Route-aware greeting and quick prompts, live token append, cancel mid-stream, every endpoint failure surfaced as text in the transcript rather than a silent stop. |
-| **Résumé → PDF** | A real Save-as-PDF, not a canvas dump: `buildResumeHtml()` rebuilds the résumé as an HTML document from the same `data/` values and the web actual writes it into a hidden `<iframe>`, which the browser lays out and prints. Verified: 7 KB of laid-out text, seven `<h2>` sections, an `@page` rule, selectable text. |
+| **Résumé → PDF** | A real Save-as-PDF, not a canvas dump: `buildResumeHtml()` rebuilds the résumé as an HTML document from the same `data/` values and the web actual writes it into a hidden `<iframe>`, which the browser lays out and prints. Verified: 7 KB of laid-out text, seven `<h2>` sections, an `@page` rule, selectable text. Desktop opens the same HTML in the browser (Cmd-P from there), Android goes through `PrintManager`, iOS through `UIPrintInteractionController` — and the button is gated on `resumePrintSupported`, so no platform shows a control that does nothing. |
+| **Lab bench** (`/lab`) | Five instruments — recomposition cost, crash triage, module-graph isolation, search traversal, provider fan-out. Every simulation is a *pure function of elapsed seconds*, which is what makes the reduced-motion still frame free (freeze the clock and you have it — no warm-up path, no second code path) and the arithmetic checkable on the JVM. One shared ticker for the whole screen, not one per experiment. |
+| **⌘K command palette** | 21 commands generated from `homeSections` + `projects` + profile data, so the list cannot drift from the site. Subsequence matching ranked prefix-first, full keyboard navigation. The chord is caught by `onPreviewKeyEvent` on a focusable root — *before* any focused child — which is what stops the terminal and the chat composer from swallowing it as text input. |
+| **Particle forge** (`/forge`) | A few thousand particles spring-tied to points sampled off the wordmark's glyph outlines (`getPathForRange` → `PathMeasure`, no rasterisation — that path is unreliable on wasm), parting around the cursor and snapping back. Flat `FloatArray`s, not boxed particles. |
+| **Theme engine, interactive** | The homepage section that demonstrates the resume claim instead of asserting it: pick any seed — each is a real accent from this site's own project data — and the preview pane re-skins through a nested `CvTheme`, the *same* `CompositionLocal` mechanism the production app uses per tenant. The panel counts its own reskins and `CvTheme` calls, so you can see it is one call and zero forked components. |
 
 ### Degraded — ported, but not at parity
 
 | Surface | What was lost, and why |
 |---|---|
 | AI chat — generative UI | The React panel renders `[[rooms]]`-style directives as real components; this port has no widget renderer, so whole-line directives are **stripped** before display (`stripDirectives`, self-checked). The reply reads cleanly — it just doesn't gain the component. Slash commands, the JD fit analyzer and Web Speech voice I/O are also absent; each is a subsystem, not a toggle. |
-| Mermaid diagrams — layout quality | Sugiyama phase 3 (the barycenter sweep that minimises edge crossings) is not implemented. Every diagram in `data/` declares its siblings in the order it wants them drawn, so today the sweep would be work with no visible output — but a hand-authored diagram that *needs* reordering will draw with crossings. Only `graph`/`flowchart` `TD`/`LR` parse; sequence, class and state diagrams would fall back to source. |
-| Résumé → PDF, off the web | Only the wasm actual does anything. JVM, Android and iOS ship documented no-op actuals — each needs something `printResume(html)` has no handle on (a temp-file lifecycle, a `Context`, a live `UIViewController`). The button is shown on every platform, so **on desktop and Android it currently does nothing**; web is the only target that ships this screen. |
+| Mermaid diagrams — scope | Only `graph`/`flowchart` `TD`/`LR` parse; sequence, class and state diagrams fall back to their source card. Crossing reduction is barycenter-only — good enough for every diagram here, but not an optimal ordering. |
+| Runtime verification off the web | Web is fully verified in a real browser. **Desktop launches, the Skia renderer initialises and it runs without exceptions — but the window was never visually confirmed** (no screen-recording permission on the build machine). **Android and iOS are compile-only**: no device, no emulator, no Xcode run here. The shader's Android gradient fallback and the `PrintManager` path are reasoned from source, not observed. |
 | Ambient wash on Android | Android renders through the platform pipeline, not Skia, so there is no `RuntimeEffect` — `runtimeShaderBrush` returns null there and the CPU starfield + radial blooms are used instead. Same silhouette, no noise texture. AGSL would be the real fix. |
 | Ambient wash vs the original | Even the shader is not the three.js original: no depth pass, no postprocessing chain, no geometry. It is a full-screen fragment program, which is a different (and much cheaper) thing. |
 | Footer | Static sitemap; the live Spotify / GitHub polling strip is unblocked by Ktor but not yet wired. |
@@ -119,7 +123,7 @@ distribution, not inferred from a green build.
 | Typed WebGPU | **No library exists.** `kotlin-browser`'s `web.gpu` package ships exactly `GPUCanvasContext` and `GPUCanvasConfiguration` — no `GPUDevice`, so it is not a WebGPU path at all. WebGL2 bindings do exist. |
 | AVIF images | **Platform limitation.** `strings` over the shipped skiko wasm finds jpeg, png, gif, ico, webp, wbmp — no AVIF decoder. Sidestepped rather than suffered: every one of the site's 166 avif assets has a webp sibling, so the gallery uses `.webp`. |
 | Compose Playground (`/compose`) | **Deferred, and the strongest argument for the whole exercise** — a real interpreter rendering real composables instead of styled `div`s. 470-line interpreter port plus a syntax-highlighting editor. Flagship v2 item. |
-| Lab bench (9 experiments), `/map`, `/forge`, `/playground`, ⌘K palette | Deferred on scope only — 7 of 9 labs are pure Canvas + frame-loop work that ports cleanly. SignalLab's Leaflet map never ports; its engine does. |
+| Signal Lab, `/map`, `/playground` | Deferred on scope, not blocked. Signal Lab's engine ports fine; its visual is a Leaflet map with real tile imagery that would have to be rebuilt as a canvas projection. The other four of the React bench's nine instruments (white-label, gateway, deterministic replay) are plain Canvas work. |
 
 ## The honest cost
 
@@ -130,13 +134,13 @@ is not what anyone downloads.
 | file | raw | gzip -9 | **brotli** | Δ brotli vs previous |
 |---|---:|---:|---:|---:|
 | skiko runtime | 8,640,316 | 3,324,704 | **2,618,182** | — (fixed dependency) |
-| app wasm (the whole portfolio) | 3,985,193 | 1,327,450 | **1,011,074** | +103,309 |
-| JS glue | 538,610 | 100,988 | **82,458** | +288 |
+| app wasm (the whole portfolio) | 4,122,972 | 1,375,234 | **1,044,512** | +33,438 |
+| JS glue | 538,610 | 100,989 | **82,320** | −138 |
 | **total** | 13,164,119 | 4,753,142 | **3,711,714** | +103,597 |
 
 The `Δ` column is the price of the five features added in this pass — the shader wash, the streaming
 chat, the Mermaid engine, the print path and the prerenderer. **+344 KB raw / +103 KB brotli**, an
-11% increase on the app wasm and **2.9% on what a visitor downloads**. Skiko did not move by a byte,
+3.3% increase on the app wasm and **1.0% on what a visitor downloads**. Skiko did not move by a byte,
 which is the point: it never does.
 
 Static HTML rides along outside the wasm: `index.html` is 29,158 raw / 8,717 brotli, each other route
@@ -145,9 +149,9 @@ Static HTML rides along outside the wasm: `index.html` is 29,158 raw / 8,717 bro
 
 | | React site | this build |
 |---|---|---|
-| Over the wire, first paint | ~hundreds of KB | **3.7 MB brotli** |
+| Over the wire, first paint | ~hundreds of KB | **3.75 MB brotli** |
 | Crawlable | fully | static per-route HTML, generated from the same data — but the Compose UI itself is a canvas |
-| Routes | 13 | 9, with real URLs, deep links and prerendered HTML |
+| Routes | 13 | 11, with real URLs, deep links and prerendered HTML |
 
 An empty Compose Multiplatform hello-world already costs **2.62 MB brotli** here; the entire
 portfolio — every screen, all the content, real fonts, Coil, Ktor, a GPU shader, a diagram layout

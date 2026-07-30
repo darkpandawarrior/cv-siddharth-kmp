@@ -98,16 +98,17 @@ private fun ResumeBody(modifier: Modifier = Modifier) {
                         text = "Open on the React site",
                         onClick = { uri.openUri(profile.portfolio.trimEnd('/') + "/resume") },
                     )
-                    // ponytail: shown on every platform, but only the web actual does anything —
-                    // the JVM/Android/iOS actuals are documented no-ops (each needs a Context, a
-                    // UIViewController or a temp-file lifecycle `printResume(html)` has no handle
-                    // on). Web is the only surface that ships this screen today. Upgrade path: an
-                    // `expect val resumePrintSupported: Boolean` next to `printResume`, and hide
-                    // the button where it is false — five files for one boolean, so not yet.
-                    PrimaryButton(
-                        text = "Print / Save as PDF",
-                        onClick = { printResume(buildResumeHtml()) },
-                    )
+                    // Gated on the platform actually having a print path, rather than shown
+                    // everywhere and silently doing nothing on three targets out of four. Android
+                    // computes this at runtime (it needs an Application context to have been
+                    // installed first), so this is a real read, not a compile-time constant.
+                    // "Open on the React site" above is the always-works fallback either way.
+                    if (resumePrintSupported) {
+                        PrimaryButton(
+                            text = "Print / Save as PDF",
+                            onClick = { printResume(buildResumeHtml()) },
+                        )
+                    }
                 }
             }
 

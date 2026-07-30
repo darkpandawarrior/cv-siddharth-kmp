@@ -2,9 +2,17 @@ package com.siddharth.cv.shared.prerender
 
 import com.siddharth.cv.shared.Route
 import com.siddharth.cv.shared.chat.floatingChatSelfCheck
+import com.siddharth.cv.shared.detail.mermaidLayoutSelfCheck
 import com.siddharth.cv.shared.detail.mermaidParseSelfCheck
 import com.siddharth.cv.shared.detail.resumeHtmlSelfCheck
+import com.siddharth.cv.shared.forge.forgeSelfCheck
+import com.siddharth.cv.shared.labs.LabGroup
+import com.siddharth.cv.shared.labs.cvLabs
+import com.siddharth.cv.shared.labs.labScreenSelfCheck
+import com.siddharth.cv.shared.labs.labsSelfCheck
+import com.siddharth.cv.shared.palette.paletteSelfCheck
 import com.siddharth.cv.shared.navSelfCheck
+import com.siddharth.cv.shared.playground.themeLabSelfCheck
 import com.siddharth.cv.shared.data.CvGallery
 import com.siddharth.cv.shared.data.Experience
 import com.siddharth.cv.shared.data.NamedLink
@@ -80,7 +88,7 @@ object Prerender {
 
         // Derived from Route, not hand-listed: a new route in Nav.kt shows up here or the `when`
         // in `render` stops compiling. That is the whole point of generating from Kotlin.
-        val routes: List<Route> = listOf(Route.Home, Route.Resume, Route.Terminal) +
+        val routes: List<Route> = listOf(Route.Home, Route.Resume, Route.Terminal, Route.Lab, Route.Forge) +
             projects.map { Route.ProjectDetail(it.slug) }
 
         routes.forEach { route ->
@@ -156,6 +164,32 @@ private fun render(route: Route, origin: String): String = when (route) {
         image = CvGallery.hero("mileway"),
         jsonLd = personLd(origin, profile.intro),
         body = terminalBody(),
+    )
+
+    Route.Lab -> page(
+        route = route,
+        origin = origin,
+        title = "Lab bench — ${profile.name}",
+        description = "Interactive simulations of real production problems: recomposition cost, " +
+            "request fan-out, crash triage, search traversal and module-graph isolation.",
+        ogType = "website",
+        image = CvGallery.hero("mileway"),
+        jsonLd = personLd(origin, profile.intro),
+        // The bench itself is a canvas, so the crawlable body is the captions — which is the part
+        // that carries the meaning anyway.
+        body = labBody(),
+    )
+
+    Route.Forge -> page(
+        route = route,
+        origin = origin,
+        title = "Particle forge — ${profile.name}",
+        description = "A few thousand particles spring-tied to the wordmark, parting around the " +
+            "cursor and snapping back. Physics on a Compose canvas.",
+        ogType = "website",
+        image = CvGallery.hero("mileway"),
+        jsonLd = personLd(origin, profile.intro),
+        body = forgeBody(),
     )
 
     is Route.ProjectDetail -> {
@@ -337,6 +371,8 @@ private fun siteNav(current: Route): String = buildString {
         Route.Home to "Home",
         Route.Resume to "Résumé",
         Route.Terminal to "Terminal",
+        Route.Lab to "Lab",
+        Route.Forge to "Forge",
     ) + projects.map { Route.ProjectDetail(it.slug) to it.slug }
 
     entries.forEach { (route, label) ->
@@ -488,6 +524,45 @@ private fun terminalBody(): String = buildString {
             "<code>open ${esc(it.slug)}</code> — " +
                 "<a href=\"/project/${esc(it.slug)}\">${esc(it.name)}</a>: ${esc(it.tagline)}"
         },
+        raw = true,
+    )
+}
+
+/**
+ * The bench's crawlable form. Each experiment's description already exists in [cvLabs] — it is
+ * precisely what the canvas cannot expose to a crawler or a screen reader, and it is also the only
+ * part that carries meaning without the animation. Emitting it here costs nothing and duplicates
+ * nothing.
+ */
+private fun labBody(): String = buildString {
+    h1("Lab bench")
+    p(
+        "Each instrument is a real production problem reduced to its arithmetic and drawn on a " +
+            "canvas — recomposition cost, request fan-out, crash triage, search traversal, " +
+            "module-graph isolation. Every simulation is a pure function of elapsed time, which " +
+            "is what makes the reduced-motion still frame free and the maths checkable.",
+    )
+    LabGroup.entries.forEach { group ->
+        h2(group.label)
+        ul(
+            cvLabs.filter { it.group == group }.map {
+                "<b>${esc(it.label)}</b> (${esc(it.metric)}) — ${esc(it.description)}"
+            },
+            raw = true,
+        )
+    }
+}
+
+private fun forgeBody(): String = buildString {
+    h1("Particle forge")
+    p(
+        "A few thousand particles, each spring-tied to a point on the wordmark, parting around " +
+            "the cursor and snapping back. Hooke plus damping over flat float arrays on a Compose " +
+            "canvas — no physics engine, no per-particle objects.",
+    )
+    p(
+        "There is nothing to read here; it is a toy. " +
+            "<a href=\"/\">The portfolio</a> is the point.",
         raw = true,
     )
 }
@@ -710,6 +785,9 @@ private fun sitemap(routes: List<Route>, origin: String): String = buildString {
             Route.Resume -> "0.9"
             is Route.ProjectDetail -> "0.7"
             Route.Terminal -> "0.5"
+            // Demos: worth indexing, but they should never outrank a case study in results.
+            Route.Lab -> "0.4"
+            Route.Forge -> "0.3"
         }
         append("  <url>\n")
         append("    <loc>${esc(loc)}</loc>\n")
@@ -813,7 +891,13 @@ internal fun selfCheck() {
     navSelfCheck()
     floatingChatSelfCheck()
     mermaidParseSelfCheck()
+    mermaidLayoutSelfCheck()
     resumeHtmlSelfCheck()
+    labsSelfCheck()
+    labScreenSelfCheck()
+    themeLabSelfCheck()
+    paletteSelfCheck()
+    forgeSelfCheck()
 
     check(esc("a & b <c> \"d\" 'e'") == "a &amp; b &lt;c&gt; &quot;d&quot; &#39;e&#39;") { "escaping" }
     check(esc("Kursi — “Panda”") == "Kursi — “Panda”") { "non-ASCII passes through; the file is UTF-8" }

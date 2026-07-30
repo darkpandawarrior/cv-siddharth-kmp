@@ -21,6 +21,12 @@ sealed interface Route {
     data object Resume : Route
 
     data object Terminal : Route
+
+    /** The lab bench — the ported experiments from `src/labs/`. */
+    data object Lab : Route
+
+    /** The particle forge. */
+    data object Forge : Route
 }
 
 /**
@@ -96,6 +102,8 @@ fun Route.toPath(): String = when (this) {
     Route.Home -> "/"
     Route.Resume -> "/resume"
     Route.Terminal -> "/terminal"
+    Route.Lab -> "/lab"
+    Route.Forge -> "/forge"
     is Route.ProjectDetail -> "/project/$slug"
 }
 
@@ -105,6 +113,8 @@ fun routeFromPath(path: String): Route {
         clean.isEmpty() -> Route.Home
         clean == "/resume" || clean == "/resume/" -> Route.Resume
         clean == "/terminal" -> Route.Terminal
+        clean == "/lab" -> Route.Lab
+        clean == "/forge" -> Route.Forge
         clean.startsWith("/project/") -> Route.ProjectDetail(clean.removePrefix("/project/"))
         // Unknown path -> home rather than a 404 screen: the prerendered HTML shell is what a
         // crawler sees, and a human who mistypes is better served by the homepage.
@@ -151,7 +161,10 @@ internal fun navSelfCheck() {
     check(nav.current == Route.Home && !nav.canGoBack) { "reset home collapses to the floor" }
 
     // Path mapping must round-trip, or the URL bar and the router disagree after a refresh.
-    listOf(Route.Home, Route.Resume, Route.Terminal, Route.ProjectDetail("mileway")).forEach {
+    listOf(
+        Route.Home, Route.Resume, Route.Terminal, Route.Lab, Route.Forge,
+        Route.ProjectDetail("mileway"),
+    ).forEach {
         check(routeFromPath(it.toPath()) == it) { "round-trip ${it.toPath()}" }
     }
     check(routeFromPath("/project/mileway/") == Route.ProjectDetail("mileway")) { "trailing slash" }

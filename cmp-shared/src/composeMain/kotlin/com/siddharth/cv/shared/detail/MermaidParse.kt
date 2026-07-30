@@ -1,5 +1,7 @@
 package com.siddharth.cv.shared.detail
 
+import com.siddharth.cv.shared.data.projects
+
 /**
  * A hand-rolled parser for the *exact* Mermaid subset the twelve diagrams in
  * [com.siddharth.cv.shared.data.projects] actually use. Not a Mermaid implementation.
@@ -91,9 +93,10 @@ fun parseMermaidFlow(source: String): FlowGraph? {
  * still drawn, it just draws *backwards*, which is exactly what "byte-for-byte replay" should look
  * like.
  *
- * ponytail: within a rank the order is declaration order, not a barycenter sweep. Every real
- * diagram declares siblings in the order it wants them, so crossing minimisation would be work
- * with no visible effect. Add the sweep the first time two edges visibly cross.
+ * Within a rank the order is then handed to [barycenterOrder] — Sugiyama's phase three. Declaration
+ * order is the seed, not the answer: all twelve shipped diagrams happen to declare siblings in a
+ * good order, but a hand-authored one doesn't have to, and the sweep can only ever return an
+ * arrangement with fewer [crossings] than the one it started from.
  */
 fun FlowGraph.ranks(): List<List<FlowNode>> {
     val index = nodes.withIndex().associate { (i, n) -> n.id to i }
@@ -144,7 +147,131 @@ fun FlowGraph.ranks(): List<List<FlowNode>> {
     }
 
     val depth = (rank.maxOrNull() ?: 0) + 1
-    return List(depth) { r -> nodes.filterIndexed { i, _ -> rank[i] == r } }
+    val declared = List(depth) { r -> nodes.filterIndexed { i, _ -> rank[i] == r } }
+    val ordered = barycenterOrder(this, declared.map { group -> group.map { it.id } })
+    return ordered.map { ids -> ids.map { byId.getValue(it) } }
+}
+
+/**
+ * Sugiyama phase three: reorder each rank so fewer edges cross, seeded by the incoming order.
+ *
+ * Four rounds of a down-then-up barycenter sweep. Each pass walks the ranks in turn and sorts one by
+ * the mean position of its neighbours in the rank the pass just finished, so the ordering propagates
+ * along the graph instead of every rank chasing a stale reference. A node with no neighbour in that
+ * adjacent rank barycenters to its own current index, which leaves it where it was rather than
+ * flinging it to the front.
+ *
+ * Two properties matter more than the crossing count itself:
+ *
+ * - **Deterministic.** Fixed round count, a stable sort, and a tie-break on the previous index, so
+ *   the same graph gives the same picture on every run — a diagram that reshuffles between page
+ *   loads is worse than one with a crossing in it.
+ * - **Monotone.** Barycenter is a heuristic and can make a specific graph worse, so every
+ *   intermediate arrangement is costed and the cheapest one wins, with the seed as the baseline.
+ *   The output is never worse than the input.
+ *
+ * ponytail: no dummy nodes for rank-skipping edges, so a rank-0 → rank-2 edge votes in neither
+ * band and doesn't count as crossing the rank-1 band it flies over. Real diagrams are 3-7 nodes
+ * wide; add the dummy chain if one ever grows enough for that flyover to read as a crossing.
+ */
+private fun barycenterOrder(graph: FlowGraph, seed: List<List<String>>): List<List<String>> {
+    if (seed.size < 2 || seed.all { it.size < 2 }) return seed
+
+    val rank = HashMap<String, Int>()
+    seed.forEachIndexed { r, group -> group.forEach { rank[it] = r } }
+    val preds = HashMap<String, MutableList<String>>()
+    val succs = HashMap<String, MutableList<String>>()
+    for (e in graph.edges) {
+        val a = rank[e.from] ?: continue
+        val b = rank[e.to] ?: continue
+        if (b - a != 1) continue // back edges bow around the outside; flyovers vote in no band
+        preds.getOrPut(e.to) { mutableListOf() } += e.from
+        succs.getOrPut(e.from) { mutableListOf() } += e.to
+    }
+
+    var current = seed
+    var best = seed
+    var bestCost = crossings(graph, seed)
+    repeat(BARYCENTER_ROUNDS) {
+        for (down in booleanArrayOf(true, false)) {
+            current = barycenterPass(current, if (down) preds else succs, down)
+            val cost = crossings(graph, current)
+            if (cost < bestCost) {
+                bestCost = cost
+                best = current
+            }
+            if (bestCost == 0) return best // nothing left to win
+        }
+    }
+    return best
+}
+
+/** ~4 rounds is where the heuristic stops improving on graphs this size; more is just churn. */
+private const val BARYCENTER_ROUNDS = 4
+
+/**
+ * One directional pass. [neighbours] must point at the rank the pass reads *from* — predecessors
+ * when walking down, successors when walking up — so the reference rank is always the one already
+ * settled by this pass.
+ */
+private fun barycenterPass(
+    order: List<List<String>>,
+    neighbours: Map<String, List<String>>,
+    down: Boolean,
+): List<List<String>> {
+    val out = order.map { it.toList() }.toMutableList()
+    val range = if (down) 1..out.lastIndex else out.lastIndex - 1 downTo 0
+    for (r in range) {
+        val reference = out[if (down) r - 1 else r + 1]
+        val refPos = HashMap<String, Int>()
+        reference.forEachIndexed { i, id -> refPos[id] = i }
+        val here = HashMap<String, Int>()
+        out[r].forEachIndexed { i, id -> here[id] = i }
+        // sortedBy is stable, so equal barycenters keep the previous order — the tie-break that
+        // makes this reproducible.
+        out[r] = out[r].sortedBy { id ->
+            val positions = neighbours[id]?.mapNotNull { refPos[it] } ?: emptyList()
+            if (positions.isEmpty()) here.getValue(id).toFloat()
+            else positions.sum().toFloat() / positions.size
+        }
+    }
+    return out
+}
+
+/**
+ * Edge pairs that cross under [ordering] (rank index → node ids in draw order).
+ *
+ * The standard bilayer count: two edges cross when their endpoints are in opposite relative order.
+ * Only edges between adjacent ranks are counted, matching what [barycenterOrder] can actually
+ * influence — back edges are drawn as bows outside the content and can't cross a rank boundary.
+ */
+fun crossings(graph: FlowGraph, ordering: List<List<String>>): Int {
+    val rank = HashMap<String, Int>()
+    val pos = HashMap<String, Int>()
+    ordering.forEachIndexed { r, group ->
+        group.forEachIndexed { i, id ->
+            rank[id] = r
+            pos[id] = i
+        }
+    }
+    val spans =
+        graph.edges.filter { e ->
+            val a = rank[e.from] ?: return@filter false
+            val b = rank[e.to] ?: return@filter false
+            b - a == 1
+        }
+    var total = 0
+    for (i in spans.indices) {
+        for (j in i + 1 until spans.size) {
+            val e1 = spans[i]
+            val e2 = spans[j]
+            if (rank[e1.from] != rank[e2.from]) continue
+            val dFrom = pos.getValue(e1.from) - pos.getValue(e2.from)
+            val dTo = pos.getValue(e1.to) - pos.getValue(e2.to)
+            if (dFrom * dTo < 0) total++
+        }
+    }
+    return total
 }
 
 /** One flat line of prose for the screen-reader description of a canvas that has no text nodes. */
@@ -388,4 +515,74 @@ internal fun mermaidParseSelfCheck() {
     check(parseMermaidFlow("sequenceDiagram\n  A->>B: hi") == null) { "not a flowchart" }
     check(parseMermaidFlow("graph TD\n  subgraph core\n  a --> b\n  end") == null) { "subgraph is unsupported, not half-supported" }
     check(parseMermaidFlow("graph TD\n  a[\"unterminated") == null) { "unbalanced bracket" }
+
+    mermaidLayoutSelfCheck()
+}
+
+/**
+ * Phase three's contract. Kept separate from [mermaidParseSelfCheck] because it checks the layout,
+ * not the scanner — but called from it, so it needs no extra wiring in `Prerender.kt`.
+ */
+internal fun mermaidLayoutSelfCheck() {
+    // Hand-built so declaration order is the point rather than an accident of the parser: rank 1 is
+    // declared in the reverse of the order its edges want, which is exactly one crossing.
+    val forced =
+        FlowGraph(
+            direction = FlowDirection.TopDown,
+            nodes = listOf("a1", "a2", "b1", "b2").map { FlowNode(it, it, NodeShape.Box) },
+            edges = listOf(FlowEdge("a1", "b2"), FlowEdge("a2", "b1")),
+        )
+    val seed = listOf(listOf("a1", "a2"), listOf("b1", "b2"))
+    check(crossings(forced, seed) == 1) { "the seed ordering must actually cross, or this proves nothing" }
+    val swept = forced.ranks().map { r -> r.map { it.id } }
+    check(swept == listOf(listOf("a1", "a2"), listOf("b2", "b1"))) { "the sweep must swap rank 1" }
+    check(crossings(forced, swept) == 0) { "barycenter must remove the crossing" }
+
+    // Same graph one rank deeper, so the sweep has to propagate rather than fix a single pair.
+    val deep =
+        FlowGraph(
+            direction = FlowDirection.TopDown,
+            nodes = listOf("a1", "a2", "b1", "b2", "c1", "c2").map { FlowNode(it, it, NodeShape.Box) },
+            edges =
+                listOf(
+                    FlowEdge("a1", "b2"),
+                    FlowEdge("a2", "b1"),
+                    FlowEdge("b1", "c1"),
+                    FlowEdge("b2", "c2"),
+                ),
+        )
+    check(crossings(deep, deep.ranks().map { r -> r.map { it.id } }) == 0) { "crossings clear through three ranks" }
+
+    // A crossing that no ordering can remove (K3,3-ish fan) still must not lose or duplicate a node,
+    // and must not come out worse than the order we started from.
+    val tangled =
+        FlowGraph(
+            direction = FlowDirection.TopDown,
+            nodes = listOf("x1", "x2", "x3", "y1", "y2", "y3").map { FlowNode(it, it, NodeShape.Box) },
+            edges =
+                listOf("x1" to "y3", "x1" to "y1", "x2" to "y2", "x3" to "y1", "x3" to "y3", "x2" to "y3")
+                    .map { (a, b) -> FlowEdge(a, b) },
+        )
+    val tangledSeed = listOf(listOf("x1", "x2", "x3"), listOf("y1", "y2", "y3"))
+    val tangledOut = tangled.ranks().map { r -> r.map { it.id } }
+    check(tangledOut.flatten().sorted() == tangled.nodes.map { it.id }.sorted()) { "every node placed exactly once" }
+    check(crossings(tangled, tangledOut) <= crossings(tangled, tangledSeed)) { "never ship a worse layout" }
+
+    // All twelve shipped diagrams: still parse, still lay out cleanly, and the sweep is a
+    // permutation of the ranking rather than an edit of it.
+    val shipped = projects.mapNotNull { it.detail }.flatMap { it.diagrams }
+    check(shipped.size == 12) { "twelve diagrams — update this check if a project gains one" }
+    shipped.forEach { diagram ->
+        val g = checkNotNull(parseMermaidFlow(diagram.code)) { "'${diagram.title}' must parse" }
+        val ranked = g.ranks().map { r -> r.map { it.id } }
+        check(ranked.flatten().sorted() == g.nodes.map { it.id }.sorted()) { "'${diagram.title}': every node ranked once" }
+        check(ranked.none { it.isEmpty() }) { "'${diagram.title}': no empty rank" }
+        // These twelve declare their siblings well, so the sweep should find nothing to fix. If this
+        // ever trips, the sweep started reordering hand-tuned diagrams — look before relaxing it.
+        check(crossings(g, ranked) == 0) { "'${diagram.title}': crossing-free" }
+        // Determinism: parse and lay out again from scratch, and demand the identical picture. A
+        // fresh parse means this also catches a layout that leaks hash iteration order.
+        val again = parseMermaidFlow(diagram.code)!!.ranks().map { r -> r.map { it.id } }
+        check(again == ranked) { "'${diagram.title}': layout must be deterministic" }
+    }
 }
