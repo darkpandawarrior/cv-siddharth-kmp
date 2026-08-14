@@ -1,0 +1,209 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ComplexCondition:ComposeInterpreter.kt:c == '0' &amp;&amp; i + 1 &lt; n &amp;&amp; (src[i + 1] == 'x' || src[i + 1] == 'X')</ID>
+    <ID>ComplexCondition:ComposeInterpreter.kt:i &lt; n &amp;&amp; !(src[i] == '*' &amp;&amp; i + 1 &lt; n &amp;&amp; src[i + 1] == '/')</ID>
+    <ID>ComplexCondition:ComposeInterpreter.kt:i &lt; n &amp;&amp; (isDigit(src[i]) || src[i] in 'a'..'f' || src[i] in 'A'..'F')</ID>
+    <ID>ComplexCondition:LabModels.kt:w &lt;= 0f || h &lt;= 0f || x &lt; 0f || y &lt; 0f || x &gt;= w || y &gt;= h</ID>
+    <ID>ComplexCondition:ParticleForge.kt:advance &lt;= 0f || width &lt; 80f || height &lt; 60f || spacingPx &lt;= 0f</ID>
+    <ID>CyclomaticComplexMethod:ComposeInterpreter.kt:Parser$private fun parseAtom: Expr</ID>
+    <ID>CyclomaticComplexMethod:ComposeInterpreter.kt:private fun tokenize: List&lt;Tok&gt;</ID>
+    <ID>CyclomaticComplexMethod:MermaidFlow.kt:private fun buildFlowLayout: FlowLayout</ID>
+    <ID>CyclomaticComplexMethod:MermaidParse.kt:fun FlowGraph.ranks: List&lt;List&lt;FlowNode&gt;&gt;</ID>
+    <ID>CyclomaticComplexMethod:ParticleForge.kt:@Composable fun ParticleForge</ID>
+    <ID>LongMethod:ComposeInterpreter.kt:internal fun composeInterpreterSelfCheck</ID>
+    <ID>LongMethod:LabModels.kt:internal fun labsSelfCheck</ID>
+    <ID>LongMethod:MermaidFlow.kt:private fun buildFlowLayout: FlowLayout</ID>
+    <ID>LongMethod:Prerender.kt:private fun page: String</ID>
+    <ID>LongMethod:TerminalEngine.kt:TerminalEngine$private fun buildTable: List&lt;Cmd&gt;</ID>
+    <ID>LoopWithTooManyJumpStatements:ChatClient.kt:while</ID>
+    <ID>LoopWithTooManyJumpStatements:ComposeInterpreter.kt:while</ID>
+    <ID>LoopWithTooManyJumpStatements:MermaidParse.kt:for</ID>
+    <ID>LoopWithTooManyJumpStatements:MermaidParse.kt:while</ID>
+    <ID>MagicNumber:ComposeInterpreter.kt:12.0</ID>
+    <ID>MagicNumber:ComposeInterpreter.kt:13.0</ID>
+    <ID>MagicNumber:ComposeInterpreter.kt:150</ID>
+    <ID>MagicNumber:ComposeInterpreter.kt:150.0</ID>
+    <ID>MagicNumber:ComposeInterpreter.kt:20.0</ID>
+    <ID>MagicNumber:ComposeInterpreter.kt:24.0</ID>
+    <ID>MagicNumber:ComposeInterpreter.kt:84.0</ID>
+    <ID>MagicNumber:ComposeRender.kt:12.0</ID>
+    <ID>MagicNumber:CvTheme.kt:0xFF000000</ID>
+    <ID>MagicNumber:CvTheme.kt:16</ID>
+    <ID>MagicNumber:LabModels.kt:0.01f</ID>
+    <ID>MagicNumber:LabModels.kt:0.1f</ID>
+    <ID>MagicNumber:LabModels.kt:0.35f</ID>
+    <ID>MagicNumber:LabModels.kt:0.37f</ID>
+    <ID>MagicNumber:LabModels.kt:0.4f</ID>
+    <ID>MagicNumber:LabModels.kt:0.5f</ID>
+    <ID>MagicNumber:LabModels.kt:0.99f</ID>
+    <ID>MagicNumber:LabModels.kt:101f</ID>
+    <ID>MagicNumber:LabModels.kt:15</ID>
+    <ID>MagicNumber:LabModels.kt:20</ID>
+    <ID>MagicNumber:LabModels.kt:2048</ID>
+    <ID>MagicNumber:LabModels.kt:20f</ID>
+    <ID>MagicNumber:LabModels.kt:33</ID>
+    <ID>MagicNumber:LabModels.kt:40</ID>
+    <ID>MagicNumber:LabModels.kt:400f</ID>
+    <ID>MagicNumber:LabModels.kt:499f</ID>
+    <ID>MagicNumber:LabModels.kt:500f</ID>
+    <ID>MagicNumber:LabModels.kt:60</ID>
+    <ID>MagicNumber:LabModels.kt:76</ID>
+    <ID>MagicNumber:LabModels.kt:78</ID>
+    <ID>MagicNumber:LabModels.kt:799f</ID>
+    <ID>MagicNumber:LabModels.kt:800f</ID>
+    <ID>MagicNumber:LabModels.kt:84</ID>
+    <ID>MagicNumber:LabModels.kt:CrashFeed.Companion$0.50f</ID>
+    <ID>MagicNumber:LabModels.kt:CrashFeed.Companion$0.80f</ID>
+    <ID>MagicNumber:LabModels.kt:CrashFeed.Companion$0.92f</ID>
+    <ID>MagicNumber:LabModels.kt:CrashFeed.Companion$0.98f</ID>
+    <ID>MagicNumber:LabModels.kt:FanoutScan$0.03f</ID>
+    <ID>MagicNumber:LabModels.kt:FanoutScan$0.97f</ID>
+    <ID>MagicNumber:LabModels.kt:FanoutScan$20</ID>
+    <ID>MagicNumber:LabScreen.kt:0.2f</ID>
+    <ID>MagicNumber:LabScreen.kt:0.5f</ID>
+    <ID>MagicNumber:LabScreen.kt:11</ID>
+    <ID>MagicNumber:LabScreen.kt:37</ID>
+    <ID>MagicNumber:MermaidFlow.kt:0.5f</ID>
+    <ID>MagicNumber:MermaidParse.kt:12</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.02f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.04f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.055f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.06f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.07f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.08f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.09f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.12f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.13f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.14f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.16f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.205f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.20f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.22f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.26f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.30f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.34f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.35f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.38f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.40f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.42f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.44f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.46f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.50f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.52f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.56f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.57f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.58f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.5f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.60f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.62f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.64f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.66f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.70710678f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.70f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.72f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.86f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.88f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.92f</ID>
+    <ID>MagicNumber:ParticleForge.kt:0.98f</ID>
+    <ID>MagicNumber:ParticleForge.kt:1.02f</ID>
+    <ID>MagicNumber:ParticleForge.kt:1.04f</ID>
+    <ID>MagicNumber:ParticleForge.kt:1e-4f</ID>
+    <ID>MagicNumber:ParticleForge.kt:20f</ID>
+    <ID>MagicNumber:ParticleForge.kt:24f</ID>
+    <ID>MagicNumber:ParticleForge.kt:30</ID>
+    <ID>MagicNumber:ParticleForge.kt:300f</ID>
+    <ID>MagicNumber:ParticleForge.kt:4000</ID>
+    <ID>MagicNumber:ParticleForge.kt:40f</ID>
+    <ID>MagicNumber:ParticleForge.kt:50f</ID>
+    <ID>MagicNumber:ParticleForge.kt:600</ID>
+    <ID>MagicNumber:ParticleForge.kt:60f</ID>
+    <ID>MagicNumber:ParticleForge.kt:80f</ID>
+    <ID>MagicNumber:ParticleForge.kt:90f</ID>
+    <ID>MagicNumber:Prerender.kt:156</ID>
+    <ID>MagicNumber:Prerender.kt:16</ID>
+    <ID>MagicNumber:Prerender.kt:300</ID>
+    <ID>MagicNumber:TerminalEngine.kt:TerminalEngine$22</ID>
+    <ID>MagicNumber:TerminalScreen.kt:0xFFFF5C7A</ID>
+    <ID>MagicNumber:ThemeLab.kt:0.0005f</ID>
+    <ID>MagicNumber:ThemeLab.kt:0.001f</ID>
+    <ID>MagicNumber:ThemeLab.kt:0.004f</ID>
+    <ID>MagicNumber:ThemeLab.kt:0.03f</ID>
+    <ID>MagicNumber:ThemeLab.kt:0.04045f</ID>
+    <ID>MagicNumber:ThemeLab.kt:0.055f</ID>
+    <ID>MagicNumber:ThemeLab.kt:0.05f</ID>
+    <ID>MagicNumber:ThemeLab.kt:0.0722f</ID>
+    <ID>MagicNumber:ThemeLab.kt:0.10f</ID>
+    <ID>MagicNumber:ThemeLab.kt:0.12f</ID>
+    <ID>MagicNumber:ThemeLab.kt:0.145f</ID>
+    <ID>MagicNumber:ThemeLab.kt:0.2126f</ID>
+    <ID>MagicNumber:ThemeLab.kt:0.29f</ID>
+    <ID>MagicNumber:ThemeLab.kt:0.55f</ID>
+    <ID>MagicNumber:ThemeLab.kt:0.58f</ID>
+    <ID>MagicNumber:ThemeLab.kt:0.5f</ID>
+    <ID>MagicNumber:ThemeLab.kt:0.62f</ID>
+    <ID>MagicNumber:ThemeLab.kt:0.7152f</ID>
+    <ID>MagicNumber:ThemeLab.kt:0.74f</ID>
+    <ID>MagicNumber:ThemeLab.kt:0.99f</ID>
+    <ID>MagicNumber:ThemeLab.kt:1.055f</ID>
+    <ID>MagicNumber:ThemeLab.kt:12.92f</ID>
+    <ID>MagicNumber:ThemeLab.kt:16</ID>
+    <ID>MagicNumber:ThemeLab.kt:2.4f</ID>
+    <ID>MagicNumber:ThemeLab.kt:20.9f</ID>
+    <ID>MagicNumber:ThemeLab.kt:255</ID>
+    <ID>MagicNumber:ThemeLab.kt:255f</ID>
+    <ID>MagicNumber:ThemeLab.kt:4.5f</ID>
+    <ID>MatchingDeclarationName:CommandPalette.kt:PaletteCommand</ID>
+    <ID>MatchingDeclarationName:CvGalleryData.kt:CvGallery</ID>
+    <ID>MatchingDeclarationName:HomeScreen.kt:HomeSection</ID>
+    <ID>MatchingDeclarationName:ThemeLab.kt:ThemeSeed</ID>
+    <ID>NestedBlockDepth:ComposeInterpreter.kt:internal fun composeInterpreterSelfCheck</ID>
+    <ID>RethrowCaughtException:FloatingChat.kt:throw cancel</ID>
+    <ID>ReturnCount:CommandPalette.kt:internal fun paletteScore: Int?</ID>
+    <ID>ReturnCount:ComposeInterpreter.kt:Parser$private fun parseAtom: Expr</ID>
+    <ID>ReturnCount:ComposeInterpreter.kt:Parser$private fun parseNode: Node?</ID>
+    <ID>ReturnCount:MermaidParse.kt:fun parseMermaidFlow: FlowGraph?</ID>
+    <ID>ReturnCount:ParticleForge.kt:private fun buildForge: Forge?</ID>
+    <ID>ReturnCount:TerminalEngine.kt:TerminalEngine$fun complete: String?</ID>
+    <ID>SwallowedException:ComposeInterpreter.kt:Parser$e: RuntimeException</ID>
+    <ID>ThrowsCount:ComposeInterpreter.kt:Parser$private fun parseStateDecl: StateDecl</ID>
+    <ID>TooGenericExceptionCaught:ChatClient.kt:transport: Throwable</ID>
+    <ID>TooGenericExceptionCaught:ComposeInterpreter.kt:Parser$e: RuntimeException</ID>
+    <ID>TooManyFunctions:ComposeInterpreter.kt:Parser</ID>
+    <ID>TopLevelPropertyNaming:CommandPalette.kt:// Tier floors. The gap between adjacent tiers (200) is wider than [BonusCap] (150), so a // within-tier tightness bonus can never lift a match above the tier below it — the ranking is // lexicographic (tier first, tightness second) without needing a comparator to say so. private const val TierPrefix = 900</ID>
+    <ID>TopLevelPropertyNaming:CommandPalette.kt:private const val BonusCap = 150</ID>
+    <ID>TopLevelPropertyNaming:CommandPalette.kt:private const val TierContains = 500</ID>
+    <ID>TopLevelPropertyNaming:CommandPalette.kt:private const val TierSubsequence = 200</ID>
+    <ID>TopLevelPropertyNaming:CommandPalette.kt:private const val TierWordStart = 700</ID>
+    <ID>TopLevelPropertyNaming:CvShaderWash.kt:/** * The ambient ground as one GPU fragment shader. * * The web build paints the ambient layer with two stacked CSS radial gradients plus a starfield; * a gradient can only ever be an ellipse, so the web version reads as two clean lens flares. What * the site actually wants — and what [AmbientBackground] can only approximate on the CPU — is a * slow, organic *wash*: fbm noise put through a domain warp so the bloom edges wander instead of * being perfect ovals. That is one texture fetch-free fragment program here and ~120 Canvas draw * calls a frame there, so this is both the better-looking and the cheaper path. * * Deliberately NOT a raymarcher: this runs full-screen behind every route on every frame. The whole * program is 4 octaves of value noise plus a two-tap warp — a handful of ALU ops per pixel. */ private const val AmbientSkSl = """ uniform float2 uSize; uniform float uTime; float hash(float2 p) { return fract(sin(dot(p, float2(127.1, 311.7))) * 43758.5453); } float vnoise(float2 p) { float2 i = floor(p); float2 f = fract(p); float2 u = f * f * (3.0 - 2.0 * f); return mix(mix(hash(i), hash(i + float2(1.0, 0.0)), u.x), mix(hash(i + float2(0.0, 1.0)), hash(i + float2(1.0, 1.0)), u.x), u.y); } float fbm(float2 p) { float s = 0.0; float a = 0.5; for (int o = 0; o &lt; 4; o++) { s += a * vnoise(p); p = p * 2.03 + float2(1.7, 9.2); a *= 0.5; } return s; } half4 main(float2 fragCoord) { const float3 GROUND = float3(0.020, 0.027, 0.039); // #05070a --color-void const float3 SIGNAL = float3(0.239, 0.863, 0.518); // #3ddc84 --color-accent const float3 DEPTH = float3(0.369, 0.902, 1.000); // #5ee6ff --color-accent-2 float h = max(uSize.y, 1.0); float2 uv = fragCoord / h; // y spans 0..1, x keeps the aspect ratio so noise never stretches float cx = uSize.x / h * 0.5; float t = uTime * 0.05; // ~20s to cross one noise cell: a drift, not an animation // Domain warp. Two fbm taps displace the sample point, which is what turns a radial falloff // into something that looks like it is breathing rather than pulsing. float2 warp = float2(fbm(uv * 1.6 + float2(t, -t)), fbm(uv * 1.6 + float2(5.2, 1.3) - t)); float2 w = uv + 0.45 * warp; // Anchored exactly where the CSS gradients are: signal above the fold, depth below it. float bloomTop = 1.0 - smoothstep(0.0, 1.05, distance(uv, float2(cx, -0.12))); float bloomBot = 1.0 - smoothstep(0.0, 1.20, distance(uv, float2(cx, 1.12))); // Peak luminance is capped near 0.30 of each accent: body text is #e8efe9, and anything // brighter than this starts eating the contrast ratio the a11y suite depends on. float3 col = GROUND; col += SIGNAL * bloomTop * (0.09 + 0.21 * fbm(w * 1.25 + float2(0.0, t * 2.0))); col += DEPTH * bloomBot * (0.06 + 0.15 * fbm(w * 1.05 + float2(3.7, -t * 1.6))); col *= 1.0 - 0.22 * smoothstep(0.55, 1.30, distance(uv, float2(cx, 0.5))); // The starfield, as a hash threshold over 4px cells instead of 120 drawCircle calls. float2 g = fragCoord / 4.0; float2 cell = floor(g); float star = step(0.9990, hash(cell + 31.7)) * smoothstep(0.5, 0.05, distance(fract(g), float2(0.5))); col += float3(0.85, 0.94, 1.0) * star * (0.30 + 0.30 * sin(uTime * 1.4 + hash(cell) * 6.2832)); // Dither. At this luminance an 8-bit framebuffer bands visibly across the falloff. col += (hash(fragCoord * 0.0137) - 0.5) * 0.005; return half4(half3(clamp(col, 0.0, 1.0)), 1.0); } """</ID>
+    <ID>TopLevelPropertyNaming:CvShaderWash.kt:/** * The frame the wash freezes on under reduced motion. * * [rememberFrameTicker] pins to 0f when motion is off, and t=0 is the one frame where every fbm * tap lands on an unwarped lattice point — the degenerate, flattest frame in the loop. Offsetting * by a constant means reduced-motion users get a *representative* still, not the worst one, and it * costs nothing on the animated path since the shader is periodic in nothing. */ private const val FrozenPhaseSeconds = 9.5f</ID>
+    <ID>TopLevelPropertyNaming:LabModels.kt:/** * Where a frozen clock parks. Chosen so that *every* experiment reads well at this one instant: * the crash feed has ~58 traces binned and ~25 in flight, the fan-out is mid-flight through its * third scan, and the search tree has finished and drawn its chosen line. */ internal const val LabStillSeconds: Float = 11.5f</ID>
+    <ID>TopLevelPropertyNaming:LabModels.kt:/** A scan runs, drains, and the next one starts. Comfortably longer than any generated span. */ internal const val FanoutScanPeriod: Float = 5f</ID>
+    <ID>TopLevelPropertyNaming:LabModels.kt:/** How long a scope stays lit after it repaints. */ internal const val RecomposeFlashSeconds: Float = 0.55f</ID>
+    <ID>TopLevelPropertyNaming:LabModels.kt:internal const val FanoutProviders: Int = 62</ID>
+    <ID>TopLevelPropertyNaming:LabModels.kt:internal const val ModuleFeatureCount: Int = 13</ID>
+    <ID>TopLevelPropertyNaming:LabModels.kt:internal const val ModuleOtherCount: Int = ModuleTotal - ModuleFeatureCount</ID>
+    <ID>TopLevelPropertyNaming:LabModels.kt:internal const val ModuleTotal: Int = 46</ID>
+    <ID>TopLevelPropertyNaming:LabModels.kt:internal const val RecomposeCells: Int = RecomposeGridW * RecomposeGridH</ID>
+    <ID>TopLevelPropertyNaming:LabModels.kt:internal const val RecomposeGridH: Int = 5</ID>
+    <ID>TopLevelPropertyNaming:LabModels.kt:internal const val RecomposeGridW: Int = 8</ID>
+    <ID>TopLevelPropertyNaming:LabScreen.kt:/** The React lab's ambient `setInterval(…, 1400)` — here it is just another function of `t`. */ private const val RecomposeAmbientSeconds: Float = 1.4f</ID>
+    <ID>TopLevelPropertyNaming:ParticleForge.kt:/** * Per-glyph advance in em. Only the nine letters of [ForgeWord] are real; anything else falls back * to a neutral width so a future word can't silently overlap itself. */ private const val ForgeFallbackAdvance: Float = 0.52f</ID>
+    <ID>TopLevelPropertyNaming:ParticleForge.kt:/** * The React original integrates in per-frame units at whatever rate the display runs * (`v += dx * 0.045`, `v *= 0.86`, `v += dir * 4.2`). Those are the same numbers converted to * per-second units against its implicit 60Hz, so the feel matches on a 120Hz panel instead of * running twice as fast: k = 0.045 * 60^2, damping = -ln(0.86) * 60, repulsion = 4.2 * 60^2. */ internal const val ForgeStiffness: Float = 162f</ID>
+    <ID>TopLevelPropertyNaming:ParticleForge.kt:/** * The integrator's ceiling, enforced *inside* [forgeStep] rather than at its call site. * * A backgrounded browser tab delivers one frame with a multi-second delta the instant it comes * back; at k = 162 a 2s step multiplies every offset by 324 and the swarm is gone forever. Clamping * here means no caller — the frame loop, a self-check, anything added later — can blow the * simulation up by handing it a bad `dt`. One guard where every path already runs through. */ internal const val ForgeMaxStepSeconds: Float = 1f / 60f</ID>
+    <ID>TopLevelPropertyNaming:ParticleForge.kt:/** * The particle budget. The floor stops a phone-width canvas from reading as a dotted line, the * ceiling stops a 4K window from asking for 30k circles a frame; between them the count simply * follows the outline length, which follows the canvas area. */ private const val ForgeMinParticles: Int = 700</ID>
+    <ID>TopLevelPropertyNaming:ParticleForge.kt:/** A Canvas exposes no text nodes at all, so this is the entire accessible surface of the room. */ private const val ForgeDescription: String = "An interactive particle field spelling the wordmark \"siddharth\". A couple of thousand dots " + "are spring-tied to points along the letters and tinted from Android green on the left to " + "cyan on the right. Moving a pointer through the mark pushes nearby dots radially out of " + "its way so the letters part around it, and pressing pushes them much further; the springs " + "pull every dot back into place as soon as the pointer moves on."</ID>
+    <ID>TopLevelPropertyNaming:ParticleForge.kt:/** Fixed-ish timestep: the loop runs whole [ForgeMaxStepSeconds] steps and drops the remainder. */ private const val ForgeMaxSubsteps: Int = 4</ID>
+    <ID>TopLevelPropertyNaming:ParticleForge.kt:/** Pressing amplifies the same field instead of adding a second one — "give it a click". */ private const val ForgePressRadiusScale: Float = 3.4f</ID>
+    <ID>TopLevelPropertyNaming:ParticleForge.kt:/** `--tracking`, in em. */ private const val ForgeLetterSpacing: Float = 0.06f</ID>
+    <ID>TopLevelPropertyNaming:ParticleForge.kt:internal const val ForgeDamping: Float = 9f</ID>
+    <ID>TopLevelPropertyNaming:ParticleForge.kt:internal const val ForgeRepelAccel: Float = 15_120f</ID>
+    <ID>TopLevelPropertyNaming:ParticleForge.kt:private const val ForgeMaxParticles: Int = 4200</ID>
+    <ID>TopLevelPropertyNaming:ParticleForge.kt:private const val ForgePressAccelScale: Float = 2.2f</ID>
+    <ID>TopLevelPropertyNaming:ParticleForge.kt:private const val ForgeWord: String = "siddharth"</ID>
+    <ID>UnusedParameter:ResumePrint.wasmJs.kt:html: String</ID>
+    <ID>VariableNaming:CvTheme.kt:val DisplayFamily = displayFamily</ID>
+    <ID>VariableNaming:CvTheme.kt:val MonoFamily = monoFamily</ID>
+  </CurrentIssues>
+</SmellBaseline>

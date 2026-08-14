@@ -4,6 +4,29 @@ plugins {
     alias(libs.plugins.androidApplication) apply false
     alias(libs.plugins.composeMultiplatform) apply false
     alias(libs.plugins.composeCompiler) apply false
+    alias(libs.plugins.detekt) apply false
+}
+
+// Static analysis. This repo had none, so nothing checked the code that renders the portfolio site.
+//
+// `source` points at `src` rather than an enumerated list of source sets, because every list in the
+// family had already drifted from reality: Kursi named five of fifteen and left production code in
+// nativeMain, gms, noGms and main unscanned; PaymentsLab omitted wasmJsMain. Adding a target adds a
+// source set, and nothing fails when the list is not updated to match — coverage shrinks silently
+// while the build stays green. `src` cannot rot that way.
+subprojects {
+    apply(plugin = "dev.detekt")
+    extensions.configure<dev.detekt.gradle.extensions.DetektExtension> {
+        config.setFrom(rootProject.files("config/detekt/detekt.yml"))
+        buildUponDefaultConfig = true
+        parallel = true
+        // Grandfathers findings that predate the gate so this lands green; new code is still gated.
+        baseline = file("detekt-baseline.xml")
+        source.setFrom(layout.projectDirectory.dir("src"))
+    }
+    tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
+        exclude("**/build/**", "**/generated/**")
+    }
 }
 
 // CVE fix: ws < 8.21.0 is a high-severity memory-exhaustion DoS. It arrives transitively through
