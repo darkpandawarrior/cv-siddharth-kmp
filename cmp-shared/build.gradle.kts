@@ -25,6 +25,10 @@ kotlin {
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         browser()
+        // CMP-4906: without a declared executable the Compose plugin's Skiko-runtime check fails
+        // `build` outright, because Compose UI cannot load its renderer from a bare klib. This gate
+        // was permanently red before 2026-08-27 - it never told anyone anything, it just failed.
+        binaries.executable()
     }
 
     android {
