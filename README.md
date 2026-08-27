@@ -8,7 +8,7 @@ same portfolio to web (Kotlin/Wasm), desktop, Android and iOS.
 
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.4.20--RC-7F52FF?logo=kotlin&logoColor=white)
 ![Compose Multiplatform](https://img.shields.io/badge/Compose%20Multiplatform-1.12.0--rc01-4285F4?logo=jetpackcompose&logoColor=white)
-![AGP](https://img.shields.io/badge/AGP-9.4.0--alpha08-3DDC84?logo=android&logoColor=white)
+![AGP](https://img.shields.io/badge/AGP-9.5.0--alpha02-3DDC84?logo=android&logoColor=white)
 ![Platforms](https://img.shields.io/badge/platforms-Web%20%7C%20Desktop%20%7C%20Android%20%7C%20iOS-3DDC84)
 ![Gradle](https://img.shields.io/badge/Gradle-9.7.0-02303A?logo=gradle&logoColor=white)
 
