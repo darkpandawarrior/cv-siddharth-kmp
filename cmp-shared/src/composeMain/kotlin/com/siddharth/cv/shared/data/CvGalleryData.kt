@@ -11,9 +11,10 @@ package com.siddharth.cv.shared.data
  *
  * **Why `.webp` and not `.avif`.** The site publishes every shot in avif, webp and png. Skiko's
  * bundled codec set (verified against the shipped wasm: jpeg, png, gif, ico, webp, wbmp) has NO
- * avif decoder, so an avif URL decodes to nothing with no error worth reading. Every avif has a
- * webp sibling — 166 pairs, zero unmatched — so preferring webp sidesteps the gap entirely at no
- * cost in fidelity.
+ * avif decoder, so an avif URL decodes to nothing with no error worth reading. The React site
+ * publishes a webp sibling beside every avif, so preferring webp sidesteps the gap entirely at no
+ * cost in fidelity. No pair tally here on purpose: it counts files in the other repo, nothing in
+ * this build can check it, and the last one shipped was off by 253.
  *
  * GENERATED from cv-siddharth/public/projects/<slug>/screenshots/ — regenerate rather than edit.
  */

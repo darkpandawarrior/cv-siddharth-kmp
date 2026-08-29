@@ -149,7 +149,7 @@ private fun StringBuilder.experienceEntries() {
 private val CommitPrefix = Regex("^(feat|fix)\\([^)]*\\): ")
 
 private fun StringBuilder.projectEntries() {
-    // break-inside:avoid lives on each entry, never on this section: six projects are taller
+    // break-inside:avoid lives on each entry, never on this section: the project list is taller
     // than a page, so avoiding a break on the whole thing would just push a page of white space.
     projects.forEach { p ->
         append("<div class=\"entry avoid\">\n")

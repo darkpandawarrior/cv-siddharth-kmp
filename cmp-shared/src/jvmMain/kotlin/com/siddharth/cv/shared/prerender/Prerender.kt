@@ -16,6 +16,8 @@ import com.siddharth.cv.shared.playground.composePresets
 import com.siddharth.cv.shared.playground.composeRenderSelfCheck
 import com.siddharth.cv.shared.playground.playgroundScreenSelfCheck
 import com.siddharth.cv.shared.navSelfCheck
+import com.siddharth.cv.shared.routeOrNull
+import com.siddharth.cv.shared.staticRoutes
 import com.siddharth.cv.shared.playground.themeLabSelfCheck
 import com.siddharth.cv.shared.data.CvGallery
 import com.siddharth.cv.shared.data.Experience
@@ -90,10 +92,7 @@ object Prerender {
         val origin = (args.getOrNull(1) ?: System.getenv("CV_SITE_ORIGIN") ?: DEFAULT_ORIGIN)
             .trimEnd('/')
 
-        // Derived from Route, not hand-listed: a new route in Nav.kt shows up here or the `when`
-        // in `render` stops compiling. That is the whole point of generating from Kotlin.
-        val routes: List<Route> = listOf(Route.Home, Route.Resume, Route.Terminal, Route.Lab, Route.Forge, Route.Playground) +
-            projects.map { Route.ProjectDetail(it.slug) }
+        val routes = prerenderRoutes
 
         routes.forEach { route ->
             val file = route.outputFile(outDir)
@@ -109,12 +108,24 @@ object Prerender {
 }
 
 /**
+ * Every page this build emits: Nav.kt's `staticRoutes`, never re-typed here, plus one page per
+ * project that actually has a detail block. A route added to Nav.kt gets a page and a sitemap entry
+ * without anyone remembering this file exists; a project without a detail block is skipped for the
+ * same reason the command palette skips it, an indexable page with nothing on it being worse than
+ * no page.
+ *
+ * A val rather than a line inside `main` so [readmeSelfCheck] counts the same list that ships.
+ */
+private val prerenderRoutes: List<Route> =
+    staticRoutes + projects.filter { it.detail != null }.map { Route.ProjectDetail(it.slug) }
+
+/**
  * Fallback origin. Overridden by `args[1]` or `CV_SITE_ORIGIN`; only used so a bare local run
  * produces something inspectable rather than throwing.
  */
 private const val DEFAULT_ORIGIN = "https://cv-siddharth-kmp.vercel.app"
 
-/** The React original. `siteRooms.to` are its routes, not this build's — see [exploreSection]. */
+/** The React original, where the rooms this build does not serve still live. See [exploreSection]. */
 private const val REACT_SITE = "https://cv-siddharth.vercel.app"
 
 private val json = Json
@@ -683,19 +694,22 @@ private fun projectBody(project: Project): String = buildString {
 }
 
 /**
- * `siteRooms.to` are routes on the React original, not on this build — only `/terminal` ported.
- * Linking them at this origin would manufacture six 404s, which is worse for indexing than
- * linking out, so everything except the terminal points at the site that actually serves it.
+ * A room links here when this build serves its path and out to the React original when it does not.
+ * The router answers that question ([routeOrNull]), so a room that ports later starts linking
+ * inward on the next prerender with no edit here. Linking an unported room at this origin would
+ * manufacture a 404, which is worse for indexing than linking out.
  */
 private fun exploreSection(): String = buildString {
+    val ported = siteRooms.count { routeOrNull(it.to) != null }
     p(
-        "Interactive surfaces on the original site — this Compose Multiplatform port ships the " +
-            "terminal; the WebGL, canvas and tldraw rooms stay on ${link("the React build", REACT_SITE)}.",
+        "Interactive surfaces on this site. ${ported} of ${siteRooms.size} rooms are built into " +
+            "this Compose Multiplatform port; the WebGL, canvas-3D and corpus rooms stay on " +
+            "${link("the React build", REACT_SITE)}.",
         raw = true,
     )
     ul(
         siteRooms.map { room ->
-            val href = if (room.to == "/terminal") "/terminal" else "$REACT_SITE${room.to}"
+            val href = if (routeOrNull(room.to) != null) room.to else "$REACT_SITE${room.to}"
             "${link(room.label, href)} <span class=\"muted\">${esc(room.tag)}</span> — ${esc(room.blurb)}"
         },
         raw = true,
@@ -939,6 +953,7 @@ internal fun selfCheck() {
     playgroundScreenSelfCheck()
     paletteSelfCheck()
     forgeSelfCheck()
+    readmeSelfCheck()
 
     check(esc("a & b <c> \"d\" 'e'") == "a &amp; b &lt;c&gt; &quot;d&quot; &#39;e&#39;") { "escaping" }
     check(esc("Kursi — “Panda”") == "Kursi — “Panda”") { "non-ASCII passes through; the file is UTF-8" }
@@ -971,18 +986,32 @@ internal fun selfCheck() {
     }
 }
 
-// ---------------------------------------------------------------------------------------------
-// INTEGRATOR NOTE — a Gradle task is still needed; this file deliberately does not add one.
-//
-//   val prerender by tasks.registering(JavaExec::class) {
-//       description = "Generates static HTML for every route from the Kotlin data."
-//       mainClass.set("com.siddharth.cv.shared.prerender.Prerender")
-//       val jvm = kotlin.targets.getByName("jvm").compilations.getByName("main")
-//       classpath = files(jvm.output.allOutputs, jvm.runtimeDependencyFiles)
-//       args("$rootDir/cmp-web/build/dist/wasmJs/productionExecutable", "https://<deploy-origin>")
-//   }
-//
-// It must run AFTER wasmJsBrowserDistribution, because that task writes index.html into the same
-// directory and would overwrite the generated root page. The second arg (or CV_SITE_ORIGIN) is
-// required for correct canonical/sitemap URLs — the default is a guess.
-// ---------------------------------------------------------------------------------------------
+/**
+ * The README is the only surface in this repo that states counts in prose, and prose does not
+ * recompile. Both halves of this check exist because both already drifted: the page count was three
+ * different numbers in one document, and the no-dash house rule was applied by hand and missed lines.
+ *
+ * Walks up from the working directory because Gradle runs `prerenderSite` with `cmp-shared` as cwd.
+ */
+private fun readmeSelfCheck() {
+    val readme = generateSequence(File("").absoluteFile) { it.parentFile }
+        .map { File(it, "README.md") }
+        .firstOrNull { it.isFile }
+        ?: error("README.md not found above ${File("").absolutePath}")
+    val text = readme.readText()
+
+    val pages = prerenderRoutes.size
+    listOf("all $pages routes", "$pages pages", "$pages URLs").forEach { phrase ->
+        check(text.contains(phrase)) { "README must say \"$phrase\": the prerenderer emits $pages pages" }
+    }
+
+    // Every path this build serves has to be findable in the README, or the parity tables claim a
+    // surface the reader cannot check. /compose shipped unmentioned once already.
+    staticRoutes.filter { it != Route.Home }.forEach { route ->
+        check(text.contains(route.toPath())) { "README never names the shipped route ${route.toPath()}" }
+    }
+
+    val dashLine = text.lineSequence().withIndex()
+        .firstOrNull { (_, line) -> line.any { it == '\u2014' || it == '\u2013' } }
+    if (dashLine != null) error("em/en dash in README line ${dashLine.index + 1}: ${dashLine.value.trim()}")
+}
