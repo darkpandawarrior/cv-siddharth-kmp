@@ -3,13 +3,13 @@ package com.siddharth.cv.shared.detail
 import com.siddharth.cv.shared.data.projects
 
 /**
- * A hand-rolled parser for the *exact* Mermaid subset the twelve diagrams in
+ * A hand-rolled parser for the *exact* Mermaid subset the shipped diagrams in
  * [com.siddharth.cv.shared.data.projects] actually use. Not a Mermaid implementation.
  *
  * The inventory (grepped from cv-siddharth/src/data/profile.ts and mirrored in CvProjectData.kt):
  *
  * - headers: `graph TD` and `graph LR`, nothing else
- * - one node shape: `id["quoted label"]` — every single node, all twelve diagrams
+ * - one node shape: `id["quoted label"]` — every single node, every diagram
  * - two connectors: `-->` and `-.->`, both with an optional `|"quoted label"|`
  * - chains on one line: `gps --> jit --> spk --> fus --> ...` (Mileway's location pipeline)
  * - `&` groups on both sides: `app --> t & s & tr & ap & pa & ag` (Mileway's module graph)
@@ -94,7 +94,7 @@ fun parseMermaidFlow(source: String): FlowGraph? {
  * like.
  *
  * Within a rank the order is then handed to [barycenterOrder] — Sugiyama's phase three. Declaration
- * order is the seed, not the answer: all twelve shipped diagrams happen to declare siblings in a
+ * order is the seed, not the answer: the shipped diagrams happen to declare siblings in a
  * good order, but a hand-authored one doesn't have to, and the sweep can only ever return an
  * arrangement with fewer [crossings] than the one it started from.
  */
@@ -459,7 +459,7 @@ private fun normalizeLabel(raw: String): String =
 /**
  * ponytail: one runnable check instead of a test module, in the same spirit as `navSelfCheck()`.
  * The inputs are copied verbatim from CvProjectData.kt, because the only thing this parser has to
- * be right about is the twelve strings the site actually ships.
+ * be right about is the strings the site actually ships.
  */
 internal fun mermaidParseSelfCheck() {
     // Kursi — chained edge, edge labels, parens inside a quoted label, and a genuine cycle.
@@ -523,6 +523,12 @@ internal fun mermaidParseSelfCheck() {
  * Phase three's contract. Kept separate from [mermaidParseSelfCheck] because it checks the layout,
  * not the scanner — but called from it, so it needs no extra wiring in `Prerender.kt`.
  */
+/**
+ * How many diagrams `projects` ships. Hardcoded on purpose: the per-diagram checks below prove each
+ * one is well-formed, and only a count catches a diagram that quietly disappeared.
+ */
+private const val SHIPPED_DIAGRAMS = 13
+
 internal fun mermaidLayoutSelfCheck() {
     // Hand-built so declaration order is the point rather than an accident of the parser: rank 1 is
     // declared in the reverse of the order its edges want, which is exactly one crossing.
@@ -568,21 +574,26 @@ internal fun mermaidLayoutSelfCheck() {
     check(tangledOut.flatten().sorted() == tangled.nodes.map { it.id }.sorted()) { "every node placed exactly once" }
     check(crossings(tangled, tangledOut) <= crossings(tangled, tangledSeed)) { "never ship a worse layout" }
 
-    // All twelve shipped diagrams: still parse, still lay out cleanly, and the sweep is a
-    // permutation of the ranking rather than an edit of it.
+    // Every shipped diagram: still parses, still lays out cleanly, and the sweep is a permutation
+    // of the ranking rather than an edit of it.
     val shipped = projects.mapNotNull { it.detail }.flatMap { it.diagrams }
-    check(shipped.size == 12) { "twelve diagrams — update this check if a project gains one" }
+    check(shipped.size == SHIPPED_DIAGRAMS) { "expected $SHIPPED_DIAGRAMS diagrams, got ${shipped.size}" }
+    var totalCrossings = 0
     shipped.forEach { diagram ->
         val g = checkNotNull(parseMermaidFlow(diagram.code)) { "'${diagram.title}' must parse" }
         val ranked = g.ranks().map { r -> r.map { it.id } }
         check(ranked.flatten().sorted() == g.nodes.map { it.id }.sorted()) { "'${diagram.title}': every node ranked once" }
         check(ranked.none { it.isEmpty() }) { "'${diagram.title}': no empty rank" }
-        // These twelve declare their siblings well, so the sweep should find nothing to fix. If this
-        // ever trips, the sweep started reordering hand-tuned diagrams — look before relaxing it.
-        check(crossings(g, ranked) == 0) { "'${diagram.title}': crossing-free" }
+        totalCrossings += crossings(g, ranked)
         // Determinism: parse and lay out again from scratch, and demand the identical picture. A
         // fresh parse means this also catches a layout that leaks hash iteration order.
         val again = parseMermaidFlow(diagram.code)!!.ranks().map { r -> r.map { it.id } }
         check(again == ranked) { "'${diagram.title}': layout must be deterministic" }
     }
+    // Twelve of the thirteen come out crossing-free: they declare their siblings well enough that
+    // the sweep finds nothing to fix. The thirteenth cannot. kmp-family's "Three repos, one seam
+    // each" has two libraries feeding the same two consumers, a K(2,2), whose crossing number is 1,
+    // so no ordering removes it. Checking the total rather than each diagram keeps the guard tight:
+    // a sweep that started reordering the hand-tuned ones still trips this. Look before relaxing.
+    check(totalCrossings == 1) { "expected exactly one unavoidable crossing across all diagrams, got $totalCrossings" }
 }

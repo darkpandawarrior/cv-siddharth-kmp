@@ -86,7 +86,10 @@ data class ProjectDetailSection(
     val body: String,
 )
 
-/** Raw Mermaid source. Nothing renders it in v1; kept so a future renderer can. */
+/**
+ * Raw Mermaid source, laid out by MermaidFlow. Anything outside `graph`/`flowchart` TD or LR
+ * degrades to a source card rather than failing.
+ */
 data class Diagram(
     val title: String,
     val code: String,

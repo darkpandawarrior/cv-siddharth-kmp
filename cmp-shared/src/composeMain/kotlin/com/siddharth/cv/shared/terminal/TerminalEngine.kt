@@ -14,6 +14,9 @@ import com.siddharth.cv.shared.data.recentGrowth
 import com.siddharth.cv.shared.data.resumeSkills
 import com.siddharth.cv.shared.data.siteRooms
 import com.siddharth.cv.shared.data.skills
+import com.siddharth.cv.shared.routeOrNull
+import com.siddharth.cv.shared.staticRoutes
+import com.siddharth.cv.shared.toPath
 
 /**
  * The command layer of cv-siddharth/src/Terminal.tsx, ported as pure Kotlin.
@@ -68,7 +71,10 @@ private val DROID = listOf(
 /** `cat` targets. [ls] prints exactly this list, so the two can never drift apart. */
 private val FILES = listOf("resume.txt", "profile.txt", "skills.txt")
 
-private val ROOMS = listOf("home/", "resume/", "terminal/", "projects/")
+// Derived from the router, never typed here: `ls` used to list four of the six routes this build
+// serves, so /lab, /forge and /compose were invisible to anyone exploring the site by keyboard.
+private val ROOMS: List<String> =
+    staticRoutes.map { if (it == Route.Home) "home/" else it.toPath().removePrefix("/") + "/" } + "projects/"
 
 private class Cmd(
     val name: String,
@@ -268,17 +274,25 @@ object TerminalEngine {
             )
         }
 
-        cmd("rooms", "the interactive rooms on the web build") {
+        cmd("rooms", "the interactive rooms on this site") {
+            // Which rooms this build serves is asked of the router, not listed here, so a room that
+            // ports later stops being labelled "web only" without anyone editing the terminal.
             val body = siteRooms.flatMap {
-                listOf(hi("${it.to.padEnd(12)}${it.label}"), TermLine("  ${it.blurb}"), dim("  ${it.tag}"))
+                val here = routeOrNull(it.to) != null
+                listOf(
+                    hi("${it.to.padEnd(12)}${it.label}"),
+                    TermLine("  ${it.blurb}"),
+                    dim("  ${it.tag} · ${if (here) "open it here" else "web only"}"),
+                )
             }
-            out(body + dim("") + dim("these live on the React build — this one ships home, resume, terminal & projects"))
+            val ported = siteRooms.count { routeOrNull(it.to) != null }
+            out(body + dim("") + dim("$ported of ${siteRooms.size} run in this build; the rest live on the React one"))
         }
 
         cmd("hire", "the recruiter pitch") {
             out(
                 head("Senior Android engineer · platform owner at 50k+ MAU"),
-                TermLine("GPS 50% -> 95% · crashes -80% · ~87% of UI-layer code in Compose across ~960k LOC."),
+                TermLine("GPS 50% -> 95% · crashes -80% · ~87% of UI-layer code in Compose across ~964k LOC."),
                 dim(profile.availability),
                 dim(""),
                 hi("mailto:${profile.email}"),
@@ -369,7 +383,7 @@ object TerminalEngine {
         }
 
         cmd("uptime", "", hidden = true) {
-            out(TermLine("up 5+ years, load average: ~960k LOC, 50k MAU, 0 dropped pagers"))
+            out(TermLine("up 5+ years, load average: ~964k LOC, 50k MAU, 0 dropped pagers"))
         }
 
         cmd("vim", "", hidden = true) { out(dim("you're already in the best editor — Android Studio. :q!")) }
@@ -447,4 +461,5 @@ fun demo() {
     check(TerminalEngine.complete("zzz") == null) { "no match completes to null" }
     check(TerminalEngine.complete("open mile") == "open mileway") { "arg completion" }
     check(TerminalEngine.run("ask anything").lines.first().tone == TermTone.ERROR) { "ask is unavailable offline" }
+    check(ROOMS.size == staticRoutes.size + 1) { "ls lists every route this build serves, plus projects/" }
 }

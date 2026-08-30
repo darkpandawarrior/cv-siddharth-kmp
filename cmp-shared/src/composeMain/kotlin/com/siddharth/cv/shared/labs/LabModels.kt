@@ -51,6 +51,13 @@ internal enum class LabGroup(val label: String) {
  * [description] is the same content for a screen reader, because a Compose Canvas exposes exactly
  * zero text nodes — whatever isn't said here is not said at all.
  */
+/**
+ * How many instruments this build actually ships. Public because the homepage room wall's lab blurb
+ * reads it: the blurb used to state a count by hand and named neither this bench's size nor the
+ * React one's. A number in prose that nothing computes is a number that goes stale.
+ */
+val labCount: Int get() = cvLabs.size
+
 internal class LabExperiment(
     val id: String,
     val label: String,
@@ -61,12 +68,15 @@ internal class LabExperiment(
 )
 
 /**
- * Five of the React bench's nine instruments. The four that didn't come across:
+ * Five of the React bench's eleven instruments: recompose, crashes, modules, search, fanout. The six
+ * that didn't come across:
  *
  * - **Signal Lab** — its visual is a Leaflet map with real tile imagery; the engine would port
  *   fine, the map would have to be rebuilt from scratch as a canvas projection. Skipped
  *   deliberately, not blocked.
- * - **White-label / Gateway / Deterministic Replay** — no obstacle, just not in this slice.
+ * - **White-label / Gateway Lab / Deterministic Replay** — no obstacle, just not in this slice.
+ * - **Chess Search / Clock Burn** — both read the generated chess corpus, which this repo does not
+ *   vendor. Porting the visuals without the corpus would ship two charts of nothing.
  */
 internal val cvLabs: List<LabExperiment> = listOf(
     LabExperiment(
@@ -75,7 +85,7 @@ internal val cvLabs: List<LabExperiment> = listOf(
         metric = "~87% Compose",
         group = LabGroup.Production,
         caption = "Tap any cell. In rebuild-the-world mode one state change repaints the whole " +
-            "screen — that is a legacy view tree, and at ~960k LOC it is molasses. Flip to stable " +
+            "screen — that is a legacy view tree, and at ~964k LOC it is molasses. Flip to stable " +
             "state and only the touched cell recomposes. That is what the ~87% migration bought.",
         description = "A grid of 40 cells standing in for recomposition scopes. Each tap flashes " +
             "the scopes that repaint: all forty in rebuild-the-world mode, one in stable-state " +

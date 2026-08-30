@@ -50,13 +50,16 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.siddharth.cv.shared.Route
 import com.siddharth.cv.shared.data.projects
 import com.siddharth.cv.shared.home.homeSections
+import com.siddharth.cv.shared.staticRoutes
 import com.siddharth.cv.shared.theme.LocalReducedMotion
 import com.siddharth.cv.shared.theme.MonoMeta
 import com.siddharth.cv.shared.theme.Reveal
 import com.siddharth.cv.shared.theme.cvColors
 import com.siddharth.cv.shared.theme.cvType
+import com.siddharth.cv.shared.toPath
 
 /**
  * One row of the palette. Deliberately carries an [id] and NOT a lambda.
@@ -68,12 +71,23 @@ import com.siddharth.cv.shared.theme.cvType
  */
 data class PaletteCommand(val label: String, val group: String, val id: String)
 
+/** Palette wording for a route. Exhaustive on purpose: see the call site. */
+private fun routeLabel(route: Route): String = when (route) {
+    Route.Home -> "Home"
+    Route.Resume -> "Résumé"
+    Route.Terminal -> "The Terminal, a faux shell you can type in"
+    Route.Lab -> "The Lab Bench, the numbers running live"
+    Route.Forge -> "The Particle Forge, cursor-reactive swarm"
+    Route.Playground -> "The Compose Playground, write Compose and watch it recompose"
+    is Route.ProjectDetail -> "Open project: ${route.slug}"
+}
+
 /**
  * The whole command list, generated from the same data the site renders.
  *
- * Nothing here is hand-typed twice: sections come from `homeSections`, project rows come from
- * `projects`, so a new section or a new project appears in the palette without anyone remembering to
- * add it. That is the entire reason this is a function over the real data instead of a literal list —
+ * Nothing here is hand-typed twice: sections come from `homeSections`, route rows from
+ * `staticRoutes`, project rows from `projects`, so a new section, route or project appears in the
+ * palette without anyone remembering to add it. That is the entire reason this is a function over the real data instead of a literal list —
  * the React original hand-maintained both and had already drifted (its `projects-section` id, its
  * missing `explore`).
  *
@@ -86,10 +100,12 @@ fun paletteCommands(): List<PaletteCommand> = buildList {
         add(PaletteCommand(label = section.label, group = "Jump", id = "section:${section.id}"))
     }
 
-    add(PaletteCommand("Résumé", "Open", "route:resume"))
-    add(PaletteCommand("The Terminal — a faux shell you can type in", "Open", "route:terminal"))
-    add(PaletteCommand("The Lab Bench — the numbers, running live", "Open", "route:lab"))
-    add(PaletteCommand("The Particle Forge — cursor-reactive swarm", "Open", "route:forge"))
+    // Route rows come from `staticRoutes`, so a route added to Nav.kt cannot ship without a way to
+    // reach it: [routeLabel]'s `when` stops compiling until it is given one. Hand-typing these is
+    // how /compose came to be routed, prerendered, and unreachable from the palette.
+    staticRoutes.filter { it != Route.Home }.forEach { route ->
+        add(PaletteCommand(routeLabel(route), "Open", "route:${route.toPath().removePrefix("/")}"))
+    }
 
     // Only projects with a detail page: a palette row that lands on a 404 is worse than no row.
     projects.filter { it.detail != null }.forEach { p ->
@@ -529,12 +545,17 @@ internal fun paletteSelfCheck() {
     val ids = commands.map { it.id }
     check(ids.size == ids.toSet().size) { "duplicate palette command id: ${ids.groupBy { it }.filterValues { it.size > 1 }.keys}" }
     check(commands.isNotEmpty()) { "palette generated no commands" }
-    check(commands.any { it.id == "route:lab" } && commands.any { it.id == "route:forge" }) { "lab and forge rows must exist" }
+    // One row per non-home route, keyed on the same path the URL bar and the prerenderer use.
+    check(commands.count { it.id.startsWith("route:") } == staticRoutes.size - 1) { "one row per route besides home" }
+    staticRoutes.filter { it != Route.Home }.forEach { r ->
+        val id = "route:${r.toPath().removePrefix("/")}"
+        check(commands.any { it.id == id }) { "no palette row for $id" }
+    }
     check(commands.count { it.id.startsWith("section:") } == homeSections.size) { "one row per homepage section" }
 
     // Case-insensitive, both directions.
     check(paletteScore("MILE", "Mileway") == paletteScore("mile", "mileway")) { "case-insensitive" }
-    check(paletteScore("FORGE", "The Particle Forge — cursor-reactive swarm") != null) { "upper-case query matches" }
+    check(paletteScore("FORGE", "The Particle Forge, cursor-reactive swarm") != null) { "upper-case query matches" }
     check(paletteScore("resume", "Résumé") == TierPrefix) { "unaccented query is an exact prefix of the accented label" }
 
     // Exact prefix outranks a word-boundary hit outranks a scattered subsequence.

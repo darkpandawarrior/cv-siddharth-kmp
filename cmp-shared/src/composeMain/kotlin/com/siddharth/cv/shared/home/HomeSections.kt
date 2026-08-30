@@ -62,6 +62,7 @@ import com.siddharth.cv.shared.data.recentGrowth
 import com.siddharth.cv.shared.data.sharedFoundation
 import com.siddharth.cv.shared.data.siteRooms
 import com.siddharth.cv.shared.data.skills
+import com.siddharth.cv.shared.routeOrNull
 import com.siddharth.cv.shared.theme.AnimatedCounter
 import com.siddharth.cv.shared.theme.CvCard
 import com.siddharth.cv.shared.theme.ExpanderSection
@@ -688,9 +689,10 @@ fun SkillsSection(modifier: Modifier = Modifier) {
 // ---------------------------------------------------------------------------------------------
 
 /**
- * The Playground teaser. Five of the six rooms are WebGL / Leaflet / tldraw surfaces with no CMP
- * equivalent, so they are labelled "web only" rather than wired to a button that does nothing —
- * a dead control is worse than an honest one.
+ * The Playground teaser. Which tiles are clickable is asked of the router, not asserted here: a room
+ * whose path [routeOrNull] resolves opens in this build, and the rest are labelled "web only"
+ * rather than wired to a button that does nothing. A dead control is worse than an honest one, and
+ * a hardcoded list of the wired ones is worse than both, because it goes stale the day a room ports.
  */
 @Composable
 fun ExploreSection(modifier: Modifier = Modifier) {
@@ -710,8 +712,9 @@ fun ExploreSection(modifier: Modifier = Modifier) {
         BoxWithConstraints(Modifier.fillMaxWidth()) {
             val columns = if (maxWidth >= 760.dp) 2 else 1
             GridRows(siteRooms, columns) { room ->
-                val wired = room.to == "/terminal"
-                val onOpen: (() -> Unit)? = if (wired) ({ nav.go(Route.Terminal) }) else null
+                val route = routeOrNull(room.to)
+                val wired = route != null
+                val onOpen: (() -> Unit)? = route?.let { { nav.go(it) } }
                 CvCard(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = onOpen,

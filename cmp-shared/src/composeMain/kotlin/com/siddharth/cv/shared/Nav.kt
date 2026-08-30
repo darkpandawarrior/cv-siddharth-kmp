@@ -8,9 +8,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 
 /**
- * The surfaces that ported. The React site has thirteen routes; the ones missing here are WebGL,
- * tldraw or Leaflet surfaces documented as dropped/deferred in the README rather than stubbed — a
- * `Route` entry with nothing behind it is a dead end, not a roadmap.
+ * The surfaces that ported: seven route kinds out of the React site's twenty-three addressable
+ * routes (the `.tsx` files in `src/routes`, minus `__root` and the catch-all).
+ *
+ * The sixteen that are missing are NOT all blocked, and the README says which is which rather than
+ * this comment guessing: two are blocked on the platform (`/blueprint`, `/pulse`), one is
+ * deliberately dropped (`/playground`), and the remaining thirteen are simply not ported yet. They
+ * are absent rather than stubbed because a `Route` entry with nothing behind it is a dead end, not
+ * a roadmap.
  *
  * Being a sealed interface is load-bearing: every `when` over a route is exhaustive, so adding an
  * entry here fails the build in each place that has to handle it (the nav host, the chat's
@@ -36,6 +41,17 @@ sealed interface Route {
     /** The Compose playground — interpreted subset, rendered with real composables. */
     data object Playground : Route
 }
+
+/**
+ * Every route with a fixed path, in nav order. [Route.ProjectDetail] is absent because it is
+ * parameterised: its pages come from `projects`.
+ *
+ * One list, read by the prerenderer's page list, the sitemap and the command palette, so a new
+ * `Route` cannot ship a screen with no crawlable page and no way to reach it. The sealed interface
+ * makes the `when`s exhaustive; this makes the enumerations single-sourced.
+ */
+val staticRoutes: List<Route> =
+    listOf(Route.Home, Route.Resume, Route.Terminal, Route.Lab, Route.Forge, Route.Playground)
 
 /**
  * The whole router. No navigation-compose: a back stack is a list, and `mutableStateListOf` already
@@ -116,22 +132,34 @@ fun Route.toPath(): String = when (this) {
     is Route.ProjectDetail -> "/project/$slug"
 }
 
-fun routeFromPath(path: String): Route {
+/**
+ * The honest answer: null means "this build does not serve that path".
+ *
+ * Separate from [routeFromPath] because two callers need the difference. The homepage room wall and
+ * the prerenderer both decide per link whether to navigate in-app or link out to the React site, and
+ * a function that silently answers [Route.Home] cannot tell them apart, which is how three shipped
+ * routes came to be labelled "web only" on their own home page.
+ */
+fun routeOrNull(path: String): Route? {
     val clean = path.substringBefore('?').substringBefore('#').trimEnd('/')
     return when {
         clean.isEmpty() -> Route.Home
-        clean == "/resume" || clean == "/resume/" -> Route.Resume
+        clean == "/resume" -> Route.Resume
         clean == "/terminal" -> Route.Terminal
         clean == "/lab" -> Route.Lab
         clean == "/forge" -> Route.Forge
         // "/compose" mirrors the React site's route name for this surface.
         clean == "/compose" -> Route.Playground
         clean.startsWith("/project/") -> Route.ProjectDetail(clean.removePrefix("/project/"))
-        // Unknown path -> home rather than a 404 screen: the prerendered HTML shell is what a
-        // crawler sees, and a human who mistypes is better served by the homepage.
-        else -> Route.Home
+        else -> null
     }
 }
+
+/**
+ * Unknown path -> home rather than a 404 screen: the prerendered HTML shell is what a crawler sees,
+ * and a human who mistypes is better served by the homepage. This is what `popstate` calls.
+ */
+fun routeFromPath(path: String): Route = routeOrNull(path) ?: Route.Home
 
 val LocalNav: ProvidableCompositionLocal<CvNavState> =
     staticCompositionLocalOf { error("CvNavState not provided — the tree must be inside App()") }
@@ -181,4 +209,17 @@ internal fun navSelfCheck() {
     check(routeFromPath("/project/mileway/") == Route.ProjectDetail("mileway")) { "trailing slash" }
     check(routeFromPath("/project/mileway?utm=x") == Route.ProjectDetail("mileway")) { "query stripped" }
     check(routeFromPath("/nonsense") == Route.Home) { "unknown path falls back home" }
+
+    // routeOrNull is what the room wall and the prerenderer branch on: it must say "not here"
+    // rather than "home", or every unported room silently claims to be a page on this build.
+    check(routeOrNull("/nonsense") == null) { "unknown path is null, not home" }
+    check(routeOrNull("/blueprint") == null) { "an unported React room is null" }
+    check(routeOrNull("/compose") == Route.Playground) { "a shipped room is not null" }
+    check(routeOrNull("") == Route.Home) { "the empty path is still home" }
+
+    // staticRoutes feeds the prerenderer's page list, the sitemap and the palette. A duplicate path
+    // collides three keys at once; a path that does not parse back is a page nothing can reach.
+    val paths = staticRoutes.map { it.toPath() }
+    check(paths.toSet().size == paths.size) { "duplicate path in staticRoutes: $paths" }
+    staticRoutes.forEach { check(routeOrNull(it.toPath()) == it) { "staticRoutes round-trip ${it.toPath()}" } }
 }
