@@ -36,7 +36,7 @@ val opsPerimeter: List<PerimeterEntry> = listOf(
     ),
     PerimeterEntry(
         file = "chessDeep.ts",
-        generatedAt = "2026-08-30",
+        generatedAt = "2026-08-31",
         slaDays = 21,
         generator = "npm run gen:chess-deep",
     ),
@@ -48,13 +48,13 @@ val opsPerimeter: List<PerimeterEntry> = listOf(
     ),
     PerimeterEntry(
         file = "timeline.ts",
-        generatedAt = "2026-08-30",
+        generatedAt = "2026-08-31",
         slaDays = 45,
         generator = "npm run gen:timeline",
     ),
     PerimeterEntry(
         file = "weeb.ts",
-        generatedAt = "2026-08-30",
+        generatedAt = "2026-08-31",
         slaDays = 21,
         generator = "npm run gen:weeb",
     ),
@@ -157,4 +157,4 @@ val opsDrift: List<DriftEntry> = listOf(
     ),
 )
 
-val opsGeneratedAt: String = "2026-08-30"
+val opsGeneratedAt: String = "2026-08-31"
