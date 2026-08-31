@@ -456,7 +456,7 @@ val chess: ChessStats = ChessStats(
 
 /** The second pass: how the game was found, which time control, how it ended, and when the opening book ran out. Win rates and shares here are PERCENTAGES, unlike chess.thesis. */
 val chessDeep: ChessDeep = ChessDeep(
-    generatedAt = "2026-08-30T12:27:03.548Z",
+    generatedAt = "2026-08-31T14:26:37.404Z",
     lastSeenOnLichess = "2026-07-30",
     sampleSize = 14119,
     bySource = listOf(
