@@ -9,14 +9,15 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import com.siddharth.cv.shared.anthology.AnthologyLayer
 
 /**
- * The surfaces that ported: sixteen route kinds out of the React site's twenty-three addressable
+ * The surfaces that ported: twenty route kinds out of the React site's twenty-three addressable
  * routes (the `.tsx` files in `src/routes`, minus `__root` and the catch-all).
  *
- * The seven that are missing are NOT all blocked, and the README says which is which rather than
- * this comment guessing: two are blocked on the platform (`/blueprint`, `/pulse`), one is
- * deliberately dropped (`/playground`), and the remaining four are simply not ported yet. They
- * are absent rather than stubbed because a `Route` entry with nothing behind it is a dead end, not
- * a roadmap.
+ * The three that are missing are the three that cannot be built here rather than the three nobody
+ * got to, and the README says why for each: `/blueprint` and `/pulse` are blocked on the platform
+ * (a DOM/WebGL widget cannot live inside a Compose canvas; a playhtml channel has no Kotlin
+ * client), and `/playground` is deliberately dropped. Nothing is absent for want of effort any
+ * more. They are absent rather than stubbed because a `Route` entry with nothing behind it is a
+ * dead end, not a roadmap.
  *
  * Being a sealed interface is load-bearing: every `when` over a route is exhaustive, so adding an
  * entry here fails the build in each place that has to handle it (the nav host, the chat's
@@ -75,11 +76,42 @@ sealed interface Route {
 
     /** How the anthology was made: the blind audit, the pipeline, the spend, the receipts. */
     data object Making : Route
+
+    /**
+     * One printed piece, read as prose rather than as a photograph of a page.
+     *
+     * The second route carrying free text, and it is parameterised for the same reason
+     * [ProjectDetail] is: its pages come from `printedPieces`, so it is not in [staticRoutes]. An
+     * unknown slug resolves here rather than to [Home] on purpose. Every slug the React site serves
+     * exists somewhere; this build carries one of that route's four corpora, so the honest answer
+     * to an anthology slug is ReadScreen's own 404 naming what it has and offering the live site,
+     * not a silent bounce to the front page.
+     */
+    data class Read(val slug: String) : Route
+
+    /**
+     * The magazine reader, carrying which edition and which page it opens on.
+     *
+     * Both fields are nullable and both defaults are dropped from the URL, the same normalisation
+     * [Anthology] applies to its layer. `page == null` means "no page requested", which is the
+     * difference between landing on the header and skipping it to show the cover. Neither field is
+     * validated here: the screen normalises an unknown year to the newest edition and clamps the
+     * page into range, so a stale pasted link still round-trips through this router unchanged.
+     */
+    data class Excelsior(val year: String? = null, val page: Int? = null) : Route
+
+    /** The board: seven years of games across two platforms, mined. */
+    data object Chess : Route
+
+    /** The story map: the constellation, as a 2D force-directed graph. */
+    data object Map : Route
 }
 
 /**
- * Every route with a fixed path, in nav order. [Route.ProjectDetail] is absent because it is
- * parameterised: its pages come from `projects`.
+ * Every route with a fixed path, in nav order. [Route.ProjectDetail] and [Route.Read] are absent
+ * because they are parameterised: their pages come from `projects` and `printedPieces`.
+ * [Route.Excelsior] IS here, at its own default, because `/excelsior` is a real address on its own
+ * and the query state only ever deep-links into a page of it.
  *
  * One list, read by the prerenderer's page list, the sitemap and the command palette, so a new
  * `Route` cannot ship a screen with no crawlable page and no way to reach it. The sealed interface
@@ -97,8 +129,11 @@ val staticRoutes: List<Route> =
         Route.Forge,
         Route.Playground,
         Route.Weeb,
+        Route.Chess,
+        Route.Map,
         Route.Loopdown,
         Route.Ink,
+        Route.Excelsior(),
         Route.Anthology(),
         Route.Canon,
         Route.Making,
@@ -173,6 +208,13 @@ class CvNavState {
  *
  * Paths mirror the React site exactly, so a link that works on cv-siddharth.vercel.app works here.
  */
+// Detekt counts one point of cyclomatic complexity per `when` branch, so every exhaustive route
+// table in this build now scores above its threshold of 20 purely for having twenty routes. The
+// complexity is the exhaustiveness, which is the property the sealed interface exists to buy: the
+// alternative it is asking for is a smaller `when` with an `else`, which is the exact defect this
+// pass removed from FloatingChat.kt. Suppressed at the four route tables rather than raised in
+// config/detekt/detekt.yml, so the exemption stays attached to its reason.
+@Suppress("CyclomaticComplexMethod")
 fun Route.toPath(): String = when (this) {
     Route.Home -> "/"
     Route.Resume -> "/resume"
@@ -188,11 +230,21 @@ fun Route.toPath(): String = when (this) {
     Route.Ink -> "/ink"
     Route.Canon -> "/canon"
     Route.Making -> "/making"
+    Route.Chess -> "/chess"
+    Route.Map -> "/map"
     // The default layer is dropped from the URL, exactly as anthology.tsx drops it: one page,
     // one canonical address, and `?layer=form` normalising to `/anthology` on both builds.
     is Route.Anthology ->
         if (layer == AnthologyLayer.Form) "/anthology" else "/anthology?layer=${layer.key}"
     is Route.ProjectDetail -> "/project/$slug"
+    is Route.Read -> "/read/$slug"
+    // Same normalisation the anthology gets, one field wider: an absent field is absent from the
+    // address, so `/excelsior` stays the one canonical page and `?year=&page=` is only ever the
+    // deep link into a spread. Written in a fixed order so the URL is stable to compare.
+    is Route.Excelsior ->
+        listOfNotNull(year?.let { "year=$it" }, page?.let { "page=$it" })
+            .joinToString("&")
+            .let { if (it.isEmpty()) "/excelsior" else "/excelsior?$it" }
 }
 
 /**
@@ -203,8 +255,10 @@ fun Route.toPath(): String = when (this) {
  * a function that silently answers [Route.Home] cannot tell them apart, which is how three shipped
  * routes came to be labelled "web only" on their own home page.
  */
+@Suppress("CyclomaticComplexMethod") // A route table. See the note on Route.toPath().
 fun routeOrNull(path: String): Route? {
     val noHash = path.substringBefore('#')
+    val query = noHash.substringAfter('?', "")
     val clean = noHash.substringBefore('?').trimEnd('/')
     return when {
         clean.isEmpty() -> Route.Home
@@ -220,25 +274,44 @@ fun routeOrNull(path: String): Route? {
         clean == "/ops" -> Route.Ops
         clean == "/loopdown" -> Route.Loopdown
         clean == "/ink" -> Route.Ink
-        clean == "/anthology" -> Route.Anthology(anthologyLayer(noHash.substringAfter('?', "")))
+        clean == "/anthology" -> Route.Anthology(anthologyLayer(query))
         clean == "/canon" -> Route.Canon
         clean == "/making" -> Route.Making
+        clean == "/chess" -> Route.Chess
+        clean == "/map" -> Route.Map
+        // Neither field is checked against the corpus. `year` is a string because the corpus keys
+        // editions by one, and a garbage `page` becomes "no page requested" rather than a throw:
+        // the screen clamps into 1..pages itself, so the router never needs the data to answer.
+        clean == "/excelsior" -> Route.Excelsior(query.param("year"), query.param("page")?.toIntOrNull())
         clean.startsWith("/project/") -> Route.ProjectDetail(clean.removePrefix("/project/"))
+        // A bare `/read` is not a page on either build, so the trailing slash trim above is what
+        // makes it null rather than a piece with an empty slug.
+        clean.startsWith("/read/") -> Route.Read(clean.removePrefix("/read/"))
         else -> null
     }
 }
 
 /**
- * `?layer=tellers` -> [AnthologyLayer.Tellers]. The only query string this router reads.
+ * One value out of a raw query string, or null. The whole of this router's query handling.
+ *
+ * No decoding, no repeated keys, no arrays: the three parameters this site uses (`layer`, `year`,
+ * `page`) are a short enum key, a four-digit year and an integer, none of which can contain a
+ * character that needs escaping. A `URLDecoder` would be a dependency (and a platform one) bought
+ * for input that cannot occur. An empty value counts as absent, so `?year=` opens the default
+ * edition rather than looking for an edition named "".
+ */
+private fun String.param(key: String): String? =
+    split('&').firstOrNull { it.startsWith("$key=") }?.removePrefix("$key=")?.ifEmpty { null }
+
+/**
+ * `?layer=tellers` -> [AnthologyLayer.Tellers].
  *
  * Absent, unrecognised or misspelled is the default layer rather than a throw, which is what
  * anthology.tsx does with the same input: a shared link with a stale layer key still opens the
  * page it names instead of 404ing on a detail nobody typed on purpose.
  */
-private fun anthologyLayer(query: String): AnthologyLayer {
-    val key = query.split('&').firstOrNull { it.startsWith("layer=") }?.removePrefix("layer=")
-    return AnthologyLayer.entries.firstOrNull { it.key == key } ?: AnthologyLayer.Form
-}
+private fun anthologyLayer(query: String): AnthologyLayer =
+    AnthologyLayer.entries.firstOrNull { it.key == query.param("layer") } ?: AnthologyLayer.Form
 
 /**
  * Unknown path -> home rather than a 404 screen: the prerendered HTML shell is what a crawler sees,
@@ -252,6 +325,10 @@ val LocalNav: ProvidableCompositionLocal<CvNavState> =
 // ponytail: one runnable check instead of a test module — the two non-obvious behaviours are
 // "home is a floor, not a second entry" and "goSection pops back to home". Call from any target's
 // main() while poking at nav.
+// LongMethod: a self-check is a list of assertions, and splitting it into four functions to satisfy
+// a line count would hide which of them the build failed in. MagicNumber: it is all literals by
+// construction, which is what an assertion is. Same accommodation shippedFormatSelfCheck already has.
+@Suppress("LongMethod", "MagicNumber")
 internal fun navSelfCheck() {
     val nav = CvNavState()
     check(nav.current == Route.Home) { "starts home" }
@@ -289,7 +366,11 @@ internal fun navSelfCheck() {
         Route.Home, Route.Resume, Route.Terminal, Route.Lab, Route.Forge, Route.Playground,
         Route.Hire, Route.Shipped, Route.Weeb, Route.Ops, Route.Loopdown, Route.Ink,
         Route.Anthology(), Route.Anthology(AnthologyLayer.Tellers), Route.Canon, Route.Making,
-        Route.ProjectDetail("mileway"),
+        Route.Chess, Route.Map, Route.ProjectDetail("mileway"), Route.Read("deadline"),
+        // Every combination of the two optional fields, because each one is written into the URL
+        // independently and a joiner that drops the wrong half round-trips as a different spread.
+        Route.Excelsior(), Route.Excelsior("2021"), Route.Excelsior(page = 5),
+        Route.Excelsior("2021", 5),
     ).forEach {
         check(routeFromPath(it.toPath()) == it) { "round-trip ${it.toPath()}" }
     }
@@ -310,11 +391,41 @@ internal fun navSelfCheck() {
     check(routeFromPath("/project/mileway?utm=x") == Route.ProjectDetail("mileway")) { "query stripped" }
     check(routeFromPath("/nonsense") == Route.Home) { "unknown path falls back home" }
 
+    // The second free-text route. Same trailing-slash and query handling as /project, and one
+    // difference worth pinning: an unknown slug is a Read, not a Home. ReadScreen's own 404 names
+    // the corpus this build carries and offers the live site, which is a better answer for a slug
+    // that really does exist on cv-siddharth.vercel.app than a silent bounce to the front page.
+    check(routeFromPath("/read/deadline/") == Route.Read("deadline")) { "trailing slash" }
+    check(routeFromPath("/read/deadline?utm=x") == Route.Read("deadline")) { "query stripped" }
+    check(routeOrNull("/read/nonsense") == Route.Read("nonsense")) { "an unknown slug reaches the reader's 404" }
+    check(routeOrNull("/read") == null) { "a bare /read is not a page on either build" }
+    check(routeOrNull("/read/") == null) { "nor is it with a trailing slash, which is the same address" }
+
+    // The reader's query state. Each of these is an address that gets pasted into an application.
+    check(Route.Excelsior().toPath() == "/excelsior") { "an absent field is absent from the URL" }
+    check(Route.Excelsior("2021", 5).toPath() == "/excelsior?year=2021&page=5") { "both fields, in order" }
+    check(Route.Excelsior(page = 5).toPath() == "/excelsior?page=5") { "page alone does not invent a year" }
+    check(routeOrNull("/excelsior?page=5&year=2021") == Route.Excelsior("2021", 5)) {
+        "the fields are found in either written order"
+    }
+    check(routeOrNull("/excelsior?utm=x&year=2019") == Route.Excelsior("2019")) {
+        "a field is found beside a parameter this router does not read"
+    }
+    check(routeOrNull("/excelsior?page=nonsense") == Route.Excelsior()) {
+        "a page that is not a number is no page requested, not a crash"
+    }
+    check(routeOrNull("/excelsior?year=1999&page=9999") == Route.Excelsior("1999", 9999)) {
+        "the router does not validate against the corpus; the screen clamps"
+    }
+    check(routeOrNull("/excelsior?year=") == Route.Excelsior()) { "an empty value is an absent one" }
+
     // routeOrNull is what the room wall and the prerenderer branch on: it must say "not here"
     // rather than "home", or every unported room silently claims to be a page on this build.
     check(routeOrNull("/nonsense") == null) { "unknown path is null, not home" }
-    check(routeOrNull("/blueprint") == null) { "an unported React room is null" }
-    check(routeOrNull("/map") == null) { "so is a room that is portable but still unbuilt" }
+    check(routeOrNull("/blueprint") == null) { "a blocked React room is null" }
+    check(routeOrNull("/pulse") == null) { "so is the other one" }
+    check(routeOrNull("/playground") == null) { "and so is the one that was dropped on purpose" }
+    check(routeOrNull("/map") == Route.Map) { "the last four rooms ported; /map is no longer null" }
     check(routeOrNull("/hire") == Route.Hire) { "a room ported in this pass is not null" }
     check(routeOrNull("/compose") == Route.Playground) { "a shipped room is not null" }
     check(routeOrNull("") == Route.Home) { "the empty path is still home" }

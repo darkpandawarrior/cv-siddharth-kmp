@@ -63,6 +63,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.siddharth.cv.shared.LocalNav
 import com.siddharth.cv.shared.Route
+import com.siddharth.cv.shared.staticRoutes
+import com.siddharth.cv.shared.data.generated.printedPieces
 import com.siddharth.cv.shared.data.projectBySlug
 import com.siddharth.cv.shared.data.projectOrder
 import com.siddharth.cv.shared.theme.CvCard
@@ -503,6 +505,7 @@ private fun Composer(
  * acknowledge where the visitor is standing without ever becoming a second turn or resetting the
  * conversation. Mirrors `greetingFor` in `cv-siddharth/src/lib/chatContext.ts`.
  */
+@Suppress("CyclomaticComplexMethod") // A route table. See the note on Route.toPath() in Nav.kt.
 private fun greetingFor(route: Route): String = when (route) {
     is Route.ProjectDetail -> {
         val label = projectBySlug(route.slug)?.name?.substringBefore(" + ")?.trim()
@@ -540,6 +543,24 @@ private fun greetingFor(route: Route): String = when (route) {
         "Mind the spoiler gates; ask me about the open half freely."
     Route.Making -> "You're on **the making-of** — the audit, the pipeline and the spend. Ask me " +
         "how any of it was verified."
+    Route.Chess -> "You're at **the board** — seven years of games mined for what actually " +
+        "decides them. Ask me what the clock finding is, or take me back to the engineering."
+    Route.Map -> "You're on **the story map** — every room on this site and the links between " +
+        "them. Click a dot to travel, or ask me where to start."
+    is Route.Excelsior -> "You're in **Excelsior** — the institute magazine, scanned. Ask me " +
+        "about the pieces he wrote, or read any of them as prose instead of paper."
+    // Named, not generic, and the fallback is the piece's own 404 rather than the home greeting:
+    // a slug this build does not carry is still a real piece on the live site, and the screen
+    // under this bubble already says so.
+    is Route.Read -> {
+        val title = printedPieces.firstOrNull { it.slug == route.slug }?.title
+        if (title != null) {
+            "You're reading **$title** — ask me about it, about where it ran, or about anything " +
+                "else on this site."
+        } else {
+            HOME_GREETING
+        }
+    }
     Route.Home -> HOME_GREETING
 }
 
@@ -554,29 +575,79 @@ private const val HOME_GREETING =
  * Templated off the project's own name rather than per-slug copy, exactly as `chipsFor` does: hand
  * -written questions drift the moment a project is renamed or added.
  */
+@Suppress("CyclomaticComplexMethod") // A route table. See the note on Route.toPath() in Nav.kt.
 private fun quickPromptsFor(route: Route, asked: List<ChatMessage>): List<String> {
     val alreadyAsked = asked.filter { it.role == ChatRole.User }.map { it.text }.toSet()
+    // No `else`. It used to end with one, and the cost was invisible by construction: nine routes
+    // shipped in the second pass and every one of them silently inherited the home page's chips,
+    // which read as a deliberate choice rather than a branch nobody wrote. The sealed interface
+    // exists to make that a compile error, and an `else` is the one way to give it up.
     val all = when (route) {
-        is Route.ProjectDetail -> {
-            val label = projectBySlug(route.slug)?.name?.substringBefore(" + ")?.trim()
-            if (label == null) HOME_PROMPTS else listOf(
-                "How did you build $label?",
-                "What was the hardest part of $label?",
-                "What's the stack behind $label?",
-            )
-        }
+        Route.Home -> HOME_PROMPTS
+        is Route.ProjectDetail ->
+            projectBySlug(route.slug)?.name?.substringBefore(" + ")?.trim()
+                ?.let { label ->
+                    listOf(
+                        "How did you build $label?",
+                        "What was the hardest part of $label?",
+                        "What's the stack behind $label?",
+                    )
+                } ?: HOME_PROMPTS
+        // The one page whose questions are about a person rather than about a thing on a page, so
+        // no template produces them. chatContext.ts carries exactly this one exception, for
+        // exactly this reason.
         Route.Resume -> listOf(
             "Walk me through your experience",
             "What are you strongest at?",
             "Are you open to new roles?",
         )
-        else -> HOME_PROMPTS
+        Route.Terminal -> roomPrompts("the terminal")
+        Route.Lab -> roomPrompts("the lab bench")
+        Route.Forge -> roomPrompts("the particle forge")
+        Route.Playground -> roomPrompts("the Compose playground")
+        Route.Hire -> roomPrompts("the short version")
+        Route.Shipped -> roomPrompts("the shipped fleet")
+        Route.Weeb -> roomPrompts("Weeb Central")
+        Route.Ops -> roomPrompts("the ops board")
+        Route.Loopdown -> roomPrompts("Loopdown")
+        Route.Ink -> roomPrompts("the Ink")
+        Route.Chess -> roomPrompts("the board")
+        Route.Map -> roomPrompts("the story map")
+        is Route.Excelsior -> roomPrompts("Excelsior")
+        is Route.Anthology -> roomPrompts("the anthology")
+        Route.Canon -> roomPrompts("the canon")
+        Route.Making -> roomPrompts("the making-of")
+        // A story is not a room: "how did you build it" is the wrong question about prose, and the
+        // endpoint would answer it about the page rather than about the writing.
+        is Route.Read ->
+            printedPieces.firstOrNull { it.slug == route.slug }?.title?.let { title ->
+                listOf(
+                    "What is $title about?",
+                    "Where did $title run?",
+                    "What else has he written?",
+                )
+            } ?: HOME_PROMPTS
     }
     // Fewer follow-ups than opening prompts: the opening list is the menu, a follow-up list is a
     // nudge, and five nudges under a finished answer reads as a form.
     val room = if (asked.isEmpty()) 5 else 3
     return all.filterNot { it in alreadyAsked }.take(room)
 }
+
+/**
+ * A room's three chips, templated off its name.
+ *
+ * Templated rather than hand-written per route, exactly as `contextChips` in chatContext.ts is:
+ * twenty rooms times three hand-written questions is sixty strings that go stale the first time a
+ * room is renamed, and every one of them would have to stay answerable from the profile data the
+ * server builds its system prompt out of. These three are answerable about any room on the site by
+ * construction, because the surface registry that names the rooms is part of that same prompt.
+ */
+private fun roomPrompts(label: String): List<String> = listOf(
+    "What is $label?",
+    "How did you build $label?",
+    "What else can I do on this site?",
+)
 
 /**
  * The home set, mirroring `QUICK_PROMPTS` in chatContext.ts. The metric questions are the audited
@@ -712,5 +783,26 @@ internal fun floatingChatSelfCheck() {
     projectOrder.forEach { slug ->
         val chips = quickPromptsFor(Route.ProjectDetail(slug), emptyList())
         check(chips.any { it.startsWith("How did you build ") }) { "no templated chip for $slug" }
+    }
+    // The `else` this file used to end with is gone, and this is what says so at runtime rather
+    // than only at compile time: no route with a room of its own may answer with the home set.
+    // A route added to Nav.kt and given `-> HOME_PROMPTS` to make the build pass fails here.
+    staticRoutes.filter { it != Route.Home }.forEach { route ->
+        val chips = quickPromptsFor(route, emptyList())
+        check(chips.isNotEmpty() && chips.none { it in HOME_PROMPTS }) {
+            "${route.toPath()} still falls back to the home prompts"
+        }
+    }
+    printedPieces.forEach { piece ->
+        val chips = quickPromptsFor(Route.Read(piece.slug), emptyList())
+        check(chips.any { it.contains(piece.title) }) { "no piece-specific chip for ${piece.slug}" }
+        check(greetingFor(Route.Read(piece.slug)).contains(piece.title)) {
+            "the reader's greeting does not name ${piece.slug}"
+        }
+    }
+    // A slug this build does not carry is a real piece on the live site, so the panel says nothing
+    // about it rather than inventing a title to ask three questions about.
+    check(quickPromptsFor(Route.Read("not-in-this-corpus"), emptyList()).all { it in HOME_PROMPTS }) {
+        "an unknown slug must not template chips off a title it does not have"
     }
 }

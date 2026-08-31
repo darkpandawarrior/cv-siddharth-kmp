@@ -50,14 +50,18 @@ import com.siddharth.cv.shared.anthology.AnthologyScreen
 import com.siddharth.cv.shared.anthology.CanonScreen
 import com.siddharth.cv.shared.anthology.MakingScreen
 import com.siddharth.cv.shared.chat.FloatingChat
+import com.siddharth.cv.shared.chess.ChessScreen
 import com.siddharth.cv.shared.data.profile
+import com.siddharth.cv.shared.excelsior.ExcelsiorScreen
 import com.siddharth.cv.shared.forge.ParticleForge
 import com.siddharth.cv.shared.hire.HireScreen
 import com.siddharth.cv.shared.labs.LabScreen
+import com.siddharth.cv.shared.map.MapScreen
 import com.siddharth.cv.shared.ops.OpsScreen
 import com.siddharth.cv.shared.palette.CommandPalette
 import com.siddharth.cv.shared.palette.PaletteCommand
 import com.siddharth.cv.shared.playground.PlaygroundScreen
+import com.siddharth.cv.shared.read.ReadScreen
 import com.siddharth.cv.shared.detail.ProjectDetailScreen
 import com.siddharth.cv.shared.detail.ResumeScreen
 import com.siddharth.cv.shared.home.HomeScreen
@@ -174,7 +178,7 @@ fun App(
 }
 
 /**
- * Route -> screen, and nothing else. Sixteen entries is a table rather than control flow, and it
+ * Route -> screen, and nothing else. Twenty entries is a table rather than control flow, and it
  * lives outside [App] so that adding a route grows a table instead of pushing the app's one
  * composable past what anyone can read in a sitting.
  *
@@ -183,6 +187,7 @@ fun App(
  * fiction rooms link to each other in a cycle that would otherwise make every one of them depend on
  * every other.
  */
+@Suppress("CyclomaticComplexMethod") // A route table. See the note on Route.toPath() in Nav.kt.
 @Composable
 private fun RouteHost(nav: CvNavState, homeList: LazyListState, content: Modifier) {
     when (val route = nav.current) {
@@ -215,6 +220,26 @@ private fun RouteHost(nav: CvNavState, homeList: LazyListState, content: Modifie
         )
         Route.Making -> MakingScreen(onReadAnthology = { nav.go(Route.Anthology()) }, modifier = content)
         is Route.ProjectDetail -> ProjectDetailScreen(route.slug, content)
+        // The two halves of the archive, and they point at each other. A piece links to the exact
+        // magazine page it ran on and the page links back to the readable prose, which is the pair
+        // the React route's own doc comment calls the point: read it properly AND see it was
+        // really printed. `year` is a String on the route because the corpus keys editions by one.
+        is Route.Read -> ReadScreen(
+            slug = route.slug,
+            onOpenPiece = { nav.go(Route.Read(it)) },
+            onSeeInPrint = { year, page -> nav.go(Route.Excelsior(year.toString(), page)) },
+            modifier = content,
+        )
+        is Route.Excelsior -> ExcelsiorScreen(
+            year = route.year,
+            page = route.page,
+            onOpenRead = { nav.go(Route.Read(it)) },
+            modifier = content,
+        )
+        // Both take nav from LocalNav rather than a callback: their links are to sections of the
+        // homepage and to arbitrary rooms, which is a router's job and not a parameter list's.
+        Route.Chess -> ChessScreen(content)
+        Route.Map -> MapScreen(content)
     }
 }
 
@@ -238,6 +263,9 @@ private fun runPaletteCommand(
     when (kind) {
         "section" -> nav.goSection(value)
         "project" -> nav.go(Route.ProjectDetail(value))
+        // Generated from `printedPieces`, the same way project rows come from `projects`: nine
+        // pieces of prose are nine destinations, and none of them is reachable from a route row.
+        "read" -> nav.go(Route.Read(value))
         // Matched back against the list the ids were generated from, rather than a second table of
         // fifteen branches that has to be remembered. `paletteSelfCheck` already asserts every
         // route row's id is exactly this string, so the lookup cannot miss one.

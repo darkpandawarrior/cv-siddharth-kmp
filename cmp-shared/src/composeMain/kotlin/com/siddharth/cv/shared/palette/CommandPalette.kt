@@ -53,6 +53,8 @@ import androidx.compose.ui.unit.dp
 import com.siddharth.cv.shared.Route
 import com.siddharth.cv.shared.data.generated.anthology
 import com.siddharth.cv.shared.data.generated.anthologyEntries
+import com.siddharth.cv.shared.data.generated.excelsiorEditions
+import com.siddharth.cv.shared.data.generated.printedPieces
 import com.siddharth.cv.shared.data.projects
 import com.siddharth.cv.shared.home.homeSections
 import com.siddharth.cv.shared.staticRoutes
@@ -74,6 +76,7 @@ import com.siddharth.cv.shared.toPath
 data class PaletteCommand(val label: String, val group: String, val id: String)
 
 /** Palette wording for a route. Exhaustive on purpose: see the call site. */
+@Suppress("CyclomaticComplexMethod") // A route table. See the note on Route.toPath() in Nav.kt.
 private fun routeLabel(route: Route): String = when (route) {
     Route.Home -> "Home"
     Route.Resume -> "Résumé"
@@ -93,7 +96,17 @@ private fun routeLabel(route: Route): String = when (route) {
         "The Anthology, ${anthologyEntries.size} entries across ${anthology.seasons.size} seasons"
     Route.Canon -> "The Canon, the laws and the count"
     Route.Making -> "The Making, how the anthology was built and audited"
+    Route.Chess -> "The Board, seven years of games mined for what decides them"
+    Route.Map -> "The Story Map, the constellation of everything on this site"
+    // Counted rather than typed, the same way the anthology row counts its entries: a fourth
+    // edition would announce itself here instead of leaving the row quietly wrong.
+    is Route.Excelsior ->
+        "Excelsior, ${excelsiorEditions.size} editions of the institute magazine, " +
+            "${excelsiorEditions.sumOf { it.pages }} scanned pages"
     is Route.ProjectDetail -> "Open project: ${route.slug}"
+    // Never reached from a route row (Read is parameterised, so it is not in `staticRoutes`), but
+    // the `when` is exhaustive and a label that reads as a placeholder would be the one that ships.
+    is Route.Read -> "Read: ${route.slug}"
 }
 
 /**
@@ -124,6 +137,14 @@ fun paletteCommands(): List<PaletteCommand> = buildList {
     // Only projects with a detail page: a palette row that lands on a 404 is worse than no row.
     projects.filter { it.detail != null }.forEach { p ->
         add(PaletteCommand("Open project: ${p.name}", "Case study", "project:${p.slug}"))
+    }
+
+    // The nine printed pieces, by title, for the same reason projects get a row each: `/read` is
+    // parameterised, so no route row can reach any of them and a reader who knows the name of a
+    // story has no other way in short of typing the slug. Titles rather than slugs, because the
+    // title is what the reader knows; the slug is what the URL knows.
+    printedPieces.forEach { piece ->
+        add(PaletteCommand("Read: ${piece.title}", "Writing", "read:${piece.slug}"))
     }
 
     add(PaletteCommand("Copy email address", "Action", "action:copy-email"))
@@ -566,6 +587,12 @@ internal fun paletteSelfCheck() {
         check(commands.any { it.id == id }) { "no palette row for $id" }
     }
     check(commands.count { it.id.startsWith("section:") } == homeSections.size) { "one row per homepage section" }
+    // The parameterised routes, which no route row can reach. A piece with no row is prose nobody
+    // can find without knowing its slug, which is the state /compose shipped in for a whole pass.
+    check(commands.count { it.id.startsWith("read:") } == printedPieces.size) { "one row per printed piece" }
+    printedPieces.forEach { piece ->
+        check(commands.any { it.id == "read:${piece.slug}" }) { "no palette row for ${piece.slug}" }
+    }
 
     // Case-insensitive, both directions.
     check(paletteScore("MILE", "Mileway") == paletteScore("mile", "mileway")) { "case-insensitive" }
