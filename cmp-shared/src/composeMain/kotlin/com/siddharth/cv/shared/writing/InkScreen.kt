@@ -341,9 +341,14 @@ private fun ExcelsiorSection(nav: CvNavState, uri: UriHandler) {
             )
             Spacer(Modifier.height(18.dp))
 
-            // The hover-to-open cover shelf is dropped: it is three scanned covers, and this port
-            // ships no bitmaps. The branching cover story it was there to show is data, so it is
-            // rendered as data instead, one chip per path, each opening the page it starts on.
+            // The hover-to-open cover shelf is dropped, and NOT because this port cannot show a
+            // bitmap: /excelsior streams all 396 scanned pages, and a cover is page 1 of an
+            // edition. It is dropped because the URL rule that builds a scan path is `pageUrl` in
+            // ExcelsiorScreen, and a second copy of that derivation over here is the thing that
+            // goes stale. Make it internal and the shelf is three ProjectShots.
+            //
+            // The branching cover story the shelf was there to show is data either way, so it is
+            // rendered as data, one chip per path, each opening the page it starts on.
             MonoMeta("THE COVER STORY · PAGE ${coverStory2021.page}")
             Spacer(Modifier.height(10.dp))
             FlowRow(

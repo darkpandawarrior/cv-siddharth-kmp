@@ -65,25 +65,41 @@ data class CvTypography(
     val ghostNumeral: TextStyle,
 )
 
-/** Site defaults — the `@theme` block, verbatim. */
+/**
+ * Site defaults, read off the `@theme` block in cv-siddharth/src/index.css.
+ *
+ * These were a generation stale until 2026-08-31, and the docstring above them claimed "verbatim"
+ * the whole time, which is why nobody checked. The site shipped `feat(theme): CAL-1, the site is an
+ * instrument, not a control room` (227691c), which retired Android green as the accent and made
+ * calibration amber the measured signal. This twin was forked before that commit and kept the old
+ * palette under the new names, so every screen rendered in the wrong accent while compiling
+ * perfectly. Colour does not fail a build, so no gate here could have caught it; running the
+ * desktop actual and looking at it did.
+ *
+ * The rename matters as much as the value. Android green did not leave the site, it became
+ * `--color-signal`, and the old `accent2` became `--color-probe`. index.css states the art
+ * direction those two now serve: "if it is cyan it is the thing being compared to".
+ */
 val CvDarkColors: CvColors =
     CvColors(
-        accent = cvColor("#3ddc84"), // Android green
-        accentDim = cvColor("#2bb86c"),
-        accent2 = cvColor("#5ee6ff"),
+        // CAL-1 Channel A, calibration amber, the MEASURED signal. 9.24:1 on ink.
+        accent = cvColor("#f2a13d"),
+        accentDim = cvColor("#c47f2a"),
+        // Channel B, the reference being compared against. Cyan is never decoration here.
+        accent2 = cvColor("#4fd6e0"),
         accent2Dim = cvColor("#2fb8d6"),
-        ink = cvColor("#0b0f0d"),
-        surface = cvColor("#111613"),
-        card = cvColor("#171e1a"),
-        line = cvColor("#243029"),
+        ink = cvColor("#0a0d0c"),
+        surface = cvColor("#111514"),
+        card = cvColor("#171c1a"),
+        line = cvColor("#262e2b"),
         onBackground = cvColor("#e8efe9"),
         // WCAG-AA floor: 4.65:1 against Kursi's #33241c card, the lightest themed ground on the
         // site. Do NOT lighten or darken — this exact value is what let the a11y suite drop its
         // color-contrast allowlist.
         muted = cvColor("#8b909a"),
-        deepVoid = cvColor("#05070a"),
+        deepVoid = cvColor("#060807"),
         glass = Color(0xFF111619).copy(alpha = 0.66f),
-        glassBorder = Color(0xFF5DE6FF).copy(alpha = 0.14f),
+        glassBorder = Color(0xFF4FD6E0).copy(alpha = 0.14f),
     )
 
 /**

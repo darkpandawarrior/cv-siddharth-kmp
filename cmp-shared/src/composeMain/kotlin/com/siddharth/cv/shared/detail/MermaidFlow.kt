@@ -48,6 +48,7 @@ import com.siddharth.cv.shared.theme.CvMotion
 import com.siddharth.cv.shared.theme.LocalReducedMotion
 import com.siddharth.cv.shared.theme.cvColors
 import com.siddharth.cv.shared.theme.cvType
+import kotlin.math.abs
 
 /**
  * Draws a Mermaid flowchart natively instead of printing its source.
@@ -57,7 +58,9 @@ import com.siddharth.cv.shared.theme.cvType
  * the ordered layers along the cross axis and routes edges between them. Phase four proper —
  * coordinate assignment that pulls each node towards its neighbours' median — is not here; ranks are
  * centred as blocks against the widest one, which for 3-7 nodes a rank reads the same and needs no
- * priority/median pass.
+ * priority/median pass. Edge labels then get their own pass: they all land on their band's midline
+ * by default and the chip behind each is opaque, so overlapping ones are packed into rows across the
+ * rank gap (see [packLabelRows]).
  *
  * **This composable owns its own card.** The call site should hand it the raw string and nothing
  * else — no surrounding background, padding or `horizontalScroll`, because it needs to measure the
@@ -109,7 +112,11 @@ fun MermaidFlow(source: String, modifier: Modifier = Modifier) {
             .border(1.dp, colors.line, RoundedCornerShape(12.dp))
             .padding(DIAGRAM_PAD),
     ) {
-        val availablePx = with(density) { maxWidth.toPx() } - with(density) { DIAGRAM_PAD.toPx() }
+        // `maxWidth` is already inside the 18dp padding: BoxWithConstraints reports the constraints
+        // its *content* receives, not the ones the card was measured with. Subtracting the pad again
+        // charged every oversized diagram a further 18dp it had, so the widest ones shrank ~5% more
+        // than they needed to and hit the scroll floor sooner.
+        val availablePx = with(density) { maxWidth.toPx() }
         // Shrink to fit, never grow past 1:1, and stop shrinking before the 11sp labels stop being
         // readable — below the floor we scroll instead, which is honest about the diagram's size.
         val fit = if (layout.width <= 0f) 1f else availablePx / layout.width
@@ -176,6 +183,9 @@ private val BACK_BOW = 36.dp
 private val ARROW_LEN = 9.dp
 private val EDGE_WIDTH = 1.5.dp
 private val LABEL_CHIP_PAD = 5.dp
+
+/** Between two rows of edge labels in the same rank gap. */
+private val LABEL_ROW_GAP = 6.dp
 
 /** Below this the 11sp mono labels stop being readable, so we scroll instead of scaling further. */
 private const val MIN_SCALE = 0.62f
@@ -269,8 +279,6 @@ private fun buildFlowLayout(
             .mapNotNull { edgeTexts[it] }
             .maxOfOrNull { if (lr) it.size.width.toFloat() else it.size.height.toFloat() }
             ?: 0f
-    val rankGap =
-        maxOf(px(if (lr) RANK_GAP_LR else RANK_GAP_TD), forwardLabelExtent + px(20.dp))
     val withinGap = px(WITHIN_GAP)
 
     // Rank axis: band thickness is the deepest node in the band; cross axis: bands are centred
@@ -285,26 +293,77 @@ private fun buildFlowLayout(
             (each + withinGap * (group.size - 1).coerceAtLeast(0)).toFloat()
         }
     val crossSpan = bandExtent.maxOrNull() ?: 0f
+
+    // Cross-axis offsets don't depend on the rank gap, and the label packer below needs them before
+    // that gap can be sized — so they're resolved here and the placement loop reads them back.
+    val crossOf = HashMap<String, Float>()
+    ranks.forEachIndexed { r, group ->
+        var alongCross = (crossSpan - bandExtent[r]) / 2f
+        group.forEach { node ->
+            val s = sizes.getValue(node.id)
+            crossOf[node.id] = alongCross
+            alongCross += (if (lr) s.height else s.width) + withinGap
+        }
+    }
+    fun crossCentre(id: String): Float {
+        val s = sizes.getValue(id)
+        return crossOf.getValue(id) + (if (lr) s.height else s.width) / 2f
+    }
+
+    // Every label between the same pair of ranks lands on that band's midline, and the chip behind
+    // it is opaque — so two labels whose cross-axis footprints overlap don't merely touch, the later
+    // one erases the earlier. Kursi's "redact per viewer" is three copies of a 21-character label
+    // whose centres sit ~85dp apart behind ~167dp chips: it drew as one smear, with two of the three
+    // half-painted over. Pack each band's labels into rows and give every label a `t` that puts it on
+    // its own row, still on its own curve. A band that fits in one row writes nothing, keeps t = 0.5,
+    // and lays out exactly as it did before.
+    val labelT = HashMap<FlowEdge, Float>()
+    var labelRows = 1
+    graph.edges
+        .mapNotNull { e ->
+            val text = edgeTexts[e] ?: return@mapNotNull null
+            if ((rankOf[e.to] ?: 0) - (rankOf[e.from] ?: 0) != 1) return@mapNotNull null
+            Triple(e, rankOf.getValue(e.from), text)
+        }
+        .groupBy { it.second }
+        .forEach { (_, band) ->
+            val spans =
+                band.map { (e, _, text) ->
+                    val extent = (if (lr) text.size.height else text.size.width) + px(LABEL_CHIP_PAD) * 2f
+                    val centre = (crossCentre(e.from) + crossCentre(e.to)) / 2f
+                    centre - extent / 2f to centre + extent / 2f
+                }
+            val rows = packLabelRows(spans)
+            val used = (rows.maxOrNull() ?: 0) + 1
+            if (used > 1) {
+                band.forEachIndexed { i, (e, _, _) -> labelT[e] = tForRankFraction((rows[i] + 0.5f) / used) }
+                labelRows = maxOf(labelRows, used)
+            }
+        }
+
+    // One row reduces to the original `widest label + breathing room`; N rows have to stack.
+    val rankGap =
+        maxOf(
+            px(if (lr) RANK_GAP_LR else RANK_GAP_TD),
+            labelRows * forwardLabelExtent + (labelRows - 1) * px(LABEL_ROW_GAP) + px(20.dp),
+        )
     val rankSpan = bandThickness.sum() + rankGap * (ranks.size - 1).coerceAtLeast(0)
 
     val placed = HashMap<String, PlacedNode>()
     var alongRank = 0f
     ranks.forEachIndexed { r, group ->
-        var alongCross = (crossSpan - bandExtent[r]) / 2f
         group.forEach { node ->
             val s = sizes.getValue(node.id)
-            val x: Float
-            val y: Float
-            if (lr) {
-                x = alongRank + (bandThickness[r] - s.width) / 2f
-                y = alongCross
-                alongCross += s.height + withinGap
-            } else {
-                x = alongCross
-                y = alongRank + (bandThickness[r] - s.height) / 2f
-                alongCross += s.width + withinGap
-            }
-            placed[node.id] = PlacedNode(node.shape, texts.getValue(node.id), x, y, s.width, s.height)
+            val cross = crossOf.getValue(node.id)
+            placed[node.id] =
+                PlacedNode(
+                    shape = node.shape,
+                    text = texts.getValue(node.id),
+                    x = if (lr) alongRank + (bandThickness[r] - s.width) / 2f else cross,
+                    y = if (lr) cross else alongRank + (bandThickness[r] - s.height) / 2f,
+                    w = s.width,
+                    h = s.height,
+                )
         }
         alongRank += bandThickness[r] + rankGap
     }
@@ -375,7 +434,7 @@ private fun buildFlowLayout(
                 dashed = e.dashed,
                 thick = e.thick,
                 label = edgeTexts[e],
-                labelCenter = cubicAt(p0, c1, c2, p3, 0.5f),
+                labelCenter = cubicAt(p0, c1, c2, p3, labelT[e] ?: 0.5f),
             )
         }
 
@@ -386,6 +445,57 @@ private fun buildFlowLayout(
         height = contentH,
     )
 }
+
+/**
+ * First-fit interval colouring: every span gets the lowest row index whose spans it doesn't overlap.
+ * Returns one row per input, in input order.
+ *
+ * Assigning in left-to-right order is what makes this exact rather than a heuristic — greedy
+ * left-to-right colouring of an interval graph uses the minimum number of rows — so the rank gap
+ * never grows by a row the labels didn't need. Two labels that merely abut (`a.end == b.start`)
+ * share a row: the chip padding is already inside the span.
+ */
+internal fun packLabelRows(spans: List<Pair<Float, Float>>): List<Int> {
+    val rows = mutableListOf<MutableList<Pair<Float, Float>>>()
+    val out = IntArray(spans.size)
+    for (i in spans.indices.sortedBy { spans[it].first }) {
+        val span = spans[i]
+        var row = rows.indexOfFirst { taken -> taken.none { it.first < span.second && span.first < it.second } }
+        if (row < 0) {
+            rows += mutableListOf<Pair<Float, Float>>()
+            row = rows.lastIndex
+        }
+        rows[row] += span
+        out[i] = row
+    }
+    return out.toList()
+}
+
+/**
+ * The `t` at which a forward edge's curve has travelled [frac] of the way along the rank axis.
+ *
+ * Both control points share the midpoint's rank coordinate, so that axis reduces to
+ * `f(t) = 1.5t - 1.5t² + t³` regardless of how far the edge fans across the other axis. `f` is
+ * strictly increasing (`f'` has no real roots), so bisection inverts it — and `f(0.5) = 0.5`, which
+ * is why a single-row band lands exactly where it always did.
+ *
+ * ponytail: 16 steps is ~1e-5 of a rank gap, far under a pixel. Closed form exists (it's a depressed
+ * cubic); it is not more readable and this runs once per labelled edge at layout time.
+ */
+private fun tForRankFraction(frac: Float): Float {
+    var lo = 0f
+    var hi = 1f
+    repeat(BISECTION_STEPS) {
+        val m = (lo + hi) / 2f
+        // 1.5t - 1.5t² + t³, factored so the coefficient appears once.
+        val progress = 1.5f * m * (1f - m) + m * m * m
+        if (progress < frac) lo = m else hi = m
+    }
+    return (lo + hi) / 2f
+}
+
+/** ~1e-5 of a rank gap, which is far under a pixel at any scale this draws at. */
+private const val BISECTION_STEPS = 16
 
 /** de Casteljau at a single `t` — cheaper and clearer than dragging a PathMeasure in for one point. */
 private fun cubicAt(p0: Offset, c1: Offset, c2: Offset, p3: Offset, t: Float): Offset {
@@ -503,4 +613,48 @@ private fun DrawScope.drawArrowHead(tip: Offset, dir: Offset, color: Color, len:
         },
         color,
     )
+}
+
+// -------------------------------------------------------------------------------------------
+// Self-check
+// -------------------------------------------------------------------------------------------
+
+/**
+ * ponytail: the rest of the layout needs a live TextMeasurer, so only the pure geometry can be
+ * checked without a Compose frame. That is also the part that was wrong. Called from
+ * `mermaidLayoutSelfCheck()`, so it needs no extra wiring in `Prerender.kt`.
+ */
+internal fun mermaidLabelSelfCheck() {
+    // Kursi's "redact per viewer" to scale: three 160-wide chips whose centres are 85 apart, so each
+    // one covers half of its neighbour. The middle label steps out; the outer two never met.
+    val redact = listOf(93f to 253f, 178f to 338f, 263f to 423f)
+    check(packLabelRows(redact) == listOf(0, 1, 0)) { "overlapping labels must not share a row" }
+
+    // Labels that clear each other keep the single row — this is what leaves 11 of the 13 untouched.
+    val clear = listOf(0f to 10f, 20f to 30f, 40f to 50f)
+    check(packLabelRows(clear) == listOf(0, 0, 0)) { "no rows bought for free" }
+    val abutting = listOf(0f to 10f, 10f to 20f)
+    check(packLabelRows(abutting) == listOf(0, 0)) { "abutting spans share a row" }
+    // Rows are assigned left to right but handed back in input order.
+    val outOfOrder = listOf(40f to 90f, 0f to 45f)
+    check(packLabelRows(outOfOrder) == listOf(1, 0)) { "rows come back in input order" }
+    check(packLabelRows(emptyList()).isEmpty()) { "no labels, no rows" }
+
+    val tolerance = 0.001f
+    val quarter = 0.25f
+    val half = 0.5f
+    val threeQuarters = 0.75f
+    check(abs(tForRankFraction(half) - half) < tolerance) { "a single row still sits at the midpoint" }
+    check(tForRankFraction(quarter) < half) { "row 0 of 2 sits above the midpoint" }
+    check(tForRankFraction(threeQuarters) > half) { "row 1 of 2 sits below it" }
+
+    // A fanned-out edge: 100 along the rank axis, 20 across it. Row 0 of 2 must land a quarter of the
+    // way down the *rank* axis, not a quarter of the way along the arc.
+    val start = Offset(0f, 0f)
+    val bendOut = Offset(0f, 50f)
+    val bendIn = Offset(20f, 50f)
+    val finish = Offset(20f, 100f)
+    val expectedY = 25f
+    val row0 = cubicAt(start, bendOut, bendIn, finish, tForRankFraction(quarter))
+    check(abs(row0.y - expectedY) < half) { "row 0 of 2 sits a quarter of the way down the band" }
 }

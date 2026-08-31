@@ -45,6 +45,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -59,6 +60,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.siddharth.cv.shared.anthology.grouped
+import com.siddharth.cv.shared.data.generated.chess
 import com.siddharth.cv.shared.data.projects
 import com.siddharth.cv.shared.theme.CvContentMaxWidth
 import com.siddharth.cv.shared.theme.CvDarkColors
@@ -218,10 +221,11 @@ fun LabScreen(modifier: Modifier = Modifier) {
             SectionHeading("Don't take the numbers on faith")
             Spacer(Modifier.height(10.dp))
             BasicText(
-                text = "Five instruments across Dice.tech's production case studies and the " +
+                text = "$labCount instruments across Dice.tech's production case studies and the " +
                     "personal open-source builds — the actual idea behind each headline metric, " +
                     "running live. Flip a switch and watch the number happen. The white-label " +
-                    "instrument has its own room on the homepage as the theme engine.",
+                    "instrument has its own room on the homepage as the theme engine, where it " +
+                    "re-skins a real subtree instead of a mock of one.",
                 modifier = Modifier.widthIn(max = 680.dp),
                 style = cvType.bodySmall,
             )
@@ -265,6 +269,10 @@ fun LabScreen(modifier: Modifier = Modifier) {
                 "modules" -> ModuleGraphInstrument(selected)
                 "search" -> SearchTreeInstrument(selected, seconds)
                 "fanout" -> FanoutInstrument(selected, seconds)
+                "gateways" -> GatewayInstrument(selected, seconds)
+                "replay" -> ReplayInstrument(selected, seconds)
+                "chess-search" -> ChessSearchInstrument(selected, seconds)
+                "chess-clock" -> ClockBurnInstrument(selected)
                 // Unreachable while [labScreenSelfCheck] passes — it asserts that every id in
                 // cvLabs is wired here. Says so out loud rather than rendering an empty panel.
                 else -> MonoMeta("// ${selected.id}: no instrument wired for this experiment yet")
@@ -274,7 +282,11 @@ fun LabScreen(modifier: Modifier = Modifier) {
 }
 
 /** Ids with a drawing below. Kept next to the `when` above so the two can't drift apart silently. */
-private val labInstrumentIds = setOf("recompose", "crashes", "modules", "search", "fanout")
+private val labInstrumentIds =
+    setOf(
+        "recompose", "crashes", "modules", "search", "fanout",
+        "gateways", "replay", "chess-search", "chess-clock",
+    )
 
 /**
  * One tab. [selectable] with [Role.RadioButton] rather than a plain clickable: five mutually
@@ -1114,6 +1126,566 @@ private fun FanoutInstrument(experiment: LabExperiment, seconds: State<Float>) {
     )
 }
 
+
+// ---------------------------------------------------------------------------------------------
+// Payment gateways
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * PaymentsLab's gateway catalog behind one contract.
+ *
+ * Toggling the contract shifts the time epoch rather than re-routing calls already in flight, for
+ * the same reason the crash feed does: a closed-form feed cannot retroactively re-decide what
+ * already landed, and pretending otherwise would misrepresent what an abstraction does. It reads as
+ * "re-run checkout from here".
+ *
+ * ponytail: the React lab bins arrivals into four category columns (native-SDK, hosted-webview,
+ * mobile-money, catalog-only) sized by each category's real share. Those four counts live in
+ * `data/projectStats.ts`, which the Kotlin generator does not emit, so this draws one shelf of every
+ * cataloged gateway instead. The lost texture is real and it is named here rather than faked with
+ * four plausible numbers.
+ */
+@Composable
+private fun GatewayInstrument(experiment: LabExperiment, seconds: State<Float>) {
+    val colors = cvColors
+    val reduced = LocalReducedMotion.current
+    val violet = labAccent("paymentslab")
+    val feed = remember { GatewayFeed() }
+    val measurer = rememberTextMeasurer(cacheSize = 8)
+    var routed by remember { mutableStateOf(false) }
+    var epoch by remember { mutableStateOf(0f) }
+
+    val coarse by rememberCoarseSeconds(seconds, stepSeconds = 0.5f)
+    val coarseLocal = (coarse - epoch).coerceAtLeast(0f)
+    val routedNow = feed.landedCount(coarseLocal)
+    val blockedNow = feed.blockedCount(coarseLocal)
+
+    val labelStyle = cvType.metaMono.copy(color = colors.onBackground.copy(alpha = 0.6f))
+
+    LabInstrument(
+        experiment = experiment,
+        canvas = {
+            Canvas(Modifier.fillMaxSize()) {
+                val t = (seconds.value - epoch).coerceAtLeast(0f)
+                val cx = size.width / 2f
+                val shelfY = size.height - 34f
+                val barrierY = size.height * 0.42f
+                val hubY = size.height * 0.22f
+                val landed = feed.landedCount(t)
+                val blocked = feed.blockedCount(t)
+                val spawned = feed.spawnedCount(t)
+
+                drawLabel(measurer, "checkout", labelStyle, cx, 8f, anchorX = 0.5f)
+
+                // Where gateway `g` sits on the shelf. One tick per cataloged gateway.
+                fun shelfX(gateway: Int): Float =
+                    26f + (gateway + 0.5f) / gatewayCount * (size.width - 52f)
+
+                if (!routed) {
+                    for (i in blocked until spawned) {
+                        val progress =
+                            ((t - feed.spawnSeconds(i)) / GatewayFeed.BarrierSeconds).coerceIn(0f, 1f)
+                        val x = cx + (feed.xFracOf(i) - 0.5f) * 24f
+                        val y = -8f + progress * (barrierY + 8f)
+                        drawRect(LabWasteRed.copy(alpha = 0.25f), Offset(x - 0.5f, y - 14f), Size(1f, 12f))
+                        drawCircle(LabWasteRed, radius = 2.4f, center = Offset(x, y))
+                    }
+                    val h = min(34f, 6f + blocked * 0.16f)
+                    drawLine(
+                        LabWasteRed.copy(alpha = 0.55f),
+                        Offset(16f, barrierY),
+                        Offset(size.width - 16f, barrierY),
+                        strokeWidth = 1f,
+                    )
+                    drawRect(LabWasteRed.copy(alpha = 0.25f), Offset(20f, barrierY), Size(size.width - 40f, h))
+                    drawRect(
+                        LabWasteRed.copy(alpha = 0.6f),
+                        Offset(20f, barrierY),
+                        Size(size.width - 40f, h),
+                        style = Stroke(1f),
+                    )
+                    drawLabel(
+                        measurer = measurer,
+                        text = "every gateway needs its own SDK integration first",
+                        style = labelStyle.copy(color = LabWasteRed),
+                        x = cx,
+                        y = barrierY + h + 8f,
+                        anchorX = 0.5f,
+                    )
+                    return@Canvas
+                }
+
+                // The shelf: one tick per gateway, the recently used ones still lit.
+                repeat(gatewayCount) { g ->
+                    val x = shelfX(g)
+                    drawLine(
+                        color = violet.copy(alpha = 0.22f),
+                        start = Offset(x, shelfY),
+                        end = Offset(x, shelfY + 8f),
+                        strokeWidth = 1.4f,
+                    )
+                }
+                // ponytail: "which gateway was last hit" is not closed-form, so the last 40 arrivals
+                // are replayed instead. That window is exactly what a fade would have shown anyway.
+                for (i in maxOf(0, landed - GatewayFeed.GlowWindow) until landed) {
+                    val age = t - (feed.spawnSeconds(i) + GatewayFeed.FallSeconds)
+                    val glow = (1f - age / GatewayFeed.GlowSeconds).coerceIn(0f, 1f)
+                    if (glow <= 0f) continue
+                    val x = shelfX(feed.gatewayOf(i))
+                    drawLine(
+                        color = violet.copy(alpha = glow),
+                        start = Offset(x, shelfY - 4f),
+                        end = Offset(x, shelfY + 10f),
+                        strokeWidth = 2.2f,
+                    )
+                }
+
+                for (i in landed until spawned) {
+                    val progress =
+                        ((t - feed.spawnSeconds(i)) / GatewayFeed.FallSeconds).coerceIn(0f, 1f)
+                    val x0 = cx + (feed.xFracOf(i) - 0.5f) * 24f
+                    // Nothing steers above the contract node: that is the point of drawing it.
+                    val hub = GatewayFeed.HubFraction
+                    val steer = ((progress - hub) / (1f - hub)).coerceIn(0f, 1f)
+                    val x = x0 + (shelfX(feed.gatewayOf(i)) - x0) * smoothstep(steer)
+                    val y = -8f + progress * (shelfY + 8f)
+                    drawRect(violet.copy(alpha = 0.27f), Offset(x - 0.5f, y - 14f), Size(1f, 12f))
+                    drawCircle(violet, radius = 2.4f, center = Offset(x, y))
+                }
+
+                val hubW = 112f
+                drawRoundRect(
+                    color = violet.copy(alpha = 0.18f),
+                    topLeft = Offset(cx - hubW / 2f, hubY - 12f),
+                    size = Size(hubW, 24f),
+                    cornerRadius = CornerRadius(6f),
+                )
+                drawRoundRect(
+                    color = violet,
+                    topLeft = Offset(cx - hubW / 2f, hubY - 12f),
+                    size = Size(hubW, 24f),
+                    cornerRadius = CornerRadius(6f),
+                    style = Stroke(1f),
+                )
+                drawLabel(
+                    measurer = measurer,
+                    text = "PaymentGateway",
+                    style = labelStyle.copy(color = violet),
+                    x = cx,
+                    y = hubY,
+                    anchorX = 0.5f,
+                    anchorY = 0.5f,
+                )
+                drawLabel(
+                    measurer = measurer,
+                    text = "$gatewayCount cataloged gateways",
+                    style = labelStyle,
+                    x = cx,
+                    y = shelfY + 14f,
+                    anchorX = 0.5f,
+                )
+            }
+        },
+        controls = {
+            LabToggle("route through the PaymentGateway contract", routed) {
+                routed = it
+                if (!reduced) epoch = seconds.value
+            }
+            if (routed) {
+                LabReadout(
+                    "$routedNow calls routed · $gatewayCount gateways reachable · " +
+                        "0 gateway-specific lines touched",
+                    colors.accent,
+                )
+            } else {
+                LabReadout("$blockedNow calls blocked · one bespoke integration owed per gateway", LabWasteRed)
+            }
+        },
+    )
+}
+
+// ---------------------------------------------------------------------------------------------
+// Deterministic replay
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Deadlock's determinism gate.
+ *
+ * This is the one instrument whose state genuinely is not a function of `t` — whether the tape has
+ * been perturbed is a decision, not a phase — and that is fine, because the *simulation* still is:
+ * both paths are recomputed from the tape every draw, and only the playhead reads the clock. Which
+ * is also why the toggle needs no epoch shift: unlike the feeds, this really can re-run history,
+ * because history here is a pure function of a 160-frame tape.
+ */
+@Composable
+private fun ReplayInstrument(experiment: LabExperiment, seconds: State<Float>) {
+    val colors = cvColors
+    val red = labAccent("deadlock")
+    val log = remember { ReplayLog() }
+    val measurer = rememberTextMeasurer(cacheSize = 8)
+    var perturbed by remember { mutableStateOf(false) }
+
+    // `cvType` is a @Composable getter, so the style is built here rather than in the draw lambda.
+    val markStyle = cvType.metaMono.copy(color = red.copy(alpha = 0.75f))
+
+    // Drift is geometry-dependent, so the readout measures the same nominal canvas the self-check
+    // does rather than whatever this viewport happens to be — otherwise the number moves on resize.
+    val drift =
+        remember(perturbed) {
+            if (!perturbed) {
+                0f
+            } else {
+                log.driftFrom(
+                    log.replay(log.frames, ReplayLog.NominalWidth, ReplayLog.NominalHeight),
+                    log.replay(log.perturbed(), ReplayLog.NominalWidth, ReplayLog.NominalHeight),
+                )
+            }
+        }
+
+    LabInstrument(
+        experiment = experiment,
+        canvas = {
+            Canvas(Modifier.fillMaxSize()) {
+                val clean = log.replay(log.frames, size.width, size.height)
+                val head = log.playheadAt(seconds.value)
+
+                fun pathOf(points: Pair<FloatArray, FloatArray>, from: Int): Path =
+                    Path().apply {
+                        for (i in from until ReplayLog.PathLength) {
+                            if (i == from) moveTo(points.first[i], points.second[i])
+                            else lineTo(points.first[i], points.second[i])
+                        }
+                    }
+
+                // Two passes for the glow the canvas API gets from shadowBlur, as the tree does.
+                val cleanPath = pathOf(clean, 0)
+                drawPath(cleanPath, colors.accent.copy(alpha = 0.22f), style = Stroke(6f, cap = StrokeCap.Round))
+                drawPath(cleanPath, colors.accent, style = Stroke(2f, cap = StrokeCap.Round))
+
+                if (perturbed) {
+                    val edited = log.replay(log.perturbed(), size.width, size.height)
+                    val editedPath = pathOf(edited, ReplayLog.DivergeAt)
+                    drawPath(editedPath, red.copy(alpha = 0.22f), style = Stroke(6f, cap = StrokeCap.Round))
+                    drawPath(editedPath, red, style = Stroke(2f, cap = StrokeCap.Round))
+
+                    val at = Offset(clean.first[ReplayLog.PerturbIndex], clean.second[ReplayLog.PerturbIndex])
+                    drawCircle(red, radius = 4f, center = at, style = Stroke(1.5f))
+                    drawLabel(
+                        measurer = measurer,
+                        text = "frame ${ReplayLog.PerturbIndex} perturbed",
+                        style = markStyle,
+                        x = at.x + 8f,
+                        y = at.y - 8f,
+                        anchorY = 1f,
+                    )
+                    if (head >= ReplayLog.DivergeAt) {
+                        drawCircle(red, radius = 3.5f, center = Offset(edited.first[head], edited.second[head]))
+                    }
+                }
+
+                drawCircle(
+                    color = colors.onBackground,
+                    radius = 3.5f,
+                    center = Offset(clean.first[head], clean.second[head]),
+                )
+            }
+        },
+        controls = {
+            TagChip(
+                text = "perturb frame #${ReplayLog.PerturbIndex}",
+                selected = perturbed,
+                tint = red,
+                onClick = { perturbed = true },
+            )
+            TagChip(text = "reset", selected = !perturbed, onClick = { perturbed = false })
+            LabReadout(
+                text =
+                    if (perturbed) {
+                        "drift: ${driftText(drift)} · gate: BLOCKED, the change is rejected"
+                    } else {
+                        "drift: ${driftText(drift)} · gate: PASS, the replays are identical"
+                    },
+                tint = if (perturbed) red else colors.accent,
+            )
+        },
+    )
+}
+
+/**
+ * Six places when the gate passes, three when it does not.
+ *
+ * The extra precision is the point: a gate that claims zero tolerance has to show enough digits that
+ * "0.000000" is a statement rather than a rounding. `toString()` on a Float would print `0.0` and
+ * `0.1483...`, neither of which reads as a measurement.
+ */
+private fun driftText(drift: Float): String {
+    val places = if (drift == 0f) 6 else 3
+    var scale = 1f
+    repeat(places) { scale *= 10f }
+    val scaled = (drift * scale).toLong()
+    val whole = scaled / scale.toLong()
+    val fraction = (scaled % scale.toLong()).toString().padStart(places, '0')
+    return "$whole.$fraction"
+}
+
+// ---------------------------------------------------------------------------------------------
+// Chess: alpha-beta search
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * A real alpha-beta search over a position out of his own games, drawn edge by edge.
+ *
+ * Nothing here is a simulation and nothing is live progress: [chessSearch] is synchronous and hands
+ * back the whole tree, so the growth is a replay of a search that already finished — which is what
+ * lets it be a function of elapsed seconds like everything else on the bench. The React version
+ * needs a Web Worker for the same search because it also runs a wall-clock budget; this one is
+ * fixed-depth and costs a few hundred microseconds to twelve thousand nodes, so it runs inline.
+ */
+@Composable
+private fun ChessSearchInstrument(experiment: LabExperiment, seconds: State<Float>) {
+    val colors = cvColors
+    val reduced = LocalReducedMotion.current
+    val measurer = rememberTextMeasurer(cacheSize = 8)
+    var presetIndex by remember { mutableStateOf(chessSearchPresets.lastIndex) }
+    var positionIndex by remember { mutableStateOf(0) }
+    var epoch by remember { mutableStateOf(0f) }
+
+    val preset = chessSearchPresets[presetIndex]
+    val entry = chessLabPositions[positionIndex.mod(chessLabPositions.size)]
+    val result =
+        remember(presetIndex, positionIndex) {
+            chessSearch(entry.fen, preset.depth, preset.noise, CHESS_SEARCH_SEED + positionIndex)
+        }
+
+    fun rerun(nextPreset: Int, nextPosition: Int) {
+        presetIndex = nextPreset
+        positionIndex = nextPosition
+        // Under reduced motion the epoch stays put, so the frozen instant still lands on a finished
+        // search rather than on an empty canvas — the same rule the ISMCTS tree follows.
+        if (!reduced) epoch = seconds.value
+    }
+
+    val titleStyle = cvType.metaMono.copy(color = colors.accent.copy(alpha = 0.55f))
+    val noteStyle = cvType.metaMono.copy(color = colors.muted)
+
+    LabInstrument(
+        experiment = experiment,
+        canvas = {
+            val widthPx = constraints.maxWidth.toFloat()
+            val heightPx = constraints.maxHeight.toFloat()
+            val tree = remember(result, widthPx, heightPx) { layoutChessTree(result, widthPx, heightPx) }
+            Canvas(Modifier.fillMaxSize()) {
+                val t = (seconds.value - epoch).coerceAtLeast(0f)
+                val revealed = chessRevealedAt(result, t)
+
+                for (i in 0 until revealed) {
+                    val edge = result.edges[i]
+                    val chosen = tree.inChosenLine[edge.to]
+                    // A few thousand edges overlap heavily at depth, so everything but the played
+                    // line stays translucent: density then reads as where the search spent its
+                    // budget rather than as a solid blob.
+                    val color =
+                        when {
+                            chosen && edge.depth == 0 -> colors.accent
+                            chosen -> colors.accent.copy(alpha = 0.34f)
+                            else -> colors.muted.copy(alpha = 0.18f)
+                        }
+                    drawLine(
+                        color = color,
+                        start = Offset(tree.x[edge.from], tree.y[edge.from]),
+                        end = Offset(tree.x[edge.to], tree.y[edge.to]),
+                        strokeWidth = if (chosen && edge.depth == 0) 2.2f else if (chosen) 1f else 0.6f,
+                    )
+                }
+
+                drawCircle(colors.accent, radius = 4f, center = Offset(tree.x[0], tree.y[0]))
+                drawLabel(measurer, "alpha-beta search tree", titleStyle, 14f, 12f)
+                if (revealed < result.edges.size) {
+                    drawLabel(measurer, "replaying the finished search", noteStyle, 14f, 30f)
+                }
+            }
+        },
+        controls = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                LabReadout("depth:")
+                Spacer(Modifier.width(8.dp))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    chessSearchPresets.forEachIndexed { i, option ->
+                        TagChip(
+                            text = option.label,
+                            selected = i == presetIndex,
+                            tint = colors.accent,
+                            onClick = { rerun(i, positionIndex) },
+                        )
+                    }
+                }
+            }
+            TagChip(
+                text = "next position",
+                tint = colors.accent,
+                onClick = { rerun(presetIndex, positionIndex + 1) },
+            )
+            LabReadout(
+                "${result.nodes.grouped()} nodes visited · ${result.edges.size.grouped()} edges drawn" +
+                    if (result.truncated) " (capped)" else "",
+            )
+            LabReadout("plays ${result.moveText} · ${preset.note}", colors.accent)
+            // Provenance, because the position is his, not a textbook diagram.
+            LabReadout(
+                "his ${entry.speed} game, ${entry.at}, rated ${entry.myRating} — a ${entry.result}",
+            )
+        },
+    )
+}
+
+// ---------------------------------------------------------------------------------------------
+// Chess: clock burn
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * The clock thesis as one chart: mean share of the starting clock still left, by decile of game
+ * progress, split by how the game ended.
+ *
+ * The chess room already tabulates these ten rows. A table answers "what was the gap at 60%"; only
+ * the chart answers "when does it open", which is the entire finding — the curves are on top of each
+ * other through the opening and come apart in the early middlegame. Two readings of the same corpus,
+ * neither redundant.
+ *
+ * No clock: like the module graph, the React original is static SVG. Selection is chips rather than
+ * a drag on the canvas, because a canvas scrubber is pointer-only and a keyboard would lose it.
+ */
+@Composable
+private fun ClockBurnInstrument(experiment: LabExperiment) {
+    val colors = cvColors
+    val measurer = rememberTextMeasurer(cacheSize = 16)
+    var bucket by remember { mutableStateOf(clockPeakDecile.bucket) }
+    val here = clockDeciles[bucket]
+
+    val axisStyle = cvType.metaMono.copy(color = colors.muted, fontSize = 10.sp)
+    val winColor = colors.accent
+    val lossColor = colors.accent2
+
+    LabInstrument(
+        experiment = experiment,
+        canvas = {
+            Canvas(Modifier.fillMaxSize().padding(horizontal = 6.dp, vertical = 10.dp)) {
+                val padLeft = 44f
+                val padRight = 18f
+                val padTop = 18f
+                val padBottom = 34f
+                val plotW = size.width - padLeft - padRight
+                val plotH = size.height - padTop - padBottom
+                if (plotW <= 0f || plotH <= 0f) return@Canvas
+
+                fun xAt(b: Int): Float = padLeft + ((b + 0.5f) / clockDeciles.size) * plotW
+                fun yAt(fraction: Double): Float = padTop + (1f - fraction.toFloat()) * plotH
+
+                listOf(0f, 0.25f, 0.5f, 0.75f, 1f).forEach { g ->
+                    val y = padTop + (1f - g) * plotH
+                    drawLine(colors.line, Offset(padLeft, y), Offset(size.width - padRight, y), strokeWidth = 1f)
+                    drawLabel(
+                        measurer = measurer,
+                        text = "${(g * 100).toInt()}%",
+                        style = axisStyle,
+                        x = padLeft - 8f,
+                        y = y,
+                        anchorX = 1f,
+                        anchorY = 0.5f,
+                    )
+                }
+
+                // The divergence itself: down the win curve, back along the loss curve.
+                val band =
+                    Path().apply {
+                        clockDeciles.forEachIndexed { i, d ->
+                            if (i == 0) moveTo(xAt(d.bucket), yAt(d.win)) else lineTo(xAt(d.bucket), yAt(d.win))
+                        }
+                        clockDeciles.reversed().forEach { d -> lineTo(xAt(d.bucket), yAt(d.loss)) }
+                        close()
+                    }
+                drawPath(band, lossColor.copy(alpha = 0.10f))
+
+                fun curve(pick: (Int) -> Double): Path =
+                    Path().apply {
+                        clockDeciles.forEachIndexed { i, d ->
+                            val y = yAt(pick(i))
+                            if (i == 0) moveTo(xAt(d.bucket), y) else lineTo(xAt(d.bucket), y)
+                        }
+                    }
+                drawPath(
+                    path = curve { clockDeciles[it].loss },
+                    color = lossColor,
+                    style = Stroke(2f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 4f))),
+                )
+                drawPath(curve { clockDeciles[it].win }, winColor, style = Stroke(2f))
+
+                clockDeciles.forEach { d ->
+                    val selected = d.bucket == bucket
+                    val r = if (selected) 4f else 2.5f
+                    drawCircle(winColor, radius = r, center = Offset(xAt(d.bucket), yAt(d.win)))
+                    drawCircle(lossColor, radius = r, center = Offset(xAt(d.bucket), yAt(d.loss)))
+                }
+
+                val markerX = xAt(bucket)
+                drawLine(
+                    color = colors.onBackground.copy(alpha = 0.6f),
+                    start = Offset(markerX, padTop),
+                    end = Offset(markerX, padTop + plotH),
+                    strokeWidth = 1f,
+                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(3f, 3f)),
+                )
+
+                drawLabel(measurer, "start of game", axisStyle, padLeft, size.height - 12f)
+                drawLabel(
+                    measurer = measurer,
+                    text = "last move",
+                    style = axisStyle,
+                    x = size.width - padRight,
+                    y = size.height - 12f,
+                    anchorX = 1f,
+                )
+                // The sample size lives on the chart, not only in the prose beside it.
+                drawLabel(
+                    measurer = measurer,
+                    text = "n = ${chess.thesis.sampleSize.grouped()} games with per-move clocks",
+                    style = axisStyle,
+                    x = padLeft + 6f,
+                    y = padTop + plotH - 8f,
+                )
+            }
+        },
+        controls = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                LabReadout("game progress:")
+                Spacer(Modifier.width(8.dp))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    clockDeciles.forEach { d ->
+                        TagChip(
+                            text = clockBandLabel(d.bucket),
+                            selected = d.bucket == bucket,
+                            tint = colors.accent,
+                            onClick = { bucket = d.bucket },
+                        )
+                    }
+                }
+            }
+            LabReadout("won — ${pctOf(here.win)} of the clock left", winColor)
+            LabReadout("lost (dashed) — ${pctOf(here.loss)} left", lossColor)
+            LabReadout("gap ${oneDecimal(here.gap * 100)} pts")
+            LabReadout(
+                "${pctOf(chess.thesis.decidedOnClock)} of decided games ended on a clock, " +
+                    "not on a board",
+            )
+        },
+    )
+}
+
 // ---------------------------------------------------------------------------------------------
 // Self-check
 // ---------------------------------------------------------------------------------------------
@@ -1155,4 +1727,17 @@ internal fun labScreenSelfCheck() {
     }
     check(scan.landedAt(stillInScan) > 0) { "the still frame should already show collected listings" }
     check(scan.landedAt(stillInScan) < scan.pulses.size) { "the still frame should still have listings in flight" }
+
+    // The gateway shelf must not run off either end of the canvas at the extremes of the catalog.
+    check(gatewayCount > 1) { "a one-tick shelf is not a fan-out" }
+
+    // Drift formatting: the zero case is the claim, so it has to print as a measurement.
+    check(driftText(0f) == "0.000000") { "a passing gate prints six places, was ${driftText(0f)}" }
+    val blockedDrift = 0.148318f
+    check(driftText(blockedDrift) == "0.148") { "a blocked gate prints three places, was ${driftText(blockedDrift)}" }
+    val wholeUnits = 12.5f
+    check(driftText(wholeUnits) == "12.500") { "whole units survive the split, was ${driftText(wholeUnits)}" }
+
+    // The clock chart's marker defaults to the widest gap, which the caption calls the finding.
+    check(clockPeakDecile.bucket in clockDeciles.indices) { "the peak decile is off the chart" }
 }

@@ -39,15 +39,21 @@ private fun cvImageLoader(context: PlatformContext): ImageLoader =
         .build()
 
 /**
- * A project screenshot with a graceful floor.
+ * One streamed image from the live site, with a graceful floor.
+ *
+ * Named for its first caller and deliberately not renamed since: it is one loader for every bitmap
+ * on the site, and it takes the URL rather than knowing how to build one. Three callers now build
+ * their own — project shots from `CvGallery`, Excelsior scan pages from `pageUrl`, and the fiction
+ * plates and portraits from `plateUrl` — and none of them needed a second pipeline.
  *
  * While loading, and if the fetch or decode fails, this falls back to the generated gradient
  * [MediaPanel] the port already used everywhere — so a dead CDN or an offline visitor degrades to
- * the previous look instead of a hole in the layout. `url == null` (a project with no synced media)
- * takes the same path.
+ * the previous look instead of a hole in the layout. `url == null` (a project with no synced media,
+ * an anthology record whose art has not been drawn yet) takes the same path.
  *
- * @param url a `.webp` CDN URL from [com.siddharth.cv.shared.data.CvGallery]; never `.avif`, which
- *   skiko cannot decode.
+ * @param url a `.webp` URL on the portfolio origin; never `.avif`, which skiko cannot decode.
+ * @param label the `contentDescription`. These are content and not decoration, so it says what the
+ *   picture IS, and it doubles as the [MediaPanel] label on the fallback.
  */
 @Composable
 fun ProjectShot(

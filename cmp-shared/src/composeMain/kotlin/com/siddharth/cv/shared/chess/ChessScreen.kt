@@ -90,24 +90,29 @@ import kotlin.math.round
  * The Board. Port of cv-siddharth/src/ChessRoom.tsx and the two panes inside it that are 2D:
  * `chess/ChessFindings.tsx` and `chess/ChessVsCommits.tsx`.
  *
- * THE WEB ROOM HAS SEVEN TABS. Two of them are here. The other five are absent rather than
- * approximated, because a flat drawing captioned with a 3D scene's claim is the one thing this
- * port is not allowed to ship:
- *  - **The Arc** (`chess/ChessArcScene.tsx`): twin rating ribbons in three.js, one per platform,
- *    each on its own vertical scale because the two rating pools are not comparable. Its flat
- *    fallback `ChessArc.tsx` is 2D and would port, but both read `corpus.arc`, the per-game rating
- *    series, which is not emitted into Kotlin.
- *  - **The Graveyard** (`chess/GraveyardScene.tsx`): a 64-column height map over the squares that
- *    still held a piece in a game's final position. Reads `corpus.graveyard`, not emitted.
- *  - **Repertoire** (`chess/RepertoireTreeScene.tsx`): an opening tree with a year scrubber over
- *    `corpus.repertoireByPlatform`, not emitted. The written arc that scene illustrates IS here,
- *    as [RepertoireSection], which is where the actual argument always lived.
- *  - **Play the Bot** (`chess/ChessBoardPane.tsx`): a chess engine in a Web Worker driving
- *    react-chessboard. That is an engine and a board widget, not a screen.
- *  - **Guess the Move** and the captured daily puzzle: the same board widget, plus a
- *    playhtml-backed counter shared between visitors. No backend here, so no shared counter.
+ * THE WEB ROOM HAS SEVEN TABS. Six of them are here, one whole and five at the fidelity the web
+ * itself drops to without WebGL. Nothing is approximated: a flat drawing captioned with a 3D
+ * scene's claim is the one thing this port is not allowed to ship.
+ *  - **The Findings** and **Rhythm** are whole, and are this file.
+ *  - **The Arc**, **The Graveyard** and **Repertoire** are in `ChessScenePanes.kt`
+ *    ([ArcPane], [GraveyardPane], [RepertoirePane]). Their three.js scenes (`ChessArcScene`, `GraveyardScene`, `RepertoireTreeScene`) are out, behind the
+ *    same WebGL wall `/blueprint` is. What is here is the OTHER branch of each pane's own
+ *    `webgl ? scene : fallback` ternary, which the web renders under reduced motion or on a machine
+ *    with no GPU: a flat SVG band chart, a ranked list of terminal squares, and a year scrubber
+ *    over a written table. Each pane's copy names the scene it is standing next to rather than in
+ *    for. The README called all three emitter work rather than renderer work and was right: the
+ *    whole cost was four new `vals` in `gen-kotlin-data.mjs`.
+ *  - **Guess the Move** is in `ChessGuessPane.kt` ([GuessThePositionPane]), whole apart from its
+ *    playhtml-backed counter shared between visitors, which needs a backend this port does not
+ *    have. Its board needs no engine: only the FEN's piece placement is drawn.
+ *  - **Play the Bot** (`chess/ChessBoardPane.tsx`) and the captured daily puzzle are the only two
+ *    still absent, and NOT because of the wall they used to be behind. Both lean on chess.js for
+ *    legality, which used to mean writing a move generator; `labs/ChessEngine.kt` now carries a
+ *    perft-checked one that is `internal` and therefore visible from here. What is actually left
+ *    is written down in [chessBoardPaneCost]: an interactive board, the two calibration presets,
+ *    and a decision about the clock model that engine deliberately drops.
  *
- * Nothing was tab-stripped in their place: two panes stack into one scroll, which is also what
+ * Nothing was tab-stripped in their place: the panes stack into one scroll, which is also what
  * ChessRoom's own default landing tab does before anyone clicks.
  *
  * NOT ONE FIGURE IS TYPED. Every number reads from `data/generated/CvChessData.kt`, generated from
@@ -145,6 +150,10 @@ fun ChessScreen(modifier: Modifier = Modifier) {
             item("cast") { CastSection(nav, if (threeUp) 3 else 1) }
             item("provenance") { ProvenanceNote() }
             item("second-pass") { SecondPassSection(if (twoUp) 2 else 1) }
+            item("arc") { ArcPane() }
+            item("graveyard") { GraveyardPane() }
+            item("repertoire-by-platform") { RepertoirePane() }
+            item("guess") { GuessThePositionPane() }
             item("rhythm") { RhythmSection() }
         }
     }
@@ -158,11 +167,11 @@ private val WideBreakpoint: Dp = 900.dp
 private val MediumBreakpoint: Dp = 620.dp
 
 /** The web page is `max-w-6xl`; every surface in this port holds to [CvContentMaxWidth]. */
-private fun Modifier.pageMeasure(): Modifier =
+internal fun Modifier.pageMeasure(): Modifier =
     this.widthIn(max = CvContentMaxWidth).fillMaxWidth().padding(horizontal = CvGutter)
 
 @Composable
-private fun Section(eyebrow: String, title: String, content: @Composable ColumnScope.() -> Unit) {
+internal fun Section(eyebrow: String, title: String, content: @Composable ColumnScope.() -> Unit) {
     Reveal {
         Column(Modifier.pageMeasure().padding(top = CvSectionGap)) {
             SectionEyebrow(eyebrow)
@@ -224,7 +233,7 @@ private val repertoire: List<RepertoireRow> =
     }
 
 /** The handoff, derived: the first year chess.com carried more games than lichess. */
-private val handoff: ChessActivityYear? = chess.activityByYear.firstOrNull { it.chesscom > it.lichess }
+internal val handoff: ChessActivityYear? = chess.activityByYear.firstOrNull { it.chesscom > it.lichess }
 
 private val displaced: RepertoireRow? = repertoire.firstOrNull { !isScandinavian(it.top.name) }
 
@@ -265,13 +274,13 @@ private val maxGap: Double = chess.thesis.deciles.maxOf { it.gap }
 // -------------------------------------------------------------------------------------------
 
 /** `3.14` to `"3.1"`. `toString()` prints "3.0999999" for some doubles. No negatives in this corpus. */
-private fun oneDecimal(v: Double): String {
+internal fun oneDecimal(v: Double): String {
     val scaled = round(v * 10.0).toInt()
     return "${scaled / 10}.${scaled % 10}"
 }
 
 /** A fraction to a percentage: `0.416` to `"41.6%"`. What `chess.*` stores. */
-private fun pctOf(fraction: Double): String = "${oneDecimal(fraction * 100)}%"
+internal fun pctOf(fraction: Double): String = "${oneDecimal(fraction * 100)}%"
 
 /** An already-scaled percentage: `49.2` to `"49.2%"`. What `chessDeep.*` stores. */
 private fun pct(percent: Double): String = "${oneDecimal(percent)}%"
@@ -1167,7 +1176,7 @@ private fun LegendItem(tint: Color, label: String) {
  * keyboard-only visitor on a narrow viewport cannot reach the columns past the fold.
  */
 @Composable
-private fun ScrollingTable(
+internal fun ScrollingTable(
     label: String,
     columns: List<Pair<String, Dp>>,
     rows: @Composable ColumnScope.() -> Unit,
@@ -1204,7 +1213,7 @@ private fun ScrollingTable(
 }
 
 @Composable
-private fun TableRow(cells: @Composable RowScope.() -> Unit) {
+internal fun TableRow(cells: @Composable RowScope.() -> Unit) {
     val colors = cvColors
     Row(
         modifier =
@@ -1223,7 +1232,7 @@ private fun TableRow(cells: @Composable RowScope.() -> Unit) {
 }
 
 @Composable
-private fun Cell(text: String, width: Dp, strong: Boolean = false, tint: Color? = null) {
+internal fun Cell(text: String, width: Dp, strong: Boolean = false, tint: Color? = null) {
     val colors = cvColors
     BasicText(
         text = text,
@@ -1279,4 +1288,7 @@ internal fun chessScreenSelfCheck() {
     }
     check(rhythmHourAt(-40f, width, padL, padR) == 0) { "a tap left of the plot must clamp to 00:00" }
     check(rhythmHourAt(width + 40f, width, padL, padR) == HOURS - 1) { "a tap right of the plot must clamp to 23:00" }
+
+    chessScenePanesSelfCheck()
+    chessGuessPaneSelfCheck()
 }

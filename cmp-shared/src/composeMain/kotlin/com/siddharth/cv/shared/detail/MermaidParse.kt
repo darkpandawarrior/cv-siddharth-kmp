@@ -168,7 +168,8 @@ fun FlowGraph.ranks(): List<List<FlowNode>> {
  *   loads is worse than one with a crossing in it.
  * - **Monotone.** Barycenter is a heuristic and can make a specific graph worse, so every
  *   intermediate arrangement is costed and the cheapest one wins, with the seed as the baseline.
- *   The output is never worse than the input.
+ *   The output is never worse than the input — and on all thirteen shipped diagrams it is the
+ *   brute-forced minimum, which [mermaidLayoutSelfCheck] proves rather than assumes.
  *
  * ponytail: no dummy nodes for rank-skipping edges, so a rank-0 → rank-2 edge votes in neither
  * band and doesn't count as crossing the rank-1 band it flies over. Real diagrams are 3-7 nodes
@@ -584,7 +585,15 @@ internal fun mermaidLayoutSelfCheck() {
         val ranked = g.ranks().map { r -> r.map { it.id } }
         check(ranked.flatten().sorted() == g.nodes.map { it.id }.sorted()) { "'${diagram.title}': every node ranked once" }
         check(ranked.none { it.isEmpty() }) { "'${diagram.title}': no empty rank" }
-        totalCrossings += crossings(g, ranked)
+        // Barycenter is a heuristic, so "no crossings left" is a claim, not a property. Brute-force
+        // the floor and demand the sweep reaches it — on every diagram, not just in aggregate.
+        val actual = crossings(g, ranked)
+        val floor =
+            checkNotNull(optimalCrossings(g, ranked)) {
+                "'${diagram.title}': too wide to brute-force; raise the cap or drop the optimality claim"
+            }
+        check(actual == floor) { "'${diagram.title}': barycenter left ${actual - floor} avoidable crossing(s)" }
+        totalCrossings += actual
         // Determinism: parse and lay out again from scratch, and demand the identical picture. A
         // fresh parse means this also catches a layout that leaks hash iteration order.
         val again = parseMermaidFlow(diagram.code)!!.ranks().map { r -> r.map { it.id } }
@@ -592,8 +601,48 @@ internal fun mermaidLayoutSelfCheck() {
     }
     // Twelve of the thirteen come out crossing-free: they declare their siblings well enough that
     // the sweep finds nothing to fix. The thirteenth cannot. kmp-family's "Three repos, one seam
-    // each" has two libraries feeding the same two consumers, a K(2,2), whose crossing number is 1,
-    // so no ordering removes it. Checking the total rather than each diagram keeps the guard tight:
-    // a sweep that started reordering the hand-tuned ones still trips this. Look before relaxing.
+    // each" has two libraries feeding the same two consumers, a K(2,2), whose two-layer crossing
+    // number is 1, so no ordering removes it — and that is now measured rather than asserted, by the
+    // per-diagram floor above. Keeping the total as well makes the guard tighter than the parts: a
+    // sweep that started reordering the hand-tuned ones still trips this. Look before relaxing.
     check(totalCrossings == 1) { "expected exactly one unavoidable crossing across all diagrams, got $totalCrossings" }
+
+    mermaidLabelSelfCheck()
+}
+
+/**
+ * The true minimum crossings for [ranks], by trying every per-rank permutation. `null` when the
+ * search would exceed [cap] arrangements.
+ *
+ * Self-check only. Ranking is fixed, so this is exactly the ordering problem barycenter approximates
+ * — which makes it the honest way to say "optimal" about the shipped diagrams instead of hoping.
+ * The widest shipped rank is 6, so the worst diagram here costs 720 arrangements; [cap] is the guard
+ * for the day someone adds a 9-wide rank and would otherwise turn the build into a factorial.
+ */
+private fun optimalCrossings(graph: FlowGraph, ranks: List<List<String>>, cap: Int = 50_000): Int? {
+    var arrangements = 1L
+    for (group in ranks) {
+        for (i in 2..group.size) arrangements *= i
+        if (arrangements > cap) return null
+    }
+    val perms = ranks.map { permutationsOf(it) }
+    val pick = IntArray(perms.size)
+    var best = Int.MAX_VALUE
+    while (true) {
+        best = minOf(best, crossings(graph, perms.indices.map { perms[it][pick[it]] }))
+        var k = perms.lastIndex
+        while (k >= 0 && ++pick[k] == perms[k].size) {
+            pick[k] = 0
+            k--
+        }
+        if (k < 0) return best
+    }
+}
+
+private fun permutationsOf(items: List<String>): List<List<String>> {
+    if (items.size <= 1) return listOf(items)
+    return items.indices.flatMap { i ->
+        val rest = items.toMutableList().apply { removeAt(i) }
+        permutationsOf(rest).map { listOf(items[i]) + it }
+    }
 }

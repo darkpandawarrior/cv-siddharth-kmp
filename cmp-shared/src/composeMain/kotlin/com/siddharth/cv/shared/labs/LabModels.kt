@@ -1,11 +1,16 @@
 package com.siddharth.cv.shared.labs
 
 import androidx.compose.ui.graphics.Color
+import com.siddharth.cv.shared.data.generated.chess
+import com.siddharth.cv.shared.data.projects
 import com.siddharth.cv.shared.theme.cvColor
 import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.hypot
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.roundToInt
+import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.random.Random
 
@@ -68,15 +73,52 @@ internal class LabExperiment(
 )
 
 /**
- * Five of the React bench's eleven instruments: recompose, crashes, modules, search, fanout. The six
- * that didn't come across:
+ * How many gateways PaymentsLab catalogs, read out of the project's own metrics rather than typed
+ * here. The React lab gets a four-way split (native-SDK / hosted-webview / mobile-money / stub) from
+ * `data/projectStats.ts`, which `gen-kotlin-data.mjs` does not emit into Kotlin — so this port draws
+ * one shelf of every gateway instead of four bins. That is a real loss of texture and it is the
+ * honest one: the alternative was hand-copying four numbers into this file, which is exactly the
+ * drift the generator exists to prevent. [labsSelfCheck] cross-checks this against the project's
+ * badge list, so the two can't part company silently.
+ */
+internal val gatewayCount: Int =
+    projects
+        .firstOrNull { it.slug == "paymentslab" }
+        ?.detail
+        ?.metrics
+        ?.firstOrNull { it.label.contains("gateways") }
+        ?.value
+        ?.toIntOrNull()
+        ?: 0
+
+/** The measured curve, straight from the generated corpus. Ten buckets of game progress. */
+internal val clockDeciles = chess.thesis.deciles
+
+/** Where the win/loss curves are furthest apart — the marker's resting place. */
+internal val clockPeakDecile = clockDeciles.maxByOrNull { it.gap } ?: clockDeciles.first()
+
+/** The widest win/loss clock gap in the corpus, in points, for the tab metric. */
+internal val clockPeakGapPoints: String get() = oneDecimal(clockPeakDecile.gap * 100)
+
+/**
+ * Nine of the React bench's eleven instruments. What happened to the other two, and to the three
+ * rows of this list that used to be excuses:
  *
- * - **Signal Lab** — its visual is a Leaflet map with real tile imagery; the engine would port
- *   fine, the map would have to be rebuilt from scratch as a canvas projection. Skipped
- *   deliberately, not blocked.
- * - **White-label / Gateway Lab / Deterministic Replay** — no obstacle, just not in this slice.
- * - **Chess Search / Clock Burn** — both read the generated chess corpus, which this repo does not
- *   vendor. Porting the visuals without the corpus would ship two charts of nothing.
+ * - **Signal Lab** — the one genuine hold-out. Its visual is a Leaflet map over real tile imagery;
+ *   the engine would port in an afternoon, the map would have to be rebuilt from scratch as a
+ *   canvas projection over a tile source this port does not carry. Skipped deliberately.
+ * - **White-label** — ported, but not onto this bench: it is `playground/ThemeLab.kt`, a section of
+ *   the homepage. That version goes *further* than the React lab it came from, which paints its
+ *   preview with inline colours; ours re-skins a real subtree through a nested `CvTheme`, which is
+ *   the production mechanism rather than a picture of it. A second copy here would be one demo
+ *   maintained twice, so this list links to it instead. See [cvLabs]' bench blurb.
+ * - **Gateway Lab / Deterministic Replay** — the note here used to read "no obstacle, just not in
+ *   this slice", and that was accurate: neither needed anything the port did not already have.
+ * - **Chess Search / Clock Burn** — this said both "read the generated chess corpus, which this
+ *   repo does not vendor". That was simply wrong: `data/generated/CvChessData.kt` carries the clock
+ *   thesis, deciles and all, and Clock Burn cost nothing but a chart. Chess Search *was* expensive,
+ *   for a different reason nobody had written down — the React lab gets legal moves from `chess.js`
+ *   — and the fix was a 0x88 move generator proved correct by perft. See `ChessEngine.kt`.
  */
 internal val cvLabs: List<LabExperiment> = listOf(
     LabExperiment(
@@ -119,6 +161,21 @@ internal val cvLabs: List<LabExperiment> = listOf(
             "draws all 78 feature-to-feature edges the composition root replaces.",
     ),
     LabExperiment(
+        id = "gateways",
+        label = "Gateway Lab",
+        metric = "$gatewayCount gateways",
+        group = LabGroup.Personal,
+        caption = "Every payment provider ships its own SDK, and most of them are still " +
+            "Activity-callback era. Turn the contract off and each checkout call needs a bespoke " +
+            "integration written before it can go anywhere. Turn it on and the same call reaches " +
+            "any of $gatewayCount cataloged gateways without one line of gateway-specific code.",
+        description = "Checkout calls fall from the top of the canvas. Without the " +
+            "PaymentGateway contract they stop dead at a barrier and pile up as blocked work. " +
+            "With it they pass through a single contract node and fan out to a shelf of " +
+            "$gatewayCount gateway ticks along the bottom, lighting whichever one each call " +
+            "routed to.",
+    ),
+    LabExperiment(
         id = "search",
         label = "Search Tree",
         metric = "10 personas",
@@ -146,6 +203,52 @@ internal val cvLabs: List<LabExperiment> = listOf(
             "into a collection zone at the bottom. With SimHash de-duplication on, a listing " +
             "already seen from another board collapses into the existing one with a ring flash " +
             "instead of adding a new dot.",
+    ),
+    LabExperiment(
+        id = "replay",
+        label = "Deterministic Replay",
+        metric = "0-tolerance",
+        group = LabGroup.Personal,
+        caption = "Deadlock's determinism contract in one line: an input frame records intent — a " +
+            "move vector, a jump, a dash — and never a position. Replay the same log and you get " +
+            "the same path, to the float. Perturb one frame of the second log and the paths split " +
+            "from exactly that frame on, which is the whole reason the gate can be zero-tolerance.",
+        description = "Two replays of one recorded input log trace a wandering path across the " +
+            "canvas. Identical logs draw one line, because the second is exactly under the first. " +
+            "Perturbing a single frame of the second log splits it away in red from that frame " +
+            "onward, and the readout turns from PASS to a blocked gate with the measured drift.",
+    ),
+    LabExperiment(
+        id = "chess-search",
+        label = "Chess Search",
+        metric = "alpha-beta",
+        group = LabGroup.Personal,
+        caption = "The same picture as Kursi's tree, a different algorithm — and this one is not a " +
+            "simulation either. Every line is a real edge from an alpha-beta search over a " +
+            "position from one of his own games, run here on a legal-move generator this port " +
+            "carries and a perft check proves correct. Two more ply is thousands more nodes, and " +
+            "still a small fraction of the legal tree: the pruning is the whole trick, and the " +
+            "readout counts what it cost.",
+        description = "An alpha-beta search tree fanning upward from a single root at the bottom " +
+            "of the canvas, replayed edge by edge after the search has already finished. The " +
+            "subtree under the move the search played is drawn brighter, and its root edge " +
+            "brightest of all. Switching between two and four ply runs a genuinely different " +
+            "search, and the readout reports the nodes visited, the move chosen, and which of " +
+            "his games the position came from.",
+    ),
+    LabExperiment(
+        id = "chess-clock",
+        label = "Clock Burn",
+        metric = "+$clockPeakGapPoints pts",
+        group = LabGroup.Personal,
+        caption = "Two curves, mean share of the starting clock still left, by decile of game " +
+            "progress. They sit on top of each other through the opening and come apart in the " +
+            "early middlegame. That gap is where the games go: the time is spent long before any " +
+            "late blunder, which is why the fix was never studying more endgames.",
+        description = "A line chart of mean clock remaining against game progress, in ten " +
+            "buckets. The won-games curve stays above the lost-games curve, the shaded band " +
+            "between them is the divergence, and a movable marker reads out both values and " +
+            "their gap at any bucket.",
     ),
 )
 
@@ -189,6 +292,24 @@ internal fun recomposeCellAt(x: Float, y: Float, w: Float, h: Float): Int {
     val col = (x / (w / RecomposeGridW)).toInt().coerceIn(0, RecomposeGridW - 1)
     val row = (y / (h / RecomposeGridH)).toInt().coerceIn(0, RecomposeGridH - 1)
     return row * RecomposeGridW + col
+}
+
+/**
+ * How many events have spawned by [cutoff], given one every [interval] seconds with a per-event
+ * sub-slot stagger that [spawnAt] applies.
+ *
+ * Shared by [CrashFeed] and [GatewayFeed] — both are closed-form feeds over a pre-rolled ring, and
+ * this is the trick that makes either O(1) at any `t`: because [spawnAt] is strictly increasing, the
+ * answer is within a slot or two of `cutoff / interval`, so a two-step scan from there beats walking
+ * the history. Extracted the second time it was needed, not the first.
+ */
+internal inline fun countSpawnedBy(cutoff: Float, interval: Float, spawnAt: (Int) -> Float): Int {
+    if (cutoff < 0f) return 0
+    var i = (cutoff / interval).toInt() + 2
+    if (i < 0) return 0 // guards a cutoff large enough to overflow the Int cast
+    while (i > 0 && spawnAt(i - 1) > cutoff) i--
+    while (spawnAt(i) <= cutoff) i++
+    return i
 }
 
 // -------------------------------------------------------------------------------------------
@@ -264,14 +385,8 @@ internal class CrashFeed(seed: Int = 20260729) {
         return ((binCount(0, landed) + binCount(1, landed)) * 100f / landed).roundToInt()
     }
 
-    private fun countSpawnedBy(cutoff: Float): Int {
-        if (cutoff < 0f) return 0
-        var i = (cutoff / SpawnInterval).toInt() + 2
-        if (i < 0) return 0 // guards a cutoff large enough to overflow the Int cast
-        while (i > 0 && spawnSeconds(i - 1) > cutoff) i--
-        while (spawnSeconds(i) <= cutoff) i++
-        return i
-    }
+    private fun countSpawnedBy(cutoff: Float): Int =
+        countSpawnedBy(cutoff, SpawnInterval, ::spawnSeconds)
 
     companion object {
         /** One trace every 140ms, matching `CrashLab.tsx`'s spawn accumulator. */
@@ -556,6 +671,208 @@ internal val moduleCrossEdges: List<Pair<Int, Int>> = buildList {
     }
 }
 
+
+// -------------------------------------------------------------------------------------------
+// Payment gateways
+// -------------------------------------------------------------------------------------------
+
+/**
+ * Checkout calls, as a closed-form function of elapsed seconds — the same shape as [CrashFeed],
+ * because the argument is the same shape: a feed arriving at a fixed rate that either gets routed or
+ * does not.
+ *
+ * The React lab (`GatewayLab.tsx`) keeps a live array, splices landed calls out of it and increments
+ * four bins. Here call `i` spawns at [spawnSeconds] and lands [FallSeconds] later, and "how many
+ * have landed" is the same two-step scan. What that buys is the same thing it buys everywhere else
+ * on this bench: the reduced-motion still frame is the frozen clock, and the arithmetic is checkable
+ * off-screen.
+ */
+internal class GatewayFeed(seed: Int = 20260812) {
+    private val gateway = IntArray(Ring)
+    private val xFrac = FloatArray(Ring)
+    private val slot = FloatArray(Ring)
+
+    init {
+        val rng = Random(seed)
+        for (i in 0 until Ring) {
+            xFrac[i] = rng.nextFloat()
+            slot[i] = rng.nextFloat()
+            gateway[i] = if (gatewayCount > 0) rng.nextInt(gatewayCount) else 0
+        }
+    }
+
+    /** Which of the cataloged gateways call [index] ends up on. */
+    fun gatewayOf(index: Int): Int = gateway[index.mod(Ring)]
+
+    fun xFracOf(index: Int): Float = xFrac[index.mod(Ring)]
+
+    fun spawnSeconds(index: Int): Float = (index + slot[index.mod(Ring)]) * SpawnInterval
+
+    fun landedCount(seconds: Float): Int =
+        countSpawnedBy(seconds - FallSeconds, SpawnInterval, ::spawnSeconds)
+
+    fun spawnedCount(seconds: Float): Int = countSpawnedBy(seconds, SpawnInterval, ::spawnSeconds)
+
+    /** Calls stopped at the barrier. Same feed, shorter fall — they never reach the shelf. */
+    fun blockedCount(seconds: Float): Int =
+        countSpawnedBy(seconds - BarrierSeconds, SpawnInterval, ::spawnSeconds)
+
+    companion object {
+        /** One checkout every 160ms, matching `GatewayLab.tsx`'s spawn accumulator. */
+        const val SpawnInterval: Float = 0.16f
+
+        /** Fall time to the gateway shelf, fixed so a taller canvas drops faster, not for longer. */
+        const val FallSeconds: Float = 2.6f
+
+        /** The barrier sits partway down, so a blocked call dies visibly earlier than a routed one. */
+        const val BarrierSeconds: Float = FallSeconds * 0.42f
+
+        /** How many recent arrivals stay lit on the shelf, and for how long. */
+        const val GlowWindow: Int = 40
+        const val GlowSeconds: Float = 1.4f
+
+        /** Where down the fall the contract node sits, as a fraction. Nothing steers above it. */
+        const val HubFraction: Float = 0.22f
+
+        private const val Ring = 2048
+    }
+}
+
+// -------------------------------------------------------------------------------------------
+// Deterministic replay
+// -------------------------------------------------------------------------------------------
+
+/** One recorded frame of *intent*. Never a position — that is the entire contract. */
+internal class InputFrame(val mx: Float, val my: Float, val jump: Boolean, val dash: Boolean)
+
+/**
+ * Deadlock's determinism contract, ported whole.
+ *
+ * The tape is recorded once from a seed and replayed as often as asked. [step] is the fixed-timestep
+ * physics tick — `state' = step(state, frame)` — and it is a pure function of its two arguments,
+ * which is the property the zero-tolerance gate is checking. [replay] therefore reproduces exactly,
+ * and [driftFrom] is the number the gate rejects on.
+ *
+ * ponytail: the path is recomputed per draw rather than cached against canvas size. It is 160
+ * multiply-adds; a cache invalidated on resize would be more code than the work it saves.
+ */
+internal class ReplayLog(seed: Int = 20260724) {
+    val frames: List<InputFrame>
+
+    init {
+        val rng = Mulberry32(seed)
+        var angle = rng.next() * 2f * PI.toFloat()
+        frames =
+            List(FrameCount) {
+                angle += (rng.next() - RollCentre) * WanderSpread
+                InputFrame(cos(angle), sin(angle), rng.next() < JumpChance, rng.next() < DashChance)
+            }
+    }
+
+    /** The tape with exactly one frame's intent inverted. One frame, nothing else. */
+    fun perturbed(): List<InputFrame> =
+        frames.mapIndexed { i, f ->
+            if (i == PerturbIndex) InputFrame(-f.mx, -f.my, f.jump, f.dash) else f
+        }
+
+    /** `x[i]`, `y[i]` is the state after `i` frames. Index 0 is the starting state. */
+    fun replay(tape: List<InputFrame>, widthPx: Float, heightPx: Float): Pair<FloatArray, FloatArray> {
+        val cx = widthPx * 0.5f
+        val cy = heightPx * 0.5f
+        val x = FloatArray(PathLength)
+        val y = FloatArray(PathLength)
+        x[0] = cx
+        y[0] = cy
+        tape.forEachIndexed { i, frame ->
+            val multiplier = if (frame.dash) DashMultiplier else 1f
+            val vx = frame.mx * Speed * multiplier + (cx - x[i]) * Pull
+            val vy = frame.my * Speed * multiplier + (cy - y[i]) * Pull
+            x[i + 1] = x[i] + vx * Dt
+            y[i + 1] = y[i] + vy * Dt - if (frame.jump) JumpKick else 0f
+        }
+        return x to y
+    }
+
+    /**
+     * Mean divergence between the two replays, from the first frame the edit can reach, expressed in
+     * thousands of pixels the way the React readout does. Zero to the float when the tapes match —
+     * which is the assertion, not a tolerance.
+     */
+    fun driftFrom(a: Pair<FloatArray, FloatArray>, b: Pair<FloatArray, FloatArray>): Float {
+        var sum = 0f
+        var n = 0
+        for (i in DivergeAt until PathLength) {
+            sum += hypot(a.first[i] - b.first[i], a.second[i] - b.second[i])
+            n++
+        }
+        return if (n == 0) 0f else sum / n / 1000f
+    }
+
+    /** Which path point the playhead is on at [seconds]. Loops, like the React lab's. */
+    fun playheadAt(seconds: Float): Int =
+        (seconds / FrameSeconds).toInt().mod(PathLength)
+
+    /**
+     * The tape's shape and the physics constants, in the companion rather than at file scope: this
+     * file's top-level names are PascalCase, and detekt's top-level *constant* pattern here is
+     * SCREAMING_SNAKE or camelCase — the older PascalCase constants above only pass on the baseline.
+     * A companion is checked by the object-property rule instead, which PascalCase satisfies, so the
+     * naming stays uniform without a suppression.
+     */
+    companion object {
+        const val FrameCount: Int = 160
+
+        /** The path includes the initial state, so it is one longer than the tape. */
+        const val PathLength: Int = FrameCount + 1
+
+        /** Which frame "perturb" edits, and the first path point that edit can possibly reach. */
+        const val PerturbIndex: Int = 64
+        const val DivergeAt: Int = PerturbIndex + 1
+
+        /** Replay pace: one full loop of the tape in about 6.7 seconds. */
+        const val FrameSeconds: Float = 0.042f
+
+        /** The canvas drift is measured against, so a resize cannot move a published number. */
+        const val NominalWidth: Float = 640f
+        const val NominalHeight: Float = 340f
+
+        /** An unsigned 0..1 roll re-centred, so a recorded turn is as likely left as right. */
+        private const val RollCentre: Float = 0.5f
+
+        /** How far the recorded turn can swing per frame, and how often it jumps or dashes. */
+        private const val WanderSpread: Float = 0.85f
+        private const val JumpChance: Float = 0.05f
+        private const val DashChance: Float = 0.06f
+
+        private const val Dt: Float = 1f / 60f
+        private const val Speed: Float = 70f
+
+        /** Gentle centering so a wandering tape stays on the canvas instead of leaving it. */
+        private const val Pull: Float = 0.6f
+        private const val DashMultiplier: Float = 2.1f
+        private const val JumpKick: Float = 5f
+    }
+}
+
+// -------------------------------------------------------------------------------------------
+// Clock burn
+// -------------------------------------------------------------------------------------------
+
+/** `0-10%`. The axis step is derived, not typed, so a re-generated corpus can change the bucketing. */
+internal fun clockBandLabel(bucket: Int): String {
+    val step = 100 / clockDeciles.size
+    return "${bucket * step}-${(bucket + 1) * step}%"
+}
+
+/** `0.0835 -> "8.4"`. There is no `String.format` on wasmJs. */
+internal fun oneDecimal(value: Double): String {
+    val tenths = (value * 10).roundToInt()
+    return "${tenths / 10}.${(if (tenths < 0) -tenths else tenths) % 10}"
+}
+
+/** `0.083 -> "8.3%"`, for a corpus figure that arrives as a Double rather than a Float. */
+internal fun pctOf(fraction: Double): String = "${oneDecimal(fraction * 100)}%"
+
 // -------------------------------------------------------------------------------------------
 // Self-check
 // -------------------------------------------------------------------------------------------
@@ -564,10 +881,27 @@ internal val moduleCrossEdges: List<Pair<Int, Int>> = buildList {
  * ponytail: one runnable check instead of a test module, matching `navSelfCheck` /
  * `mermaidParseSelfCheck`. Must be called from `selfCheck()` in jvmMain's Prerender.kt — nothing
  * under composeMain executes on its own, and a check that never runs reads as coverage it isn't.
+ *
+ * One function per instrument rather than one long one: a bench of nine simulations that fails as
+ * a single `labsSelfCheck` tells you only that the bench is broken, and the stack frame that
+ * actually names the instrument is worth more than the lines it costs.
  */
 internal fun labsSelfCheck() {
-    // The bench itself.
-    check(cvLabs.size == 5) { "five instruments ported" }
+    checkBench()
+    checkRecomposeHitTesting()
+    checkCrashFeed()
+    checkFanout()
+    checkSearchTree()
+    checkModuleGraph()
+    checkGatewayFeed()
+    checkReplayLog()
+    checkClockBurn()
+    chessEngineSelfCheck()
+}
+
+/** The bench itself, plus the two formatting helpers every readout on it goes through. */
+private fun checkBench() {
+    check(cvLabs.size == 9) { "nine of the React bench's eleven instruments, was ${cvLabs.size}" }
     check(cvLabs.map { it.id }.toSet().size == cvLabs.size) { "lab ids are unique — the picker keys on them" }
     cvLabs.forEach {
         check(it.caption.length > 60) { "${it.id}: a simulation without an explanation is decoration" }
@@ -578,7 +912,10 @@ internal fun labsSelfCheck() {
     check(pct1(1f) == "100.0%") { "whole" }
     check(smoothstep(0f) == 0f && smoothstep(1f) == 1f) { "easing spans its range" }
 
-    // Recomposition hit-testing: the corners, the centre, and everything off-grid.
+}
+
+/** Recomposition hit-testing: the corners, the centre, and everything off-grid. */
+private fun checkRecomposeHitTesting() {
     check(recomposeCellAt(1f, 1f, 800f, 500f) == 0) { "top-left cell" }
     check(recomposeCellAt(799f, 499f, 800f, 500f) == RecomposeCells - 1) { "bottom-right cell" }
     check(recomposeCellAt(101f, 101f, 800f, 500f) == RecomposeGridW + 1) { "second row, second column" }
@@ -587,7 +924,10 @@ internal fun labsSelfCheck() {
     }
     check(recomposeCellAt(10f, 10f, 0f, 0f) == -1) { "a zero-size grid can't be hit" }
 
-    // Crash feed: monotone, conserved, and skewed the way the story claims.
+}
+
+/** Crash feed: monotone, conserved, and skewed the way the story claims. */
+private fun checkCrashFeed() {
     val feed = CrashFeed()
     check(feed.landedCount(0f) == 0) { "nothing has landed before the first trace falls" }
     check(feed.landedCount(CrashFeed.FallSeconds - 0.01f) == 0) { "the first trace is still in flight" }
@@ -618,7 +958,10 @@ internal fun labsSelfCheck() {
         "the skew covers both ends"
     }
 
-    // Fan-out: de-dup keeps exactly one arrival per cluster, and only ever fewer than it saw.
+}
+
+/** Fan-out: de-dup keeps exactly one arrival per cluster, and only ever fewer than it saw. */
+private fun checkFanout() {
     for (seed in 0 until 6) {
         val scan = FanoutScan(seed)
         check(scan.pulses.size >= scan.clusterCount) { "every cluster lands at least once" }
@@ -640,7 +983,10 @@ internal fun labsSelfCheck() {
         check(prevUnique < prevTotal) { "there were duplicates to collapse in the first place" }
     }
 
-    // Search tree: a well-formed tree that reveals monotonically and can always walk to its root.
+}
+
+/** Search tree: a well-formed tree that reveals monotonically and can always walk to its root. */
+private fun checkSearchTree() {
     searchTiers.indices.forEach { tier ->
         val run = buildSearchTreeRun(tier, tier, 640f, 340f)
         check(run.nodes.size > 20) { "${run.tierLabel}: the tree actually grew" }
@@ -665,10 +1011,108 @@ internal fun labsSelfCheck() {
     val b = buildSearchTreeRun(2, 3, 640f, 340f)
     check(a.nodes.size == b.nodes.size && a.chosen == b.chosen && a.role == b.role) { "runs reproduce" }
 
-    // Module graph.
+}
+
+/** Module graph. */
+private fun checkModuleGraph() {
     check(moduleFeatures.size == ModuleFeatureCount) { "thirteen feature modules" }
     check(moduleFeatures.count { it.named } == 6) { "six confirmed names, seven honest placeholders" }
     check(moduleCrossEdges.size == 78) { "13 choose 2 — the tangle isolation removes" }
     check(moduleCrossEdges.toSet().size == 78) { "no duplicated pair" }
     check(ModuleOtherCount == 33) { "46 total minus 13 features" }
+
+}
+
+/**
+ * Gateways: the count is read out of project data, so the failure mode is a silent 0 — and a
+ * renamed metric label. Cross-checked against the badge list, which states it independently.
+ */
+private fun checkGatewayFeed() {
+    check(gatewayCount > 0) { "the paymentslab gateway metric no longer parses as a number" }
+    val paymentsLab = projects.first { it.slug == "paymentslab" }
+    check(paymentsLab.badges.any { it == "$gatewayCount gateways" }) {
+        "the metric says $gatewayCount gateways but the badges disagree: ${paymentsLab.badges}"
+    }
+    val gateways = GatewayFeed()
+    check(gateways.landedCount(0f) == 0) { "no call has routed before the first one falls" }
+    check(gateways.blockedCount(0f) == 0) { "no call is blocked before the first one falls" }
+    var prevRouted = 0
+    var prevBlocked = 0
+    var gt = 0f
+    val sweepSeconds = 300f
+    // Deliberately not a multiple of the 0.16s spawn interval, so the samples land off-beat.
+    val sweepStep = 0.31f
+    while (gt < sweepSeconds) {
+        val routed = gateways.landedCount(gt)
+        val blocked = gateways.blockedCount(gt)
+        val spawned = gateways.spawnedCount(gt)
+        check(routed >= prevRouted && blocked >= prevBlocked) { "gateway counters only grow (t=$gt)" }
+        // The barrier is nearer than the shelf, so the blocked run is always ahead of the routed one.
+        check(blocked >= routed) { "a call cannot route before it could have been blocked (t=$gt)" }
+        check(spawned >= blocked) { "a call cannot be blocked before it spawns (t=$gt)" }
+        check(gateways.gatewayOf(routed) in 0 until gatewayCount) { "a call routed off the shelf" }
+        prevRouted = routed
+        prevBlocked = blocked
+        gt += sweepStep
+    }
+    val wrapped = gateways.landedCount(20_000f)
+    check(wrapped > 2048) { "a long run wraps the gateway ring" }
+
+}
+
+/**
+ * Replay: the whole claim is that identical tapes reproduce to the float, and that one edited
+ * frame changes the output from exactly that frame on and never before it.
+ */
+private fun checkReplayLog() {
+    val log = ReplayLog()
+    check(log.frames.size == ReplayLog.FrameCount) { "the tape is ${log.frames.size} frames, not ${ReplayLog.FrameCount}" }
+    val clean = log.replay(log.frames, 640f, 340f)
+    val again = log.replay(log.frames, 640f, 340f)
+    check(clean.first.contentEquals(again.first) && clean.second.contentEquals(again.second)) {
+        "two replays of one tape must be bit-identical, or the gate has nothing to check"
+    }
+    check(log.driftFrom(clean, again) == 0f) { "identical tapes drift by zero, not by epsilon" }
+    val edited = log.replay(log.perturbed(), 640f, 340f)
+    for (i in 0..ReplayLog.PerturbIndex) {
+        check(clean.first[i] == edited.first[i] && clean.second[i] == edited.second[i]) {
+            "the edit reached backwards to frame $i, which a fixed-timestep replay cannot do"
+        }
+    }
+    check(clean.first[ReplayLog.DivergeAt] != edited.first[ReplayLog.DivergeAt]) {
+        "editing a frame must change the very next state, or the gate would pass a real change"
+    }
+    check(log.driftFrom(clean, edited) > 0f) { "a perturbed tape has to register drift" }
+    check(log.perturbed().count { f -> log.frames.none { it.mx == f.mx && it.my == f.my } } <= 1) {
+        "perturb edits one frame, not a range"
+    }
+    check(log.playheadAt(0f) == 0) { "the playhead starts at the recorded initial state" }
+    check(log.playheadAt(ReplayLog.FrameSeconds * ReplayLog.PathLength) == 0) { "and wraps at the end of the tape" }
+    check(log.playheadAt(LabStillSeconds) > ReplayLog.DivergeAt) {
+        "the still frame should sit past the split, where both paths are visible"
+    }
+
+}
+
+/** Clock burn: the corpus decides the shape, so the checks are on properties, not on values. */
+private fun checkClockBurn() {
+    check(clockDeciles.size == 10) { "the clock thesis is bucketed by decile" }
+    clockDeciles.forEachIndexed { i, d ->
+        check(d.bucket == i) { "decile $i is labelled ${d.bucket} — the chart plots by position" }
+        check(d.win in 0.0..1.0 && d.loss in 0.0..1.0) { "decile $i is not a fraction of a clock" }
+        check(oneDecimal(d.gap * 100).isNotEmpty()) { "decile $i's gap does not format" }
+    }
+    // The thesis itself: more clock left in wins than in losses, everywhere, and the gap opens
+    // rather than being there from move one. If a regenerated corpus breaks this, the caption lies.
+    check(clockDeciles.all { it.win >= it.loss }) { "a decile where losses kept more clock than wins" }
+    check(clockDeciles.first().gap < clockPeakDecile.gap / 2) { "the curves have to start together" }
+    check(clockPeakDecile.bucket in 4..8) { "the gap should peak in the middlegame, not the opening" }
+    val roundsUp = 8.35
+    val negativeGap = -1.24
+    check(oneDecimal(0.0) == "0.0" && oneDecimal(roundsUp) == "8.4" && oneDecimal(negativeGap) == "-1.2") {
+        "one-decimal formatting, including the negative case a subtraction can produce"
+    }
+    val clockShare = 0.083
+    check(pctOf(clockShare) == "8.3%") { "percentage formatting" }
+    check(clockBandLabel(0) == "0-10%" && clockBandLabel(9) == "90-100%") { "band labels span the game" }
 }

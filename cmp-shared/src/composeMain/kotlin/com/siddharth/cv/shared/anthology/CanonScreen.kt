@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,6 +29,7 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -43,6 +45,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.siddharth.cv.shared.data.generated.CanonLaw
 import com.siddharth.cv.shared.data.generated.CanonPoint
+import com.siddharth.cv.shared.data.generated.Rendering
 import com.siddharth.cv.shared.data.generated.SeasonCanon
 import com.siddharth.cv.shared.data.generated.afterlivesNote
 import com.siddharth.cv.shared.data.generated.anthology
@@ -57,6 +60,7 @@ import com.siddharth.cv.shared.data.generated.seasonCanon
 import com.siddharth.cv.shared.data.generated.standardIntervals
 import com.siddharth.cv.shared.data.generated.tether
 import com.siddharth.cv.shared.data.generated.tetherDoctrine
+import com.siddharth.cv.shared.media.ProjectShot
 import com.siddharth.cv.shared.theme.AnimatedCounter
 import com.siddharth.cv.shared.theme.CircuitDivider
 import com.siddharth.cv.shared.theme.CvCard
@@ -87,12 +91,12 @@ import com.siddharth.cv.shared.theme.cvType
  * writing one field. See [CanonBody]; that is the one non-obvious block in the file and it is
  * load-bearing, because a law's own name can be the spoiler.
  *
- * LOST AGAINST THE WEB, all of it for the same reason, which is that this port carries no bitmaps:
- *  - The bestiary plate above The Count. It becomes the drawn fourteen-cell figure the anthology
- *    hub uses, which states the same census without pretending to be the painting.
- *  - The four rendering portraits. That section argues with plates rather than asserting, and here
- *    it can only assert; the captions were already carrying the argument in words, so they stay and
- *    the frames go, rather than an invented panel standing in for a drawing of a person.
+ * LOST AGAINST THE WEB:
+ *  - The bestiary plate above The Count. It stays the drawn fourteen-cell figure the anthology hub
+ *    uses, which is derived from [namedThirteen] and therefore cannot outlive the corpus that fills
+ *    it. That is a substitute that earns its place, not a gap: the plate could be streamed the way
+ *    the four portraits below now are, and the drawn census says the same thing with a property the
+ *    painting does not have.
  *  - Tveggi's scratch, the seam between sections. It is an SVG string the emitter left behind, so
  *    the site's own [CircuitDivider] is the seam instead.
  */
@@ -467,11 +471,16 @@ private fun RefLink(label: String, onClick: () -> Unit) {
  * The strongest material in the project, and it reframes every image on the site, so it gets the
  * most room.
  *
- * On the web it argues with plates: four portraits at ~460px each, two across, captions outside the
- * frame. This port has no bitmaps, so the four states of the rig are argued in words alone. That is
- * a real loss and it is named rather than papered over with a generated panel. A drawn stand-in
- * for a portrait would be the instrument inventing a body, which is the one thing this doctrine
- * says it does not get to do.
+ * It argues with plates, so it gets the plates. Four portraits, two across, streamed from the live
+ * origin by [plateUrl] and captioned outside the frame exactly as the web does, because the web
+ * portraits are flattened illustrations on baked cream paper with no alpha: type laid over one
+ * would be unreadable, and a caption floating on the ink ground beside it would read as a cut-out
+ * that is not there.
+ *
+ * The floor when a fetch fails is [com.siddharth.cv.shared.media.ProjectShot]'s generated gradient,
+ * which is the correct failure here and not a stand-in for a person: it is plainly a loading panel,
+ * and the `contentDescription` still carries the rendering's own note, so the argument survives an
+ * offline reader without the instrument inventing a body it does not get to invent.
  */
 private fun LazyListScope.renderingSection(
     twoUp: Boolean,
@@ -513,21 +522,7 @@ private fun LazyListScope.renderingSection(
             ) {
                 row.forEachIndexed { i, r ->
                     Box(Modifier.weight(1f)) {
-                        Reveal(delayMillis = i * 80) {
-                            val witness = anthology.witnesses.firstOrNull { it.id == r.witnessId }
-                            CvCard(Modifier.fillMaxWidth(), glowOnHover = false) {
-                                SectionEyebrow("the rig ${r.state}")
-                                Spacer(Modifier.height(12.dp))
-                                BasicText(
-                                    text = witness?.name ?: r.witnessId,
-                                    style = cvType.cardTitle.copy(color = cvColors.onBackground),
-                                )
-                                Spacer(Modifier.height(10.dp))
-                                BasicText(text = r.note, style = cvType.bodySmall)
-                                Spacer(Modifier.height(14.dp))
-                                RefLink("read the entry") { openRead(r.slug, uri) }
-                            }
-                        }
+                        Reveal(delayMillis = i * 80) { RenderingCard(r, uri) }
                     }
                 }
                 repeat(columns - row.size) { Spacer(Modifier.weight(1f)) }
@@ -555,6 +550,40 @@ private fun LazyListScope.renderingSection(
                 RefLink("The tellers are on the roll") { onOpenAnthology(AnthologyLayer.Tellers) }
             }
         }
+    }
+}
+
+/**
+ * One state of the rig: the portrait that is the evidence for it, then the caption, outside the
+ * frame and never over the plate. The web portraits are flattened illustrations on baked cream
+ * paper with no alpha channel, so type laid on one would be unreadable and type floating beside one
+ * would read as a cut-out that is not there.
+ */
+@Composable
+private fun RenderingCard(r: Rendering, uri: UriHandler) {
+    val witness = anthology.witnesses.firstOrNull { it.id == r.witnessId }
+    CvCard(Modifier.fillMaxWidth(), glowOnHover = false) {
+        val art = witness?.art?.let { plateUrl(it) }
+        if (art != null) {
+            ProjectShot(
+                url = art,
+                // The note IS the evidence for the state the eyebrow names, so it is the
+                // description too: a reader who cannot see the plate gets the same argument.
+                label = "${witness.name}, rendered. ${r.note}",
+                modifier = Modifier.fillMaxWidth().aspectRatio(portraitAspect).clip(PlateShape),
+            )
+            Spacer(Modifier.height(16.dp))
+        }
+        SectionEyebrow("the rig ${r.state}")
+        Spacer(Modifier.height(12.dp))
+        BasicText(
+            text = witness?.name ?: r.witnessId,
+            style = cvType.cardTitle.copy(color = cvColors.onBackground),
+        )
+        Spacer(Modifier.height(10.dp))
+        BasicText(text = r.note, style = cvType.bodySmall)
+        Spacer(Modifier.height(14.dp))
+        RefLink("read the entry") { openRead(r.slug, uri) }
     }
 }
 
