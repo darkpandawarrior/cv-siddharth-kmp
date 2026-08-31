@@ -522,6 +522,24 @@ private fun greetingFor(route: Route): String = when (route) {
         "compile step."
     Route.Forge -> "You're in **the forge** — a few thousand particles spring-tied to the wordmark. " +
         "Ask me anything about the rest of the site while you play with it."
+    Route.Hire -> "You're on **the short version** — the claim, the number behind it, and the link " +
+        "that proves it. Ask me to expand any row, or paste a job description at me."
+    Route.Shipped -> "You're looking at **the fleet** — every Play Store listing his commits " +
+        "reached, live and pulled. Ask me what his hand actually did on any of them."
+    Route.Ops -> "You're at **the ops board** — what reports, what has gone stale, what is broken. " +
+        "Ask me what any row is measuring, or what happens when one goes red."
+    Route.Weeb -> "You're in **Weeb Central** — a hand-kept list read as evidence. Ask me what the " +
+        "findings are, or go back to the engineering."
+    Route.Loopdown -> "You're in **Loopdown** — the field notes. Ask me about any lesson, or about " +
+        "the bug it came out of."
+    Route.Ink -> "You're in **the Ink** — the writing that predates the code. Ask me about it, or " +
+        "ask me to take you back to the Android work."
+    is Route.Anthology -> "You're in **the anthology** — ask me anything about it, or ask me to " +
+        "show you somewhere else on the site."
+    Route.Canon -> "You're reading **the canon** — the laws and the count behind the anthology. " +
+        "Mind the spoiler gates; ask me about the open half freely."
+    Route.Making -> "You're on **the making-of** — the audit, the pipeline and the spend. Ask me " +
+        "how any of it was verified."
     Route.Home -> HOME_GREETING
 }
 

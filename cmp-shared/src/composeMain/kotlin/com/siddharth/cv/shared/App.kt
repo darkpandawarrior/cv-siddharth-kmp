@@ -46,10 +46,15 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import com.siddharth.cv.shared.anthology.AnthologyScreen
+import com.siddharth.cv.shared.anthology.CanonScreen
+import com.siddharth.cv.shared.anthology.MakingScreen
 import com.siddharth.cv.shared.chat.FloatingChat
 import com.siddharth.cv.shared.data.profile
 import com.siddharth.cv.shared.forge.ParticleForge
+import com.siddharth.cv.shared.hire.HireScreen
 import com.siddharth.cv.shared.labs.LabScreen
+import com.siddharth.cv.shared.ops.OpsScreen
 import com.siddharth.cv.shared.palette.CommandPalette
 import com.siddharth.cv.shared.palette.PaletteCommand
 import com.siddharth.cv.shared.playground.PlaygroundScreen
@@ -58,7 +63,11 @@ import com.siddharth.cv.shared.detail.ResumeScreen
 import com.siddharth.cv.shared.home.HomeScreen
 import com.siddharth.cv.shared.home.homeSections
 import com.siddharth.cv.shared.media.InstallCvImageLoader
+import com.siddharth.cv.shared.shipped.ShippedScreen
 import com.siddharth.cv.shared.terminal.TerminalScreen
+import com.siddharth.cv.shared.weeb.WeebScreen
+import com.siddharth.cv.shared.writing.InkScreen
+import com.siddharth.cv.shared.writing.LoopdownScreen
 import com.siddharth.cv.shared.theme.CvTheme
 import com.siddharth.cv.shared.theme.ShaderOrGradientBackground
 import com.siddharth.cv.shared.theme.cvColors
@@ -136,16 +145,7 @@ fun App(
 
                 // Screens that re-theme (résumé paper, per-project accent) nest their own CvTheme,
                 // so the ambient layer behind them keeps the site's dark palette by construction.
-                val content = Modifier.fillMaxSize().padding(top = TopBarHeight)
-                when (val route = nav.current) {
-                    Route.Home -> HomeScreen(homeList, content)
-                    Route.Resume -> ResumeScreen(content)
-                    Route.Terminal -> TerminalScreen(content)
-                    Route.Lab -> LabScreen(content)
-                    Route.Forge -> ParticleForge(content)
-                    Route.Playground -> PlaygroundScreen(content)
-                    is Route.ProjectDetail -> ProjectDetailScreen(route.slug, content)
-                }
+                RouteHost(nav, homeList, Modifier.fillMaxSize().padding(top = TopBarHeight))
 
                 TopBar(nav, homeList)
 
@@ -174,6 +174,51 @@ fun App(
 }
 
 /**
+ * Route -> screen, and nothing else. Sixteen entries is a table rather than control flow, and it
+ * lives outside [App] so that adding a route grows a table instead of pushing the app's one
+ * composable past what anyone can read in a sitting.
+ *
+ * Cross-room links are lambdas rather than routes baked into the screens. A screen that reaches for
+ * [CvNavState] itself cannot be rendered from a preview, a test or the prerenderer, and the four
+ * fiction rooms link to each other in a cycle that would otherwise make every one of them depend on
+ * every other.
+ */
+@Composable
+private fun RouteHost(nav: CvNavState, homeList: LazyListState, content: Modifier) {
+    when (val route = nav.current) {
+        Route.Home -> HomeScreen(homeList, content)
+        Route.Resume -> ResumeScreen(content)
+        Route.Terminal -> TerminalScreen(content)
+        Route.Lab -> LabScreen(content)
+        Route.Forge -> ParticleForge(content)
+        Route.Playground -> PlaygroundScreen(content)
+        Route.Hire -> HireScreen(content)
+        Route.Shipped -> ShippedScreen(content)
+        Route.Weeb -> WeebScreen(content)
+        Route.Ops -> OpsScreen(content)
+        Route.Loopdown -> LoopdownScreen(onOpenInk = { nav.go(Route.Ink) }, modifier = content)
+        Route.Ink -> InkScreen(
+            onOpenLoopdown = { nav.go(Route.Loopdown) },
+            onOpenAnthology = { nav.go(Route.Anthology()) },
+            modifier = content,
+        )
+        is Route.Anthology -> AnthologyScreen(
+            onOpenCanon = { nav.go(Route.Canon) },
+            modifier = content,
+            initialLayer = route.layer,
+        )
+        // The layer travels: /canon points at a named one, and Route.Anthology carries it into the
+        // URL, so the Back button and a pasted link agree with the click that got you there.
+        Route.Canon -> CanonScreen(
+            onOpenAnthology = { layer -> nav.go(Route.Anthology(layer)) },
+            modifier = content,
+        )
+        Route.Making -> MakingScreen(onReadAnthology = { nav.go(Route.Anthology()) }, modifier = content)
+        is Route.ProjectDetail -> ProjectDetailScreen(route.slug, content)
+    }
+}
+
+/**
  * Palette id -> action. The ids are strings rather than lambdas so `palette/CommandPalette.kt` needs
  * no dependency on navigation, the clipboard or the URI handler — it just lists what exists and lets
  * this decide what any of it means. `paletteSelfCheck` already asserts the ids are unique.
@@ -193,14 +238,10 @@ private fun runPaletteCommand(
     when (kind) {
         "section" -> nav.goSection(value)
         "project" -> nav.go(Route.ProjectDetail(value))
-        "route" -> when (value) {
-            "resume" -> nav.go(Route.Resume)
-            "terminal" -> nav.go(Route.Terminal)
-            "lab" -> nav.go(Route.Lab)
-            "forge" -> nav.go(Route.Forge)
-            "compose", "playground" -> nav.go(Route.Playground)
-            "home" -> nav.go(Route.Home)
-        }
+        // Matched back against the list the ids were generated from, rather than a second table of
+        // fifteen branches that has to be remembered. `paletteSelfCheck` already asserts every
+        // route row's id is exactly this string, so the lookup cannot miss one.
+        "route" -> staticRoutes.firstOrNull { it.toPath().removePrefix("/") == value }?.let(nav::go)
         "action" -> when (value) {
             "copy-email" -> clipboard.setText(AnnotatedString(profile.email))
             "github" -> uriHandler.openUri(profile.github)

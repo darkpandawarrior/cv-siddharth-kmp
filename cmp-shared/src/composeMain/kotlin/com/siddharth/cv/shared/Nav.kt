@@ -6,14 +6,15 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import com.siddharth.cv.shared.anthology.AnthologyLayer
 
 /**
- * The surfaces that ported: seven route kinds out of the React site's twenty-three addressable
+ * The surfaces that ported: sixteen route kinds out of the React site's twenty-three addressable
  * routes (the `.tsx` files in `src/routes`, minus `__root` and the catch-all).
  *
- * The sixteen that are missing are NOT all blocked, and the README says which is which rather than
+ * The seven that are missing are NOT all blocked, and the README says which is which rather than
  * this comment guessing: two are blocked on the platform (`/blueprint`, `/pulse`), one is
- * deliberately dropped (`/playground`), and the remaining thirteen are simply not ported yet. They
+ * deliberately dropped (`/playground`), and the remaining four are simply not ported yet. They
  * are absent rather than stubbed because a `Route` entry with nothing behind it is a dead end, not
  * a roadmap.
  *
@@ -40,6 +41,40 @@ sealed interface Route {
 
     /** The Compose playground — interpreted subset, rendered with real composables. */
     data object Playground : Route
+
+    /** The ninety-second page, for a reader who wants the claim and the proof and nothing else. */
+    data object Hire : Route
+
+    /** The Play Store fleet: every listing his commits reached, live and pulled. */
+    data object Shipped : Route
+
+    /** Weeb Central: the anime and manga ledger read as evidence rather than as a list. */
+    data object Weeb : Route
+
+    /** The ops board: what reports, what has gone stale, what is broken. */
+    data object Ops : Route
+
+    /** Loopdown: the field notes index, its series and its personified-bug cast. */
+    data object Loopdown : Route
+
+    /** The Ink: the doorway room, and the writing that predates the code. */
+    data object Ink : Route
+
+    /**
+     * The anthology, carrying which layer it opens on.
+     *
+     * The only fixed-path route with a field, and it earns it: `/canon` links straight at a named
+     * layer, and the React route encodes that in the URL the same way (`?layer=tellers`), with the
+     * default normalised away. A parameterless entry would have made every one of those links land
+     * on the first layer and quietly lose the destination.
+     */
+    data class Anthology(val layer: AnthologyLayer = AnthologyLayer.Form) : Route
+
+    /** The canon: the count, the laws, the doctrine, and the line the spoilers sit below. */
+    data object Canon : Route
+
+    /** How the anthology was made: the blind audit, the pipeline, the spend, the receipts. */
+    data object Making : Route
 }
 
 /**
@@ -51,7 +86,23 @@ sealed interface Route {
  * makes the `when`s exhaustive; this makes the enumerations single-sourced.
  */
 val staticRoutes: List<Route> =
-    listOf(Route.Home, Route.Resume, Route.Terminal, Route.Lab, Route.Forge, Route.Playground)
+    listOf(
+        Route.Home,
+        Route.Resume,
+        Route.Hire,
+        Route.Shipped,
+        Route.Ops,
+        Route.Terminal,
+        Route.Lab,
+        Route.Forge,
+        Route.Playground,
+        Route.Weeb,
+        Route.Loopdown,
+        Route.Ink,
+        Route.Anthology(),
+        Route.Canon,
+        Route.Making,
+    )
 
 /**
  * The whole router. No navigation-compose: a back stack is a list, and `mutableStateListOf` already
@@ -129,6 +180,18 @@ fun Route.toPath(): String = when (this) {
     Route.Lab -> "/lab"
     Route.Forge -> "/forge"
     Route.Playground -> "/compose"
+    Route.Hire -> "/hire"
+    Route.Shipped -> "/shipped"
+    Route.Weeb -> "/weeb"
+    Route.Ops -> "/ops"
+    Route.Loopdown -> "/loopdown"
+    Route.Ink -> "/ink"
+    Route.Canon -> "/canon"
+    Route.Making -> "/making"
+    // The default layer is dropped from the URL, exactly as anthology.tsx drops it: one page,
+    // one canonical address, and `?layer=form` normalising to `/anthology` on both builds.
+    is Route.Anthology ->
+        if (layer == AnthologyLayer.Form) "/anthology" else "/anthology?layer=${layer.key}"
     is Route.ProjectDetail -> "/project/$slug"
 }
 
@@ -141,7 +204,8 @@ fun Route.toPath(): String = when (this) {
  * routes came to be labelled "web only" on their own home page.
  */
 fun routeOrNull(path: String): Route? {
-    val clean = path.substringBefore('?').substringBefore('#').trimEnd('/')
+    val noHash = path.substringBefore('#')
+    val clean = noHash.substringBefore('?').trimEnd('/')
     return when {
         clean.isEmpty() -> Route.Home
         clean == "/resume" -> Route.Resume
@@ -150,9 +214,30 @@ fun routeOrNull(path: String): Route? {
         clean == "/forge" -> Route.Forge
         // "/compose" mirrors the React site's route name for this surface.
         clean == "/compose" -> Route.Playground
+        clean == "/hire" -> Route.Hire
+        clean == "/shipped" -> Route.Shipped
+        clean == "/weeb" -> Route.Weeb
+        clean == "/ops" -> Route.Ops
+        clean == "/loopdown" -> Route.Loopdown
+        clean == "/ink" -> Route.Ink
+        clean == "/anthology" -> Route.Anthology(anthologyLayer(noHash.substringAfter('?', "")))
+        clean == "/canon" -> Route.Canon
+        clean == "/making" -> Route.Making
         clean.startsWith("/project/") -> Route.ProjectDetail(clean.removePrefix("/project/"))
         else -> null
     }
+}
+
+/**
+ * `?layer=tellers` -> [AnthologyLayer.Tellers]. The only query string this router reads.
+ *
+ * Absent, unrecognised or misspelled is the default layer rather than a throw, which is what
+ * anthology.tsx does with the same input: a shared link with a stale layer key still opens the
+ * page it names instead of 404ing on a detail nobody typed on purpose.
+ */
+private fun anthologyLayer(query: String): AnthologyLayer {
+    val key = query.split('&').firstOrNull { it.startsWith("layer=") }?.removePrefix("layer=")
+    return AnthologyLayer.entries.firstOrNull { it.key == key } ?: AnthologyLayer.Form
 }
 
 /**
@@ -202,9 +287,24 @@ internal fun navSelfCheck() {
     // Path mapping must round-trip, or the URL bar and the router disagree after a refresh.
     listOf(
         Route.Home, Route.Resume, Route.Terminal, Route.Lab, Route.Forge, Route.Playground,
+        Route.Hire, Route.Shipped, Route.Weeb, Route.Ops, Route.Loopdown, Route.Ink,
+        Route.Anthology(), Route.Anthology(AnthologyLayer.Tellers), Route.Canon, Route.Making,
         Route.ProjectDetail("mileway"),
     ).forEach {
         check(routeFromPath(it.toPath()) == it) { "round-trip ${it.toPath()}" }
+    }
+
+    // The one query string this router reads. Each of these is a link somebody can paste.
+    check(Route.Anthology().toPath() == "/anthology") { "the default layer is not written into the URL" }
+    check(Route.Anthology(AnthologyLayer.Map).toPath() == "/anthology?layer=map") { "a named layer is" }
+    check(routeOrNull("/anthology?layer=nonsense") == Route.Anthology()) {
+        "an unrecognised layer opens the page rather than failing it"
+    }
+    check(routeOrNull("/anthology?utm=x&layer=tellers") == Route.Anthology(AnthologyLayer.Tellers)) {
+        "the layer is found beside other query parameters"
+    }
+    check(routeOrNull("/anthology?layer=map#worlds") == Route.Anthology(AnthologyLayer.Map)) {
+        "a fragment is not part of the query"
     }
     check(routeFromPath("/project/mileway/") == Route.ProjectDetail("mileway")) { "trailing slash" }
     check(routeFromPath("/project/mileway?utm=x") == Route.ProjectDetail("mileway")) { "query stripped" }
@@ -214,6 +314,8 @@ internal fun navSelfCheck() {
     // rather than "home", or every unported room silently claims to be a page on this build.
     check(routeOrNull("/nonsense") == null) { "unknown path is null, not home" }
     check(routeOrNull("/blueprint") == null) { "an unported React room is null" }
+    check(routeOrNull("/map") == null) { "so is a room that is portable but still unbuilt" }
+    check(routeOrNull("/hire") == Route.Hire) { "a room ported in this pass is not null" }
     check(routeOrNull("/compose") == Route.Playground) { "a shipped room is not null" }
     check(routeOrNull("") == Route.Home) { "the empty path is still home" }
 
