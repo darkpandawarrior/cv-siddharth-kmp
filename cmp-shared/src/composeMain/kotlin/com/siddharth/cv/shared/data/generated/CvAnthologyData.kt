@@ -4,10 +4,11 @@ package com.siddharth.cv.shared.data.generated
 // Source of truth: cv-siddharth/src/data/anthology.ts
 // Run `npm run gen:kotlin` in the React repo to refresh; this file is
 // rewritten wholesale and any hand edit is lost on the next build.
-// Left behind: every story `body` (448 KB) and every `sigil` (206 KB of
-// inline animated SVG). /read is not ported and Compose has no SVG-string
-// renderer, so both would be dead weight in a wasm bundle a visitor
-// downloads. `mark` goes with them for the same reason.
+// Left behind: every story `body` (448 KB), every `sigil` (206 KB of
+// inline animated SVG), and `mark`. The ported /read serves the nine
+// Excelsior pieces in CvArchiveTextData.kt, not the anthology, and Compose
+// has no SVG-string renderer — so all three would be dead weight in a wasm
+// bundle a visitor downloads.
 
 data class AnthologyMeta(
     val slug: String,

@@ -1,15 +1,24 @@
+// TooManyFunctions: this file is one small function per section of one page, times thirty-three
+// pages. Splitting it by route would put a page's head copy and its body in different files, which
+// is the drift the whole generator exists to prevent.
+@file:Suppress("TooManyFunctions")
+
 package com.siddharth.cv.shared.prerender
 
 import com.siddharth.cv.shared.Route
 import com.siddharth.cv.shared.chat.floatingChatSelfCheck
+import com.siddharth.cv.shared.chess.chessScreenSelfCheck
 import com.siddharth.cv.shared.detail.mermaidLayoutSelfCheck
 import com.siddharth.cv.shared.detail.mermaidParseSelfCheck
 import com.siddharth.cv.shared.detail.resumeHtmlSelfCheck
+import com.siddharth.cv.shared.excelsior.excelsiorSelfCheck
 import com.siddharth.cv.shared.forge.forgeSelfCheck
 import com.siddharth.cv.shared.labs.LabGroup
 import com.siddharth.cv.shared.labs.cvLabs
 import com.siddharth.cv.shared.labs.labScreenSelfCheck
 import com.siddharth.cv.shared.labs.labsSelfCheck
+import com.siddharth.cv.shared.map.describeStoryMap
+import com.siddharth.cv.shared.map.mapScreenSelfCheck
 import com.siddharth.cv.shared.palette.paletteSelfCheck
 import com.siddharth.cv.shared.playground.composeInterpreterSelfCheck
 import com.siddharth.cv.shared.playground.composePresets
@@ -40,6 +49,13 @@ import com.siddharth.cv.shared.data.resumeSkills
 import com.siddharth.cv.shared.data.sharedFoundation
 import com.siddharth.cv.shared.data.generated.anthology
 import com.siddharth.cv.shared.data.generated.anthologyEntries
+import com.siddharth.cv.shared.data.generated.chess
+import com.siddharth.cv.shared.data.generated.chessDeep
+import com.siddharth.cv.shared.data.generated.excelsiorEditions
+import com.siddharth.cv.shared.data.generated.excelsiorMarks
+import com.siddharth.cv.shared.data.generated.printedPieces
+import com.siddharth.cv.shared.data.generated.storyMapEdges
+import com.siddharth.cv.shared.data.generated.storyMapNodes
 import com.siddharth.cv.shared.data.generated.auditMethod
 import com.siddharth.cv.shared.data.generated.boardArc
 import com.siddharth.cv.shared.data.generated.boardProfiles
@@ -79,6 +95,8 @@ import com.siddharth.cv.shared.data.generated.tetherDoctrine
 import com.siddharth.cv.shared.data.generated.lastShipped
 import com.siddharth.cv.shared.data.siteRooms
 import com.siddharth.cv.shared.data.skills
+import com.siddharth.cv.shared.read.parsePiece
+import com.siddharth.cv.shared.read.readParseSelfCheck
 import com.siddharth.cv.shared.shipped.shippedFormatSelfCheck
 import com.siddharth.cv.shared.writing.titleize
 import com.siddharth.cv.shared.terminal.TerminalEngine
@@ -151,15 +169,26 @@ object Prerender {
 
 /**
  * Every page this build emits: Nav.kt's `staticRoutes`, never re-typed here, plus one page per
- * project that actually has a detail block. A route added to Nav.kt gets a page and a sitemap entry
- * without anyone remembering this file exists; a project without a detail block is skipped for the
- * same reason the command palette skips it, an indexable page with nothing on it being worse than
- * no page.
+ * project that actually has a detail block and one per printed piece. A route added to Nav.kt gets
+ * a page and a sitemap entry without anyone remembering this file exists; a project without a
+ * detail block is skipped for the same reason the command palette skips it, an indexable page with
+ * nothing on it being worse than no page.
+ *
+ * The two parameterised routes are what makes the page count grow faster than the route count:
+ * twenty route kinds, thirty-three URLs. `/read` alone is nine of them, and they are the pages this
+ * build most wants indexed, because the prose on them is the only content here that exists nowhere
+ * else in a crawlable form. The React route publishes the same nine as client-rendered markdown.
+ *
+ * `/excelsior` contributes exactly one page despite carrying query state. A page per spread would
+ * be 396 files whose only difference is a scroll position, and `outputFile` would have to invent a
+ * filename for a `?`; `selfCheck` asserts it never does.
  *
  * A val rather than a line inside `main` so [readmeSelfCheck] counts the same list that ships.
  */
 private val prerenderRoutes: List<Route> =
-    staticRoutes + projects.filter { it.detail != null }.map { Route.ProjectDetail(it.slug) }
+    staticRoutes +
+        projects.filter { it.detail != null }.map { Route.ProjectDetail(it.slug) } +
+        printedPieces.map { Route.Read(it.slug) }
 
 /**
  * Fallback origin. Overridden by `args[1]` or `CV_SITE_ORIGIN`; only used so a bare local run
@@ -196,6 +225,7 @@ private fun Route.outputFile(root: File): File {
  * `page` defaults to the website type, no share image and the Person record, which is what most of
  * these are; only the pages that genuinely differ say so.
  */
+@Suppress("CyclomaticComplexMethod") // A route table. See the note on Route.toPath() in Nav.kt.
 private fun render(route: Route, origin: String): String = when (route) {
     Route.Home ->
         page(route, origin, "${profile.name} — ${profile.title}", profile.intro, homeBody(), "profile", HERO)
@@ -227,6 +257,14 @@ private fun render(route: Route, origin: String): String = when (route) {
         page(route, origin, "The Canon — ${anthology.title}", CANON_DESCRIPTION, canonBody())
     Route.Making ->
         page(route, origin, "The Making — ${anthology.title}", MAKING_DESCRIPTION, makingBody())
+    Route.Chess ->
+        page(route, origin, "The Board — ${profile.name}", roomBlurb("/chess"), chessBody())
+    Route.Map ->
+        page(route, origin, "The Story Map — ${profile.name}", roomBlurb("/map"), mapBody())
+    // One page for the reader, at its own default. The `?year=&page=` addresses are real and
+    // shareable, and they resolve in the app; they are not separate documents to index.
+    is Route.Excelsior ->
+        page(route, origin, "Excelsior — ${profile.name}", EXCELSIOR_DESCRIPTION, excelsiorBody())
 
     is Route.ProjectDetail -> {
         // Only slugs taken from `projects` reach here (main() builds the list), so this is a
@@ -243,7 +281,33 @@ private fun render(route: Route, origin: String): String = when (route) {
             jsonLd = projectLd(project, origin),
         )
     }
+
+    // The head shape read.$slug.tsx emits, field for field: the piece's own title, its blurb as
+    // both description and og:description, and og:type article rather than website. The one
+    // deliberate difference is og:title, which is the full "<title>" here rather than the bare
+    // piece name, so that a shared card names the writer as well as the story.
+    is Route.Read -> {
+        val piece = printedPieces.first { it.slug == route.slug }
+        page(
+            route = route,
+            origin = origin,
+            title = "${piece.title} — ${profile.name}",
+            description = piece.blurb,
+            body = readBody(piece),
+            ogType = "article",
+        )
+    }
 }
+
+/**
+ * A room's own blurb out of the surface registry, which is where `roomHead` in the React repo gets
+ * the same sentence. Two rooms landed in this pass that already had a description in `siteRooms`
+ * and writing a second one here would be the fourth copy the registry's own doc comment warns
+ * about. `error` rather than a fallback: a missing room is a typo in a string literal, and a
+ * silently generic description is exactly the duplicate-content problem `roomHead` exists to fix.
+ */
+private fun roomBlurb(path: String): String =
+    siteRooms.firstOrNull { it.to == path }?.blurb ?: error("no siteRooms entry for $path")
 
 /**
  * The one share image this build has for a page that is not a project: a real screenshot of a real
@@ -401,6 +465,7 @@ private val PAGE_CSS = """
     #seo a { color: #3ddc84; }
     #seo .muted { color: #8b909a; }
     #seo .lead { font-size: 1.05rem; }
+    #seo blockquote { margin: 1rem 0; padding-left: 1rem; border-left: 2px solid #3ddc84; color: #b9c0b9; }
     #seo nav { font: 400 12px/2 ui-monospace, monospace; margin-bottom: 2rem; }
     #seo nav a { margin-right: .9rem; white-space: nowrap; }
     #seo pre { overflow-x: auto; font: 400 12px/1.55 ui-monospace, monospace; color: #b9c0b9; }
@@ -409,7 +474,7 @@ private val PAGE_CSS = """
 /**
  * Every route linked from every page. This is the single highest-value thing on the page for
  * indexability: without it a crawler that lands on one project page has no path to the other
- * twenty, because the app's own navigation is canvas clicks it cannot see.
+ * thirty-two, because the app's own navigation is canvas clicks it cannot see.
  *
  * Walks [prerenderRoutes] rather than a second hand-typed list. That list used to be typed here,
  * and it was already two kinds of wrong: it had never been given `/compose`'s neighbours, and it
@@ -431,10 +496,11 @@ private fun siteNav(current: Route): String = buildString {
 }
 
 /**
- * The one-word name of a route in the site nav. Short on purpose: this strip carries twenty-one
+ * The one-word name of a route in the site nav. Short on purpose: this strip carries thirty-three
  * links on every page and the descriptive wording belongs in the `<title>` and the palette, not in
  * a mono nav rule. Exhaustive, so a new route cannot ship without being named here.
  */
+@Suppress("CyclomaticComplexMethod") // A route table. See the note on Route.toPath() in Nav.kt.
 private fun Route.navLabel(): String = when (this) {
     Route.Home -> "Home"
     Route.Resume -> "Résumé"
@@ -451,7 +517,11 @@ private fun Route.navLabel(): String = when (this) {
     is Route.Anthology -> "Anthology"
     Route.Canon -> "Canon"
     Route.Making -> "Making"
+    Route.Chess -> "Chess"
+    Route.Map -> "Map"
+    is Route.Excelsior -> "Excelsior"
     is Route.ProjectDetail -> slug
+    is Route.Read -> slug
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -1136,6 +1206,193 @@ private fun projectBody(project: Project): String = buildString {
 }
 
 /**
+ * One piece of prose, and the reason `/read` is nine pages rather than one.
+ *
+ * The blocks come from `parsePiece`, the SAME parser the Compose screen draws, rather than from a
+ * second split written here. That is the whole point of the parser being its own file: a
+ * blockquote that is a paragraph in the crawlable layer and an epigraph in the app would be two
+ * documents claiming to be one piece, which is the drift this generator exists to make impossible.
+ * The four pieces whose line breaks are U+2028 rather than newline are three walls of text without
+ * it; a browser draws U+2028 as a forced break, so the React page has always been right about this
+ * and a naive re-split here would have been the one place the two views disagreed.
+ *
+ * Italic spans are dropped. They are the only inline markup in the corpus and they carry emphasis,
+ * not structure, so an `<em>` here would add a tag a crawler weighs and a reader cannot see.
+ *
+ * Line breaks inside a block are NOT dropped, and getting that wrong is what this comment exists
+ * for. See [breaks].
+ */
+private fun readBody(piece: com.siddharth.cv.shared.data.generated.PrintedPiece): String = buildString {
+    h1(piece.title)
+    // Provenance first, because it is the claim the page is making: this ran on paper, on a page
+    // you can go and look at. Only five of the nine carry a page number.
+    val ran = if (piece.page > 0) {
+        "Excelsior ${piece.year}, page ${piece.page}. ${piece.words} words"
+    } else {
+        "${piece.form.replace('-', ' ')}, ${piece.era}. ${piece.words} words"
+    }
+    p(ran, cls = "muted")
+
+    parsePiece(piece.body).forEach { block ->
+        if (block.quote) blockquote(breaks(block.text)) else p(breaks(block.text), raw = true)
+    }
+
+    if (piece.page > 0) {
+        h2("In print")
+        p(
+            "Read the page it ran on: " +
+                link("Excelsior ${piece.year}, page ${piece.page}", "/excelsior?year=${piece.year}&page=${piece.page}"),
+            raw = true,
+        )
+    }
+
+    h2("The rest of the printed work")
+    ul(
+        printedPieces.filter { it.slug != piece.slug }.map {
+            "${link(it.title, "/read/${it.slug}")} <span class=\"muted\">${esc(it.era)}</span> — ${esc(it.blurb)}"
+        },
+        raw = true,
+    )
+}
+
+private val EXCELSIOR_DESCRIPTION =
+    "${excelsiorEditions.size} editions of MANIT Bhopal's institute magazine, " +
+        "${excelsiorEditions.sumOf { it.pages }} scanned pages, readable in full. English Editor " +
+        "on 2019 and 2020, Joint Chief Editor on 2021."
+
+/**
+ * The magazine, as an index rather than as pages.
+ *
+ * The 396 page images stream from the live origin and are not in this repo, so the crawlable layer
+ * has nothing to show and says what it has instead: the editions, their canonical PDFs, and the
+ * ten curated marks with the prose behind each one linked. That is the honest shape anyway. A
+ * scan is unsearchable by construction, which is the whole argument `/read` was built on.
+ */
+private fun excelsiorBody(): String = buildString {
+    h1("Excelsior")
+    p(EXCELSIOR_DESCRIPTION, cls = "lead")
+
+    h2("Editions")
+    ul(
+        excelsiorEditions.map {
+            "<b>${esc(it.year)}</b> — ${it.pages} pages. ${link("MANIT's own PDF", it.source)}"
+        },
+        raw = true,
+    )
+
+    // `wrote` marks link to the prose; `about` and `credit` marks name a page and stop there,
+    // because there is nothing readable behind them and a link to a scroll position is not a page.
+    h2("What is marked in them")
+    ul(
+        excelsiorMarks.map { mark ->
+            val where = "${esc(mark.year)}, page ${mark.page}"
+            val title = mark.readSlug
+                ?.let { link(mark.label, "/read/$it") }
+                ?: esc(mark.label)
+            "<b>$title</b> <span class=\"muted\">$where · ${esc(mark.kind)}</span> — ${esc(mark.note)}"
+        },
+        raw = true,
+    )
+
+    p(
+        "The pages themselves are scans and carry no text layer. Every piece of his that ran in " +
+            "them is readable as prose under ${link("/read", "/read/${printedPieces.first().slug}")}.",
+        raw = true,
+    )
+}
+
+/**
+ * The board. Two of the room's seven tabs ported (the three-D scenes and the two board widgets did
+ * not), so this page carries the two that did: the clock finding and the corpus behind it.
+ *
+ * Every figure reads out of the generated corpus. The three constraints the screen renders as
+ * constraints are stated here as constraints too, because a crawler quoting "1,050 hours at the
+ * board" without "two measurement methods added together" would be quoting a number this repo
+ * does not actually claim.
+ */
+private fun chessBody(): String = buildString {
+    h1("The Board")
+    p(roomBlurb("/chess"), cls = "lead")
+
+    h2("The corpus")
+    ul(
+        listOf(
+            "${chess.totals.games} games, ${chess.span.from} to ${chess.span.to}",
+            "${chess.totals.wins} wins, ${chess.totals.losses} losses, ${chess.totals.draws} draws",
+            "${chess.boardTime.combinedHours} hours at the board: ${chess.boardTime.lichessHours} " +
+                "self-reported by lichess plus ${chess.boardTime.chesscomHours} derived from " +
+                "chess.com game clocks. Two measurement methods added together, not one metric.",
+            "${chess.discipline.distinctDays} distinct days out of ${chess.discipline.spanDays}, " +
+                "longest streak ${chess.discipline.longestDayStreak} days",
+        ),
+    )
+
+    h2("What decides them")
+    p(
+        "${pct(chess.thesis.decidedOnClock)} of decisive games end on the clock rather than on " +
+            "the board, over a sample of ${chess.thesis.sampleSize}. " +
+            "${pct(chess.thesis.lossesOnTime)} of losses are flags; ${pct(chess.thesis.winsOnTime)} " +
+            "of wins are.",
+    )
+    ul(
+        chessDeep.byEnding.map { "<b>${esc(it.status)}</b> — ${it.n} games, ${it.share}%" },
+        raw = true,
+    )
+
+    h2("Where the games came from")
+    ul(
+        chessDeep.bySource.map { "<b>${esc(it.source)}</b> — ${it.n} games, ${it.winRate}% won" },
+        raw = true,
+    )
+    p(
+        "The two platforms rate against different pools, so nothing here joins their ratings into " +
+            "one line.",
+        cls = "muted",
+    )
+
+    h2("Platforms")
+    ul(
+        chess.platforms.map { platform ->
+            val peaks = platform.peaks.joinToString(", ") { "${esc(it.format)} ${it.rating}" }
+            "${link(platform.id, platform.url)} — ${platform.games} games, joined " +
+                "${esc(platform.joined)}. Peaks: $peaks"
+        },
+        raw = true,
+    )
+}
+
+/** Percentage from a fraction, one decimal, trailing `.0` dropped. */
+private fun pct(fraction: Double): String {
+    val tenths = Math.round(fraction * 1000).toInt()
+    return if (tenths % 10 == 0) "${tenths / 10}%" else "${tenths / 10}.${tenths % 10}%"
+}
+
+/**
+ * The story map.
+ *
+ * The prose paragraph is `describeStoryMap`, the same sentence the Compose canvas hands to a
+ * screen reader as its `contentDescription`. One description of the graph, two consumers: a canvas
+ * emits no text nodes and a prerendered page has nothing but them, and both problems have the same
+ * answer. The node list under it is the actual navigation, which is what the React room keeps as a
+ * chip row underneath its own WebGL scene for the same reason.
+ */
+private fun mapBody(): String = buildString {
+    h1("The Story Map")
+    p(roomBlurb("/map"), cls = "lead")
+    p(describeStoryMap(storyMapNodes, storyMapEdges))
+
+    h2("Every place on it")
+    ul(
+        storyMapNodes.map { node ->
+            val href = node.target.takeIf { it.startsWith("/") || it.startsWith("http") }
+            val label = if (href != null) link(node.label, href) else esc(node.label)
+            label + (node.sub?.let { " <span class=\"muted\">${esc(it)}</span>" } ?: "")
+        },
+        raw = true,
+    )
+}
+
+/**
  * A room links here when this build serves its path and out to the React original when it does not.
  * The router answers that question ([routeOrNull]), so a room that ports later starts linking
  * inward on the next prerender with no edit here. Linking an unported room at this origin would
@@ -1267,6 +1524,7 @@ private fun ld(build: kotlinx.serialization.json.JsonObjectBuilder.() -> Unit): 
  * run makes every page claim it changed on every deploy, which search engines learn to ignore and
  * which would make the output non-reproducible for build caching. Priority is the only hint given.
  */
+@Suppress("CyclomaticComplexMethod") // A route table. See the note on Route.toPath() in Nav.kt.
 private fun sitemap(routes: List<Route>, origin: String): String = buildString {
     append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n")
     append("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n")
@@ -1282,15 +1540,24 @@ private fun sitemap(routes: List<Route>, origin: String): String = buildString {
             is Route.ProjectDetail -> "0.7"
             // Evidence about the work, one rung under a case study.
             Route.Shipped -> "0.7"
+            // The nine printed pieces. Weighted with the case studies rather than with the rooms
+            // they hang off, because each is a whole document of original prose and it is the only
+            // place on this origin that prose is crawlable at all.
+            is Route.Read -> "0.7"
             Route.Playground -> "0.6"
             Route.Loopdown -> "0.6"
             Route.Terminal -> "0.5"
             Route.Ink -> "0.5"
             is Route.Anthology -> "0.5"
+            // The evidence half of the archive. A rung under the prose it points at, on purpose:
+            // this page has an index and no text, and the pages it indexes are unsearchable scans.
+            is Route.Excelsior -> "0.4"
             // Demos: worth indexing, but they should never outrank a case study in results.
             Route.Lab -> "0.4"
             Route.Ops -> "0.4"
             Route.Weeb -> "0.4"
+            Route.Chess -> "0.4"
+            Route.Map -> "0.3"
             // Rooms off a room. Indexable, never a landing page.
             Route.Canon -> "0.3"
             Route.Making -> "0.3"
@@ -1360,6 +1627,25 @@ private fun StringBuilder.h3(text: String, raw: Boolean = false) {
     append("    <h3>${if (raw) text else esc(text)}</h3>\n")
 }
 
+/** The one block element `/read` needs that no other page does. Takes pre-escaped HTML, like [ul]. */
+private fun StringBuilder.blockquote(html: String) {
+    append("    <blockquote>$html</blockquote>\n")
+}
+
+/**
+ * One block's text, with its internal line breaks kept.
+ *
+ * `parsePiece` turns U+2028 into a real newline inside the block, which is what Compose breaks on.
+ * HTML does not: a bare newline inside a `<p>` collapses to a space. Without this, the four pieces
+ * that were pasted out of a word processor render correctly in the app and as three walls of text
+ * on the page a crawler reads, which is the worst of both, because it is invisible from either
+ * side. `<br>` is the exact analogue of what a browser already does with the U+2028 on the React
+ * site, doubled breaks and all. Promoting each line to its own `<p>` was the other option and it
+ * is wrong: it would flatten the difference between a line break and the paragraph gap the writer
+ * wrote as a doubled one.
+ */
+private fun breaks(text: String): String = text.split('\n').joinToString("<br>\n") { esc(it) }
+
 private fun StringBuilder.p(text: String, cls: String? = null, raw: Boolean = false) {
     val attr = cls?.let { " class=\"${esc(it)}\"" } ?: ""
     append("    <p$attr>${if (raw) text else esc(text)}</p>\n")
@@ -1385,6 +1671,9 @@ private fun StringBuilder.ul(items: List<String>, raw: Boolean = false) {
  */
 private const val MIN_CRAWLABLE_CHARS = 400
 
+// LongMethod: same reason navSelfCheck carries it. This one is also the project's only JVM entry
+// point, so every composeMain self-check has to be called from here or wasm DCE deletes it.
+@Suppress("LongMethod")
 internal fun selfCheck() {
     // The shared self-checks piggyback here because this is the ONLY entry point in the project
     // that actually executes on the JVM. Everything under composeMain is `internal` and called
@@ -1411,6 +1700,13 @@ internal fun selfCheck() {
     shippedFormatSelfCheck()
     anthologySelfCheck()
     makingSelfCheck()
+    // The four the final pass left behind. `readParseSelfCheck` is the one that matters most here:
+    // this file renders `parsePiece` output straight into nine indexable pages, so a parser
+    // regression would ship as silently corrupted prose on the only crawlable text this origin has.
+    readParseSelfCheck()
+    excelsiorSelfCheck()
+    chessScreenSelfCheck()
+    mapScreenSelfCheck()
     readmeSelfCheck()
 
     check(esc("a & b <c> \"d\" 'e'") == "a &amp; b &lt;c&gt; &quot;d&quot; &#39;e&#39;") { "escaping" }
@@ -1466,6 +1762,51 @@ internal fun selfCheck() {
         }
         check(html.contains(esc(project.tagline))) { "${project.slug}: real content, not a placeholder" }
         check(!html.contains("</script>\",")) { "${project.slug}: JSON-LD cannot break out of its tag" }
+    }
+
+    // Same guarantee for the prose. These nine pages are the only crawlable long-form text on this
+    // origin, and every way they can fail is silent: a body that renders as one block, a U+2028
+    // that survives into the HTML as an invisible character no browser breaks on inside a <p>, or
+    // a piece whose page is really its neighbour's. Each is checked against the corpus, not
+    // against a fixture, so a regenerated corpus moves the check with it.
+    check(printedPieces.isNotEmpty()) { "no printed pieces means /read is a route with no pages" }
+    printedPieces.forEach { piece ->
+        val html = render(Route.Read(piece.slug), "https://example.test")
+        check(html.contains("rel=\"canonical\" href=\"https://example.test/read/${piece.slug}\"")) {
+            "${piece.slug}: canonical points at its own route"
+        }
+        check(html.contains("<title>${esc(piece.title)} — ${esc(profile.name)}</title>")) {
+            "${piece.slug}: the piece names itself in its own title"
+        }
+        check(html.contains("og:type\" content=\"article\"")) { "${piece.slug}: prose is an article, not a website" }
+        check(html.contains("<blockquote>")) { "${piece.slug}: the epigraph did not survive the parse" }
+        check(!html.contains('\u2028')) {
+            "${piece.slug}: a U+2028 reached the HTML, where it is an invisible non-break"
+        }
+        // The one that actually caught this: 78 line breaks inside three paragraphs render as
+        // three walls of text if they reach the HTML as bare newlines, and the page is valid,
+        // indexable and wrong. Exact equality, because `<br>` has no other source on this page.
+        val internalBreaks = parsePiece(piece.body).sumOf { block -> block.text.count { it == '\n' } }
+        check(html.split("<br>").size - 1 == internalBreaks) {
+            "${piece.slug}: $internalBreaks line breaks inside blocks, " +
+                "${html.split("<br>").size - 1} reached the page"
+        }
+        // Every paragraph the parser found has to be its own element. Four of the nine are three
+        // source lines and dozens of real paragraphs, so a body that lost the split still renders
+        // as a valid page and reads as a wall.
+        val paragraphs = parsePiece(piece.body).count { !it.quote }
+        check(html.split("    <p>").size - 1 >= paragraphs) {
+            "${piece.slug}: $paragraphs parsed paragraphs did not all reach the page"
+        }
+    }
+
+    // The reader's deep links have to be addresses this router answers, or five of the nine pieces
+    // point at a 404 on this origin instead of at the page they ran on.
+    printedPieces.filter { it.page > 0 }.forEach { piece ->
+        val href = "/excelsior?year=${piece.year}&page=${piece.page}"
+        check(routeOrNull(href) == Route.Excelsior(piece.year, piece.page)) {
+            "${piece.slug}: the in-print link $href does not resolve"
+        }
     }
 }
 

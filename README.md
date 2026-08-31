@@ -24,7 +24,7 @@ same portfolio to web (Kotlin/Wasm), desktop, Android and iOS.
 > drawing conclusions from it.
 
 Forked from [`kmp-app-template`](https://github.com/darkpandawarrior/kmp-app-template).
-~29.9k LOC of Kotlin across the four modules, 6.6k of which is generated data corpora emitted
+~35.5k LOC of Kotlin across the four modules, 7.6k of which is generated data corpora emitted
 from the React repo rather than written here.
 
 ## Toolchain
@@ -50,7 +50,7 @@ hand-built on Compose and Ktor primitives.
 ./gradlew :cmp-desktop:run                       # desktop JVM window
 ./gradlew :cmp-android:installDebug              # Android
 ./gradlew :cmp-web:wasmJsBrowserDistribution     # production web bundle
-./gradlew :cmp-shared:prerenderSite              # bundle + static HTML for all 21 routes
+./gradlew :cmp-shared:prerenderSite              # bundle + static HTML for all 33 routes
 open cmp-ios/iosApp.xcodeproj                    # iOS (arm64 + simulator-arm64 only)
 ```
 
@@ -63,21 +63,26 @@ origin; `<link rel="canonical">` and the sitemap depend on it.
 
 ## What ported
 
-Sixteen route *kinds* ship, **home**, **résumé**, **hire**, **shipped**, **ops**, **project
+Twenty route *kinds* ship, **home**, **résumé**, **hire**, **shipped**, **ops**, **project
 detail** (×6), **terminal**, **lab bench**, **particle forge**, **compose playground**
-(`/compose`), **weeb**, **loopdown**, **ink**, **anthology**, **canon**, **making**: for
-twenty-one distinct URLs, each with a prerendered indexable page. The React site has
+(`/compose`), **weeb**, **the board** (`/chess`), **the story map** (`/map`), **loopdown**,
+**ink**, **excelsior**, **read** (`/read/<slug>`, ×9), **anthology**, **canon**, **making**: for
+thirty-three distinct URLs, each with a prerendered indexable page. The React site has
 **twenty-three** addressable routes (`ls src/routes/*.tsx`, minus `__root` and the catch-all), so
-sixteen of its route kinds ported and seven did not. The seven are named and classified in
-[Absent](#absent-the-seven-react-routes-this-build-does-not-have) below; nothing here is left
-unaccounted for.
+twenty of its route kinds ported and three did not.
+
+**Those three are the three that cannot be built here, not the three nobody got to.** Two are
+blocked on the platform and one was dropped on purpose; every one of them is named with its wall in
+[Absent](#absent-the-three-react-routes-this-build-does-not-have) below. There is no longer a
+surface on the React site that this port is merely behind on.
 
 Most rows in the Native table below were verified in a real browser against the production wasm
-distribution, not inferred from a green build. **The nine added in the second pass are the
-exception and it is stated here rather than buried**: `/hire`, `/shipped`, `/weeb`, `/ops`,
-`/loopdown`, `/ink`, `/anthology`, `/canon` and `/making` compile, prerender, and are reachable
-from the nav, the palette and a pasted URL, and three of them leave runnable self-checks that
-`prerenderSite` executes on every deploy. None of the nine has been looked at in a browser yet.
+distribution, not inferred from a green build. **The thirteen added in the second and third passes
+are the exception and it is stated here rather than buried**: `/hire`, `/shipped`, `/weeb`, `/ops`,
+`/loopdown`, `/ink`, `/anthology`, `/canon`, `/making`, `/read/<slug>`, `/excelsior`, `/chess` and
+`/map` compile, prerender, and are reachable from the nav, the palette and a pasted URL, and seven
+of them leave runnable self-checks that `prerenderSite` executes on every deploy. None of the
+thirteen has been looked at in a browser yet.
 
 ### Native, no meaningful loss
 
@@ -96,13 +101,13 @@ from the nav, the palette and a pasted URL, and three of them leave runnable sel
 | **Real screenshots** | Coil 3.5.0 + `coil-network-ktor3` + Ktor 3.5.1 on wasmJs, streaming the live site's CDN. Falls back to the generated gradient while loading or on failure. |
 | **Real typefaces** | Space Grotesk + DM Mono vendored through `compose.components.resources`. Skia never sees CSS fonts, so the bytes have to ship, `FontFamily.SansSerif` was a placeholder, not a choice. |
 | **Real URLs + deep links** | `history.pushState` / `popstate` via `kotlinx-browser`. `/resume`, `/terminal`, `/project/<slug>` are shareable, refreshable, and Back works. |
-| **Crawlable fallback, generated** | Compose mounts into `#compose`, so a sibling `#seo` block of semantic HTML survives boot. `prerenderSite` writes one such page per route from `data/*.kt`, 21 pages, `sitemap.xml`, `robots.txt`, per-route `og:`/`twitter:` cards and JSON-LD, all read out of the same Kotlin the app renders. The site nav on every page is derived from the same route list, so a route added to `Nav.kt` is linked from all twenty-one without anyone remembering this file exists. |
+| **Crawlable fallback, generated** | Compose mounts into `#compose`, so a sibling `#seo` block of semantic HTML survives boot. `prerenderSite` writes one such page per route from `data/*.kt`, 33 pages, `sitemap.xml`, `robots.txt`, per-route `og:`/`twitter:` cards and JSON-LD, all read out of the same Kotlin the app renders. The site nav on every page is derived from the same route list, so a route added to `Nav.kt` is linked from all thirty-three without anyone remembering this file exists. The two parameterised routes are why the page count outgrows the route count: `/project/<slug>` is six of them and `/read/<slug>` is nine. |
 | **GPU ambient wash** | The background is one SkSL fragment program through Skiko `RuntimeEffect`: 4-octave value-noise fbm put through a two-tap domain warp, so the blooms wander instead of being the perfect ellipses a CSS radial gradient is limited to. Starfield is a hash threshold over 4px cells rather than ~120 `drawCircle` calls, so it is also the *cheaper* path. Verified live in-browser by the shader's per-pixel dither showing up in a screenshot (≈70% of adjacent background pixels differ by 1 to 4/255; a CPU gradient is smooth). |
 | **Mermaid diagrams, rendered** | Sugiyama phases 1 to 3 on the Compose canvas, longest-path ranking, barycenter crossing reduction over four down-then-up sweeps, curved edge routing with arrowheads, shrink-to-fit then scroll. Crossings are counted before and after and the worse arrangement is discarded, so the sweep can never make a diagram worse. All 13 diagrams in `data/` parse and lay out (`SHIPPED_DIAGRAMS` in `MermaidParse.kt` fails the self-check if that count moves without this line moving); anything outside `graph`/`flowchart` `TD`/`LR` degrades to its own source card rather than drawing a lie. The canvas has no text nodes, so each graph also emits a prose `contentDescription`. |
 | **Floating AI chat** | Streams from the same live Vercel endpoint as the React site. The SSE frames are parsed by hand off `bodyAsChannel()` rather than through Ktor's `SSE` plugin, deliberately: the plugin collapses a non-2xx into an `SSEClientException` whose status and body are awkward to recover, and this endpoint says useful things in its error bodies. Route-aware greeting and quick prompts, live token append, cancel mid-stream, every endpoint failure surfaced as text in the transcript rather than a silent stop. |
 | **Résumé → PDF** | A real Save-as-PDF, not a canvas dump: `buildResumeHtml()` rebuilds the résumé as an HTML document from the same `data/` values and the web actual writes it into a hidden `<iframe>`, which the browser lays out and prints. Verified: 7 KB of laid-out text, seven `<h2>` sections, an `@page` rule, selectable text. Desktop opens the same HTML in the browser (Cmd-P from there), Android goes through `PrintManager`, iOS through `UIPrintInteractionController`, and the button is gated on `resumePrintSupported`, so no platform shows a control that does nothing. |
 | **Lab bench** (`/lab`) | Five instruments, recomposition cost, crash triage, module-graph isolation, search traversal, provider fan-out. Every simulation is a *pure function of elapsed seconds*, which is what makes the reduced-motion still frame free (freeze the clock and you have it, no warm-up path, no second code path) and the arithmetic checkable on the JVM. One shared ticker for the whole screen, not one per experiment. |
-| **⌘K command palette** | 32 commands generated from `homeSections` + `staticRoutes` + `projects` + profile data (9 sections + 14 routes + 6 case studies + 3 actions), so the list cannot drift from the site. Subsequence matching ranked prefix-first, full keyboard navigation. The chord is caught by `onPreviewKeyEvent` on a focusable root, *before* any focused child, which is what stops the terminal and the chat composer from swallowing it as text input. |
+| **⌘K command palette** | 44 commands generated from `homeSections` + `staticRoutes` + `projects` + `printedPieces` + profile data (9 sections + 17 routes + 6 case studies + 9 pieces + 3 actions), so the list cannot drift from the site. The nine piece rows exist because `/read` is parameterised: no route row can reach any of them, and a reader who knows a story's name would otherwise have to know its slug. Subsequence matching ranked prefix-first, full keyboard navigation. The chord is caught by `onPreviewKeyEvent` on a focusable root, *before* any focused child, which is what stops the terminal and the chat composer from swallowing it as text input. |
 | **Particle forge** (`/forge`) | A few thousand particles spring-tied to points sampled off the wordmark's glyph outlines (`getPathForRange` → `PathMeasure`, no rasterisation, that path is unreliable on wasm), parting around the cursor and snapping back. Flat `FloatArray`s, not boxed particles. |
 | **Compose playground** (`/compose`) | Type a curated slice of Compose and watch it render **through real composables**: a real `Column`, a real Material 3 `Button`, real `AnimatedVisibility`, real recomposition from real observable state. There is no Run button because there is no compile step, so the preview follows your keystrokes. Verified in-browser: the Counter preset's button drove the interpolated `"$count"` from 0 to 3. All 7 React presets parse and render. |
 | **Theme engine, interactive** | The homepage section that demonstrates the resume claim instead of asserting it: pick any seed, each is a real accent from this site's own project data, and the preview pane re-skins through a nested `CvTheme`, the *same* `CompositionLocal` mechanism the production app uses per tenant. The panel counts its own reskins and `CvTheme` calls, so you can see it is one call and zero forked components. |
@@ -115,6 +120,10 @@ from the nav, the palette and a pasted URL, and three of them leave runnable sel
 | **The anthology** (`/anthology`) | Eight layers off one ported table, so the switch order, the season mapping and the `?layer=` URL vocabulary stay a single thing. Per-entry identity is a function of the entry rather than of its season number, applied through a nested `CvTheme`. Two figures are drawn on a Canvas from the corpus rather than shipped as bitmaps, and the starmap regenerates its 671-point field from the same seeded LCG the web uses, with `Int` wraparound matching `Math.imul`, so both builds draw the identical sky. |
 | **The canon** (`/canon`) | The spoiler partition is the data and stays the data: open is `spoils == null`, and the open laws come from the open blocks only, so a gated season's law can never surface above the divider. The heading still derives its own number word. There is no season literal anywhere in the file. The ghost numeral is drawn with `drawText` on a Canvas, which emits no semantics node, reaching by construction the "decorative, out of the a11y tree" answer the web reaches with an `aria-hidden` anyone can drop. |
 | **The making-of** (`/making`) | The blind audit, the pipeline, the spend, then the three closed spoiler gates. Every figure reads from the generated corpus. The one piece of arithmetic on the page is the money formatter, and it leaves a runnable check behind driven off `spend` itself, so a regenerated corpus moves the check with it. |
+| **Read** (`/read/<slug>`) | Nine pieces of prose, and the only long-form text on this origin a crawler can read. The corpus was measured rather than assumed: across all nine bodies the only markdown present is `> ` blockquote and `*italic*`, so the renderer is a 239-line hand-written parser with `unsupportedMarkdown()` guarding its own scope, not a CommonMark engine. The genuinely non-obvious cost was not markdown at all: four of the nine use U+2028 as their line break, which CSS treats as a forced break, so a port that does not translate it ships three walls of text. The same `parsePiece` feeds the Compose reader and the prerendered HTML, so the two views cannot disagree about where a paragraph ends. |
+| **Excelsior** (`/excelsior`) | All 396 scanned pages of three institute-magazine editions, streamed from the live origin through the Coil pipeline that was already here. Facing pages pair above 720dp because the 2\|3 spread is artwork; below it they stack. A `LazyColumn` instead of a simulated page turn, deliberately: the web's leaf flip exists to hide that only the current spread is in the DOM, and a lazy list gets that for free while giving back a wheel and a sticky bar. `?year=` and `?page=` are real, shareable addresses; the router does not validate either, because the screen normalises an unknown year to the newest edition and clamps the page itself. |
+| **The Board** (`/chess`) | The two 2D panes of a seven-tab room: the clock thesis over 18,938 games with its ten-bucket divergence table, and the rhythm chart as one `Canvas` carrying two 24-hour distributions, a dashed commit curve and a win-rate line on its own axis. Not one figure is typed; two that the React hand-types (`twenty-one points`, `Seven years`) are derived here and lose their number rather than going stale. The three audited constraints render **as constraints**: combined hours name both measurement methods, the two platforms are never joined into one rating line, and the Scandinavian column is labelled a floor. |
+| **The Story Map** (`/map`) | A real Fruchterman-Reingold layout, `k = C·sqrt(area/n)` with linear cooling over 320 iterations, seeded from the corpus's own hand-placed coordinates rather than from noise. No `hypot`, no `pow`, no trig anywhere: those are permitted a unit of error by IEEE 754 and free to differ between JVM, V8 and wasm, so the layout is `sqrt` and arithmetic only and settles bit-identically on every target. Asserted on the JVM at 13 nodes, 20 edges, final displacement 0.000406. Reduced motion parks the clock at the end of the settle, so the still frame **is** the settled frame rather than a second code path. |
 
 ### Degraded, ported, but not at parity
 
@@ -128,7 +137,10 @@ from the nav, the palette and a pasted URL, and three of them leave runnable sel
 | Footer | Static sitemap; the live Spotify / GitHub polling strip is unblocked by Ktor but not yet wired. |
 | Accessibility | Weaker than the DOM original, but **not** the "synthesised bridge" first assumed: CMP 1.12 emits a live `#cmp_a11y_root` DOM tree mirroring the layout with correct bounding boxes. It sits inside a shadow root, so assistive tech reaches it and crawlers generally do not. The committed axe suite still has no wasm equivalent. |
 | Glass / glow | No `backdrop-filter`; every `box-shadow` glow becomes a hand-drawn radial gradient. |
-| Plates, portraits and scanned pages | The fiction rooms and `/ink` carry per-entry artwork on the web: an entry plate for every anthology entry, four rendering portraits, ten sibling plates, the Excelsior cover shelf. This port ships no bitmaps for any of them. Where the picture carried an argument it is redrawn on a Canvas from the same data (the census grid, the case grid, the branching cover story as one chip per path); where it did not, it is **absent rather than replaced**. A generated abstract wash captioned with a person's name would be exactly the lie the Rendering doctrine on `/canon` is about. |
+| Plates and portraits | The fiction rooms and `/ink` carry per-entry artwork on the web: an entry plate for every anthology entry, four rendering portraits, ten sibling plates. This port ships no bitmaps for any of them. The scanned magazine pages **are** now served, streamed rather than shipped, which is the row above; these are the ones that remain. Where the picture carried an argument it is redrawn on a Canvas from the same data (the census grid, the case grid, the branching cover story as one chip per path); where it did not, it is **absent rather than replaced**. A generated abstract wash captioned with a person's name would be exactly the lie the Rendering doctrine on `/canon` is about. |
+| The Board, scope | ChessRoom has seven tabs and two ported. Three are three.js scenes (`ChessArcScene`, `GraveyardScene`, `RepertoireTreeScene`); `ChessBoardPane` is a Web Worker engine plus react-chessboard; `GuessTheMove` / `DailyPuzzle` add a playhtml-backed shared counter on top of that board. No flat drawing carries a 3D scene's caption and nothing is approximated in place of one. Worth correcting the shape of that loss: `ChessArc.tsx`, the reduced-motion fallback, is 2D SVG and blocked on **data**, not on WebGL, because `corpus.arc` is one of the slices the emitter leaves behind. Same for the graveyard heatmap and the repertoire scrubber. All three are emitter work, not renderer work. |
+| Story map, fidelity | The React room is a three.js constellation you orbit; this is a 2D force-directed graph. That is a fidelity loss and the page says so on itself rather than only here. Two nodes name destinations this build does not serve (`#blueprint`, `chat`) and are drawn as hollow **rings** with the reason in words, never as live dots that go nowhere. The layout stretches each axis independently onto the frame, which is the same distortion the React canvas applies; what is preserved either way is the topology, which is what the figure claims. |
+| Excelsior, the address bar | The web writes every page turn back to the URL with `replace: true`. `CvNavState` has `go` (pushes) and `reset` (pops to home first) and no replace that preserves the stack, so the honest options were a back-stack entry per page turn across 128 pages or "the address is where you came in". This build takes the second. A pasted `?year=&page=` still opens exactly that spread; only the live write-back is gone. |
 | Lab bench, scope | `src/data/labs.ts` registers eleven instruments; five ported. Deferred on scope, not blocked. Signal Lab is the only one with a real dependency: its visual is a Leaflet map with live tile imagery (`src/labs/SignalLab.tsx:2`) that would have to be rebuilt as a canvas projection, though its engine ports unchanged. White-label, gateway, deterministic replay and the two chess instruments are plain Canvas work. |
 
 ### Dropped, deliberately, with reasons
@@ -140,24 +152,59 @@ from the nav, the palette and a pasted URL, and three of them leave runnable sel
 | Typed WebGPU | **No library exists.** `kotlin-browser`'s `web.gpu` package ships exactly `GPUCanvasContext` and `GPUCanvasConfiguration`, no `GPUDevice`, so it is not a WebGPU path at all. WebGL2 bindings do exist. |
 | AVIF images | **Platform limitation.** `strings` over the shipped skiko wasm finds jpeg, png, gif, ico, webp, wbmp, no AVIF decoder. Sidestepped rather than suffered: the React site publishes a webp beside every still screenshot this gallery lists, so the gallery asks for `.webp`. No pair tally here on purpose, it counts files in the other repo and nothing in this build can check it. |
 
-### Absent, the seven React routes this build does not have
+### Absent, the three React routes this build does not have
 
 Absent is not the same as dropped. A dropped surface was attempted and refused for a reason that
 will not change; an absent one simply has not been built here yet, and the class says what it would
-cost. Of the seven: **two are blocked**, **one is dropped**, and **four are just unbuilt**. Nine
-routes left this table in the second pass and are now rows in the Native table above. Every React
-route not in the Native table appears exactly once below.
+cost. **This table used to hold seven, four of them classed "portable, real work". Those four are
+now rows in the Native table above, and what is left is three walls.** Two are blocked on the
+platform and one was dropped on purpose. Nothing on the React site is missing here for want of
+effort any more, and that sentence is the one worth checking the rest of this document against.
 
 | React route | Class | Why, and what it would cost |
 |---|---|---|
 | `/blueprint` | **Blocked** | tldraw + three.js. Compose paints into one canvas inside a shadow root, so a DOM/WebGL widget can only be *overlaid*, owning all input in its rect, never laid out inside the Compose tree. Same reason as the Blueprint3D row above. |
 | `/pulse` | **Blocked** | Its counter is `usePageData` from `@playhtml/react` (`src/play/pulse.ts:2`), a client-writable third-party web channel with no Kotlin client. The surface is not the work; the backend is. |
 | `/playground` | **Dropped** | A drivable three.js + Rapier world, 73 files under `src/world/`. Its one portable half is the room grid, which is the home page's explore section already. Note this is a different route from `/compose`, which *did* port. |
-| `/map` | **Portable, real work** | A three.js constellation over `NODES` / `EDGES` in `StoryMap.tsx`. A Compose Canvas port is a 2D force-directed graph: honest, but a fidelity loss, not a like-for-like. There is no Leaflet on this route; Leaflet is a lab bench instrument. |
-| `/chess` | **Portable, real work** | `src/data/chess.ts` is 1,445 generated lines and nothing emits it into Kotlin yet. ChessRoom's three scenes are three.js; ChessVsCommits and ChessFindings are 2D and would port directly. |
-| `/excelsior` | **Portable, real work** | Needs scanned page imagery, which this port ships no bitmaps for, plus `?year=&page=` query state. The router half got cheaper in the second pass: `routeOrNull` now reads one query parameter for `/anthology?layer=`, so the pattern exists. The pages are the real cost. |
-| `/read/:slug` | **Portable, real work** | Needs a markdown renderer, and needs the story bodies the Kotlin emitter deliberately leaves behind (they are ~99% of that corpus's bytes and nothing ported can render them). `MermaidParse.kt` shows this repo will hand-write a parser, but that is a subsystem, not an afternoon. |
 
+### Two cost estimates this file got wrong
+
+Both were written in good faith from reading the React source, and both were pessimistic enough to
+keep a surface off this build for a pass. Deleting them quietly would leave a README that has only
+ever been right, which is not a document anyone should trust about its own port.
+
+**`/read/:slug` was priced as "a markdown renderer ... a subsystem, not an afternoon".** That is
+true of the React route and false of this build's share of it. The React route mounts
+`react-markdown` + `remark-gfm` because it serves **four** corpora, and the anthology half carries
+GFM tables that are load-bearing on three pages. This build carries one of those four, the nine
+printed pieces, and their markdown was measured across every body rather than assumed: `> `
+blockquote (nine, always the blurb as an epigraph) and `*italic*` (five spans). No headings, bold,
+lists, links, code, rules or tables. That is 239 lines with a runnable self-check, and
+`unsupportedMarkdown()` fails the build the day a tenth piece arrives carrying anything else. The
+estimate also missed the only cost that was genuinely non-obvious, and it was not markdown: four of
+the nine pieces were pasted out of a word processor and use U+2028 LINE SEPARATOR as their internal
+line break, 78 of them in one piece. A browser treats U+2028 as a forced break, so the React page
+has been drawing those all along without markdown involved; a port that does not translate it
+renders Pointer Games as three unbroken walls of text. The honest remaining gap is the one the old
+row was right about: the anthology bodies are still not emitted, so an anthology slug reaches the
+reader's own 404 rather than a page.
+
+**`/excelsior` was priced as needing "scanned page imagery, which this port ships no bitmaps for",
+and "the pages are the real cost".** Both halves were false by the time they were read again. Coil
+3.5.0 with `coil-network-ktor3` was already a dependency, `media/ProjectShot.kt` already streamed
+the live origin with a graceful floor, and the 396 pages were already published at
+`/excelsior/pages/<year>/pNNN.webp`. The entire imagery cost was a two-line URL builder, verified
+against the live origin at each edition's last page before anything referenced it. The pages were
+not the real cost; the real cost was deciding that a scroll beats a simulated page turn, which is a
+design call and not an engineering one. What survives of the original claim is narrower and still
+true: skiko has no AVIF decoder, so the reader asks for the `.webp` sibling, and on disk that is the
+only format the pages exist in anyway.
+
+Two other rows in that table were accurate and are recorded here so the score is complete. `/map`
+said a Compose Canvas port would be "honest, but a fidelity loss, not a like-for-like", which is
+exactly what shipped. `/chess` said the room's scenes were three.js and its two flat panes would
+port directly, which is what happened; its one stale clause was that nothing emitted
+`src/data/chess.ts` into Kotlin, and the emitter now does.
 
 ## The honest cost
 
@@ -168,37 +215,41 @@ is not what anyone downloads.
 | file | raw | gzip -9 | **brotli** |
 |---|---:|---:|---:|
 | skiko runtime | 8,640,316 | 3,324,704 | **2,618,182** |
-| app wasm (the whole portfolio) | 4,951,790 | 1,594,767 | **1,200,361** |
-| JS glue | 538,935 | 101,007 | **82,340** |
-| **total** | 14,131,041 | 5,020,478 | **3,900,883** |
+| app wasm (the whole portfolio) | 5,243,479 | 1,691,217 | **1,273,905** |
+| JS glue | 538,935 | 101,006 | **82,354** |
+| **total** | 14,422,730 | 5,116,927 | **3,974,441** |
 
 Reproduce it: `brotli -q 11 -c <file> | wc -c` over
 `cmp-web/build/dist/wasmJs/productionExecutable`. Skiko is a fixed dependency and does not move
 between passes, which is the point of quoting it on its own line.
 
-Static HTML rides along outside the wasm, one page per route across all 21 URLs, and only one of
-them is ever fetched.
+Static HTML rides along outside the wasm, one page per route across all 33 URLs, and only one of
+them is ever fetched. Nine of those are whole pieces of prose, so the static layer is now the
+largest it has been by some way and still costs a visitor exactly one document.
 The vendored fonts are a further 394 KiB (five `.ttf` faces under `composeResources`), fetched in
 parallel with the wasm.
 
 | | React site | this build |
 |---|---|---|
-| Over the wire, first paint | ~hundreds of KB | **3.90 MB brotli** |
+| Over the wire, first paint | ~hundreds of KB | **3.97 MB brotli** |
 | Crawlable | fully | static per-route HTML, generated from the same data, but the Compose UI itself is a canvas |
-| Routes | 23 | 21 URLs over 16 route kinds, with real URLs, deep links and prerendered HTML |
+| Routes | 23 | 33 URLs over 20 route kinds, with real URLs, deep links and prerendered HTML |
 
 An empty Compose Multiplatform hello-world already costs **2.62 MB brotli** here; the entire
 portfolio, every screen, all the content, real fonts, Coil, Ktor, a GPU shader, a diagram layout
-engine and a streaming LLM client, adds **1.28 MB** on top (app wasm plus JS glue, brotli). That ratio is the finding worth keeping:
+engine and a streaming LLM client, adds **1.36 MB** on top (app wasm plus JS glue, brotli). That ratio is the finding worth keeping:
 **the framework floor dominates and the content is nearly free**, which is exactly backwards from the
 web, and exactly why this belongs at a sub-path as a demo rather than at the apex domain.
 
-The second pass is the cleanest measurement of that claim this repo has. Nine screens and eight
-generated corpora went in, 6.6k lines of data and 6.2k lines of Compose, and the payload moved
-from 1,159,550 to 1,282,701 bytes brotli, both measured on the same machine either side of the
-wiring: **123 KB for nine of the sixteen route kinds that were missing**, on a 2.62 MB floor that
-did not move a byte. Adding a route to this build costs about what one hero image costs on the
-React one.
+The second and third passes are the cleanest measurement of that claim this repo has, because the
+same number was taken on the same machine three times. Nine screens and eight generated corpora
+went in on the second, 6.6k lines of data and 6.2k lines of Compose, and the payload moved from
+1,159,550 to 1,282,701 bytes brotli: **123 KB for nine route kinds**, on a 2.62 MB floor that did
+not move a byte. The third pass added the last four kinds, four more corpora, and 89 KB of raw UTF-8
+prose compiled in as Kotlin string literals, for 1,356,259: **74 KB for four more kinds and the
+whole printed archive**, on the same unmoved floor. Adding a route to this build costs about what
+one hero image costs on the React one, and the nine pieces of prose cost less than that, because
+prose is the one payload brotli is genuinely good at.
 
 One incidental finding worth writing down, because it only appears once the prerendered routes are
 servable: **Compose Resources builds its font URLs relative to the document**, so on `/project/mileway`

@@ -30,13 +30,13 @@ data class DriftEntry(
 val opsPerimeter: List<PerimeterEntry> = listOf(
     PerimeterEntry(
         file = "chess.ts",
-        generatedAt = "2026-08-29",
+        generatedAt = "2026-08-30",
         slaDays = 21,
         generator = "npm run gen:chess",
     ),
     PerimeterEntry(
         file = "chessDeep.ts",
-        generatedAt = "2026-08-29",
+        generatedAt = "2026-08-30",
         slaDays = 21,
         generator = "npm run gen:chess-deep",
     ),
@@ -54,7 +54,7 @@ val opsPerimeter: List<PerimeterEntry> = listOf(
     ),
     PerimeterEntry(
         file = "weeb.ts",
-        generatedAt = "2026-08-29",
+        generatedAt = "2026-08-30",
         slaDays = 21,
         generator = "npm run gen:weeb",
     ),
