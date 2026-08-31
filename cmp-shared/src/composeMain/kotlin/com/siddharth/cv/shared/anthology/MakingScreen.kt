@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,6 +24,7 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
@@ -52,6 +54,7 @@ import com.siddharth.cv.shared.data.generated.s4Fence
 import com.siddharth.cv.shared.data.generated.seasonCanon
 import com.siddharth.cv.shared.data.generated.spend
 import com.siddharth.cv.shared.data.generated.voiceConstraints
+import com.siddharth.cv.shared.media.ProjectShot
 import com.siddharth.cv.shared.theme.CircuitDivider
 import com.siddharth.cv.shared.theme.CvCard
 import com.siddharth.cv.shared.theme.CvContentMaxWidth
@@ -59,7 +62,6 @@ import com.siddharth.cv.shared.theme.CvGutter
 import com.siddharth.cv.shared.theme.CvSectionGap
 import com.siddharth.cv.shared.theme.ExpanderSection
 import com.siddharth.cv.shared.theme.GhostButton
-import com.siddharth.cv.shared.theme.MediaPanel
 import com.siddharth.cv.shared.theme.MonoMeta
 import com.siddharth.cv.shared.theme.PrimaryButton
 import com.siddharth.cv.shared.theme.Reveal
@@ -86,11 +88,12 @@ import kotlin.math.roundToInt
  * in the card *above* the expander header rather than inside it: it is still named before it is
  * paid, and it stays put when the body opens.
  *
+ * THE PORTRAITS ARE THE REAL ONES. This page's whole subject is two passes of artwork and what was
+ * wrong with the first, so the redrawn set is streamed from the live origin by [plateUrl] rather
+ * than stood in for. A generated panel here would have been the page arguing about pictures with no
+ * picture in it.
+ *
  * DEGRADED, deliberately:
- *   - The four witness portraits are [MediaPanel] stand-ins. This port ships no bitmaps (every
- *     image on wasmJs is a network round trip), so the plates themselves are not here; each panel
- *     carries the rendering's own note as its `contentDescription` so the argument survives even
- *     though the artwork does not.
  *   - The web page's `<GiantCTA>` becomes a [PrimaryButton]. Same destination, no slab.
  *   - There is no footer and no floating chat on this screen; both are App-level furniture.
  */
@@ -257,24 +260,23 @@ private fun PortraitsSection() {
 }
 
 /**
- * One `<figure>`: the plate, then the caption. The plate is a generated panel and says so in its
- * `contentDescription`. Claiming to be the portrait when it is a stand-in would be the one lie
- * this whole page exists to argue against.
+ * One `<figure>`: the plate, then the caption.
+ *
+ * The plate is the shipped redrawn portrait, streamed. Its `contentDescription` is the rendering's
+ * own note, which is what the page is arguing with in the first place, so a reader who cannot see
+ * the picture gets the argument rather than a filename. If the fetch fails,
+ * [com.siddharth.cv.shared.media.ProjectShot] falls back to the generated gradient, which reads as
+ * a loading panel and never as a claim to be a drawing of a person.
  */
 @Composable
 private fun RenderingPlate(rendering: Rendering) {
     val colors = cvColors
     val witness = anthology.witnesses.firstOrNull { it.id == rendering.witnessId } ?: return
     Column(Modifier.widthIn(min = 260.dp, max = 460.dp)) {
-        MediaPanel(
-            seed = rendering.witnessId,
-            label = witness.name,
-            modifier =
-                Modifier.semantics {
-                    contentDescription =
-                        "Stand-in panel for the portrait of ${witness.name}. " +
-                            "The rig ${rendering.state}. ${rendering.note}"
-                },
+        ProjectShot(
+            url = plateUrl(witness.art),
+            label = "${witness.name}, rendered. The rig ${rendering.state}. ${rendering.note}",
+            modifier = Modifier.fillMaxWidth().aspectRatio(portraitAspect).clip(PlateShape),
         )
         Spacer(Modifier.height(10.dp))
         SectionEyebrow("the rig ${rendering.state}")

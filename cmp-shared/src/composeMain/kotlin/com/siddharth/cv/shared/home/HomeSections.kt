@@ -69,6 +69,15 @@ import com.siddharth.cv.shared.theme.ExpanderSection
 import com.siddharth.cv.shared.theme.GhostButton
 import com.siddharth.cv.shared.data.CvGallery
 import com.siddharth.cv.shared.media.ProjectShot
+import com.siddharth.cv.shared.net.GITHUB_ACTIVITY_ENDPOINT
+import com.siddharth.cv.shared.net.GithubActivity
+import com.siddharth.cv.shared.net.GithubActivityItem
+import com.siddharth.cv.shared.net.SPOTIFY_ENDPOINT
+import com.siddharth.cv.shared.net.SpotifyNow
+import com.siddharth.cv.shared.net.SpotifyTrack
+import com.siddharth.cv.shared.net.byRepo
+import com.siddharth.cv.shared.net.fetchSignal
+import com.siddharth.cv.shared.net.nowOrLast
 import com.siddharth.cv.shared.theme.MetricGauge
 import com.siddharth.cv.shared.theme.MonoMeta
 import com.siddharth.cv.shared.theme.PrimaryButton
@@ -815,5 +824,102 @@ fun ContactSection(modifier: Modifier = Modifier) {
         Spacer(Modifier.height(20.dp))
 
         MonoMeta(profile.email)
+
+        // The last thing on the page, which is where the web's footer strip sits too.
+        LiveSignalStrip()
     }
+}
+
+// ---------------------------------------------------------------------------------------------
+// The live footer strip
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * `NowChip` from `cv-siddharth/src/SiteFooter.tsx`: the last thing on the page, and the only part
+ * of this build that reads anything live.
+ *
+ * WHY IT SITS UNDER THE CONTACT SECTION rather than in a footer of its own: this port has no
+ * footer. The React site's sitemap columns are answered here by the Explore room grid and the
+ * command palette, both of which derive from the same registry the web footer does, so a fifth
+ * copy of the same links would be furniture rather than a surface. The strip is the half of that
+ * footer that carried information, so it goes at the bottom of the last section instead.
+ *
+ * WHY ONE FETCH AND NOT A POLL: see the note on `net/LiveSignal.kt`. The web polls both endpoints
+ * every twenty seconds for as long as a tab is open; the answers change a few times a day.
+ *
+ * FAILURE IS INVISIBLE, BY DESIGN. No spinner, no error line, no reserved space: the strip is
+ * absent until it has something true to say and stays absent if it never does, which is also what
+ * the React chip does with `return null`. Because it is the last thing on the page, arriving late
+ * moves nothing that was already on screen. That matters more here than on the web, because in a
+ * browser this will usually never arrive at all — those two endpoints send no CORS header, so a
+ * build served from anywhere but the React origin is refused by the browser before Ktor sees a
+ * status. Wired anyway: the fix is one header on the handlers, not more code here, and the strip
+ * is already correct on the day it lands.
+ */
+@Composable
+fun LiveSignalStrip(modifier: Modifier = Modifier) {
+    val colors = cvColors
+    val uriHandler = LocalUriHandler.current
+
+    var listening by remember { mutableStateOf<SpotifyTrack?>(null) }
+    var repos by remember { mutableStateOf<List<GithubActivityItem>>(emptyList()) }
+
+    // Two independent awaits rather than one: the GitHub half is connected today and the Spotify
+    // half is not, and a single failed call must not take the working one down with it.
+    LaunchedEffect(Unit) {
+        listening = fetchSignal<SpotifyNow>(SPOTIFY_ENDPOINT)?.nowOrLast()
+    }
+    LaunchedEffect(Unit) {
+        repos = fetchSignal<GithubActivity>(GITHUB_ACTIVITY_ENDPOINT)?.byRepo().orEmpty()
+    }
+
+    val track = listening
+    if (track == null && repos.isEmpty()) return
+
+    Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+        Spacer(Modifier.height(36.dp))
+        Box(Modifier.fillMaxWidth().height(1.dp).background(colors.line))
+        Spacer(Modifier.height(16.dp))
+
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            if (track != null) {
+                // The album thumbnail the web shows is dropped. It is a 16px decoration on a
+                // decoration, and it would be the only Coil call on the homepage.
+                val label = "${track.track} · ${track.artist}".trim(' ', '·')
+                SignalChip(
+                    text = label,
+                    accent = false,
+                    onClick = track.url?.let { url -> { uriHandler.openUri(url) } },
+                )
+            }
+            if (repos.isNotEmpty()) {
+                BasicText(text = "recently", style = cvType.metaMono.copy(color = colors.muted))
+                repos.forEach { item ->
+                    SignalChip(
+                        // The owner prefix is the same on every one of his own repos and carries
+                        // nothing; an upstream row keeps its arrow, which is the part that does.
+                        text = item.repo.substringAfterLast('/') + if (item.upstream) " ↗" else "",
+                        accent = item.upstream,
+                        onClick = item.url.takeIf { it.isNotBlank() }?.let { url ->
+                            { uriHandler.openUri(url) }
+                        },
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** One live-signal word. Clickable only when the endpoint gave it somewhere to go. */
+@Composable
+private fun SignalChip(text: String, accent: Boolean, onClick: (() -> Unit)?) {
+    val colors = cvColors
+    BasicText(
+        text = text,
+        modifier = if (onClick == null) Modifier else Modifier.clickable(role = Role.Button) { onClick() },
+        style = cvType.metaMono.copy(color = if (accent) colors.accent else colors.onBackground),
+    )
 }

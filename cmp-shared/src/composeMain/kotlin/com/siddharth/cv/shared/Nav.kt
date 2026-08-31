@@ -162,7 +162,20 @@ class CvNavState {
     var pendingSection: String? by mutableStateOf(null)
         private set
 
+    /**
+     * True when [current] arrived through [replace] rather than through a push, a pop or a reset.
+     *
+     * The web shell is the only reader, and it needs this because it cannot tell otherwise: it is
+     * handed a route and nothing else, so without this flag a page turn inside `/excelsior` becomes
+     * a `history.pushState` and the visitor's Back button has to be pressed 64 times to leave the
+     * magazine. Set by exactly one operation and cleared by every other, so a stale `true` cannot
+     * survive a real navigation.
+     */
+    var replacedInPlace: Boolean by mutableStateOf(false)
+        private set
+
     fun go(route: Route) {
+        replacedInPlace = false
         if (route == current) return
         if (route == Route.Home) {
             popToHome()
@@ -171,7 +184,32 @@ class CvNavState {
         stack.add(route)
     }
 
+    /**
+     * Same page, new address — the counterpart of the web's `navigate({ …, replace: true })`.
+     *
+     * The third operation, and the one the two above cannot express between them. A magazine page
+     * turn is not somewhere you went, it is the same place showing you a different spread, so the
+     * address has to follow it (or a shared link opens the wrong page) while the back stack must
+     * not (or Back stops meaning "leave the magazine" and starts meaning "one page earlier",
+     * 64 times). [go] gets the second wrong and [reset] destroys whatever you were reading before
+     * you opened the room.
+     *
+     * A replace at the floor is deliberately a push. [Route.Home] is the floor of this stack and
+     * never appears twice, so overwriting it would leave a stack whose bottom entry is not Home and
+     * break the invariant every other operation here holds.
+     */
+    fun replace(route: Route) {
+        if (route == current) return
+        if (current == Route.Home) {
+            go(route)
+            return
+        }
+        replacedInPlace = true
+        stack[stack.lastIndex] = route
+    }
+
     fun goSection(id: String) {
+        replacedInPlace = false
         popToHome()
         pendingSection = id
     }
@@ -181,6 +219,7 @@ class CvNavState {
     }
 
     fun back() {
+        replacedInPlace = false
         if (canGoBack) stack.removeAt(stack.lastIndex)
     }
 
@@ -192,6 +231,7 @@ class CvNavState {
      * API for control of the stack.
      */
     fun reset(route: Route) {
+        replacedInPlace = false
         popToHome()
         if (route != Route.Home) stack.add(route)
     }
@@ -257,11 +297,12 @@ fun Route.toPath(): String = when (this) {
  */
 @Suppress("CyclomaticComplexMethod") // A route table. See the note on Route.toPath().
 fun routeOrNull(path: String): Route? {
+    val fragment = path.substringAfter('#', "")
     val noHash = path.substringBefore('#')
     val query = noHash.substringAfter('?', "")
     val clean = noHash.substringBefore('?').trimEnd('/')
     return when {
-        clean.isEmpty() -> Route.Home
+        clean.isEmpty() -> legacyInbound(fragment, query) ?: Route.Home
         clean == "/resume" -> Route.Resume
         clean == "/terminal" -> Route.Terminal
         clean == "/lab" -> Route.Lab
@@ -289,6 +330,35 @@ fun routeOrNull(path: String): Route? {
         clean.startsWith("/read/") -> Route.Read(clean.removePrefix("/read/"))
         else -> null
     }
+}
+
+/**
+ * The addresses that predate this site's paths and are still out in the world.
+ *
+ * `HashCompat` in `src/routes/__root.tsx` is the React counterpart, and the shapes are its, not
+ * invented here: `/#project/<slug>` and `/#terminal` are how every link shared before the router
+ * migration is written, and `/?project=<slug>` exists because LinkedIn's Featured card strips the
+ * fragment off a URL and keeps the query. The React repo has Playwright coverage for all three.
+ * Without this they land on the homepage, which is the wrong page and looks like a broken link.
+ *
+ * Only consulted for the root path, which is the only shape any of them actually take. A hash on a
+ * real page is a section anchor, and this router does not own scrolling — [CvNavState.goSection]
+ * does, and the shell would have to raise it.
+ *
+ * NOT YET REACHABLE FROM THE WEB SHELL: `cmp-web`'s `main()` passes `window.location.pathname`,
+ * which carries neither the query nor the fragment. That also costs the `?year=`/`?layer=` deep
+ * links this router has always parsed, so the fix is one line there and it turns on all of it at
+ * once. Written here because this is where the answer belongs, and it is self-checked below.
+ */
+private fun legacyInbound(fragment: String, query: String): Route? {
+    if (fragment.startsWith("project/")) {
+        return fragment.removePrefix("project/").ifEmpty { null }?.let { Route.ProjectDetail(it) }
+    }
+    query.param("project")?.let { return Route.ProjectDetail(it) }
+    // `#terminal`, `#lab`, `#compose` — the old hash-router addresses. Asked of the real table
+    // rather than of a second list of slugs, so a room that ports is reachable by both spellings
+    // and a section anchor like `#projects` stays null because `/projects` is not a page.
+    return if (fragment.isEmpty()) null else routeOrNull("/$fragment")
 }
 
 /**
@@ -361,6 +431,38 @@ internal fun navSelfCheck() {
     nav.reset(Route.Home)
     check(nav.current == Route.Home && !nav.canGoBack) { "reset home collapses to the floor" }
 
+    // replace() is the page turn: the address moves, the stack does not. Walked at the depth
+    // /excelsior actually runs at — one entry above home — because that is where the 64-entry
+    // back stack this exists to prevent would have been built.
+    nav.go(Route.Excelsior())
+    repeat(4) { i -> nav.replace(Route.Excelsior("2021", i + 1)) }
+    check(nav.current == Route.Excelsior("2021", 4)) { "replace lands on the route" }
+    check(nav.replacedInPlace) { "and tells the web shell to replaceState rather than push" }
+    nav.back()
+    check(nav.current == Route.Home) { "four page turns left one entry, not four" }
+    check(!nav.replacedInPlace) { "back clears the flag, or the shell replaces a real navigation" }
+
+    nav.go(Route.Excelsior())
+    nav.replace(Route.Excelsior("2021", 7))
+    nav.go(Route.Resume)
+    check(!nav.replacedInPlace) { "a push after a replace is still a push" }
+    check(nav.canGoBack) { "the replaced entry is underneath it" }
+    nav.back()
+    check(nav.current == Route.Excelsior("2021", 7)) { "back off the push returns to the replaced spread" }
+
+    // The floor is the one place a replace must not overwrite: Home is the bottom of every stack,
+    // and a stack whose bottom is /excelsior has no way back to the front page.
+    nav.reset(Route.Home)
+    nav.replace(Route.Excelsior("2019", 3))
+    check(nav.current == Route.Excelsior("2019", 3)) { "a replace at the floor still lands" }
+    check(nav.canGoBack) { "but pushes, so home stays underneath it" }
+    check(!nav.replacedInPlace) { "and is reported as the push it was" }
+
+    nav.reset(Route.Excelsior("2021", 2))
+    nav.replace(Route.Excelsior("2021", 2))
+    check(!nav.replacedInPlace) { "replacing the current route is a no-op, not a history write" }
+    nav.reset(Route.Home)
+
     // Path mapping must round-trip, or the URL bar and the router disagree after a refresh.
     listOf(
         Route.Home, Route.Resume, Route.Terminal, Route.Lab, Route.Forge, Route.Playground,
@@ -429,6 +531,18 @@ internal fun navSelfCheck() {
     check(routeOrNull("/hire") == Route.Hire) { "a room ported in this pass is not null" }
     check(routeOrNull("/compose") == Route.Playground) { "a shipped room is not null" }
     check(routeOrNull("") == Route.Home) { "the empty path is still home" }
+
+    // The legacy inbound addresses. Every one of these is a link that already exists somewhere he
+    // does not control — a LinkedIn Featured card, an old share, a pasted hash URL.
+    check(routeOrNull("/#project/mileway") == Route.ProjectDetail("mileway")) { "the old hash project link" }
+    check(routeOrNull("/?project=kursi") == Route.ProjectDetail("kursi")) { "LinkedIn Featured keeps the query" }
+    check(routeOrNull("/#terminal") == Route.Terminal) { "an old hash route resolves to its page" }
+    check(routeOrNull("/#compose") == Route.Playground) { "including one whose slug is not its name" }
+    check(routeOrNull("/#projects") == Route.Home) { "a homepage section anchor is the homepage, not a route" }
+    check(routeOrNull("/#pulse") == Route.Home) { "an unported room's hash falls home rather than 404ing" }
+    check(routeOrNull("/#project/") == Route.Home) { "an empty slug is not a project page" }
+    check(routeOrNull("/?project=") == Route.Home) { "nor is an empty query value" }
+    check(routeOrNull("/lab#top") == Route.Lab) { "a fragment on a real page does not redirect off it" }
 
     // staticRoutes feeds the prerenderer's page list, the sitemap and the palette. A duplicate path
     // collides three keys at once; a path that does not parse back is a page nothing can reach.

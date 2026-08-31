@@ -36,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -64,6 +65,7 @@ import com.siddharth.cv.shared.data.generated.seasonCanon
 import com.siddharth.cv.shared.data.generated.siblingSeries
 import com.siddharth.cv.shared.data.generated.unfiledPieces
 import com.siddharth.cv.shared.data.profile
+import com.siddharth.cv.shared.media.ProjectShot
 import com.siddharth.cv.shared.theme.CvCard
 import com.siddharth.cv.shared.theme.CvColors
 import com.siddharth.cv.shared.theme.CvContentMaxWidth
@@ -671,17 +673,48 @@ private data class EntryLook(
     val kickerAccent: Boolean,
     val tiltDeg: Float,
     val hoverTilt: Boolean,
+    /**
+     * What the plate IS, for a reader who cannot see it. The web card ships `alt=""` because the
+     * title sits two lines below the picture, which is the correct call for decoration and the
+     * wrong one here: these are painted artefacts, one per entry, and the title alone does not say
+     * that a picture is even present. Every phrase below is a claim the season already makes about
+     * its own stock elsewhere in this file, never a description of a painting nothing here can see.
+     */
+    val plateIs: String,
 )
 
 private fun entryLook(e: AnthologyEntry): EntryLook =
     when {
         // The Directory's survey form. Broadcast, filed, numbered. A case file does not tilt.
-        e.season == 1 -> EntryLook("ENTRY #${e.entry}", InkColors, false, 0f, false)
+        e.season == 1 ->
+            EntryLook(
+                "ENTRY #${e.entry}",
+                InkColors,
+                false,
+                0f,
+                false,
+                "a Directory survey plate, filed",
+            )
         // His own page. Loose warm paper on a desk, so it sits very slightly askew.
-        e.season == 2 -> EntryLook("PAGE ${e.page} OF 91", InkColors, true, paperTiltDeg, true)
+        e.season == 2 ->
+            EntryLook(
+                "PAGE ${e.page} OF 91",
+                InkColors,
+                true,
+                paperTiltDeg,
+                true,
+                "a page out of his case, on warm paper",
+            )
         // The exception, and the only undamaged object in the season.
         e.season == 3 && e.kindling == kindlingFinale ->
-            EntryLook("THE PAGE HE KEEPS", KeptPaperColors, true, 0f, false)
+            EntryLook(
+                "THE PAGE HE KEEPS",
+                KeptPaperColors,
+                true,
+                0f,
+                false,
+                "the one page he did not burn, undamaged",
+            )
         // The fire. Same paper, marked by it, so the accent goes to ember and nothing rotates:
         // a burned page is the shape of its own edge and a tilt would fight the bite.
         e.season == 3 ->
@@ -691,6 +724,7 @@ private fun entryLook(e: AnthologyEntry): EntryLook =
                 true,
                 0f,
                 false,
+                "a withdrawn page, identified by its burned edge",
             )
         // The notice board. Posted rather than handled, so it is flat, and it carries the same
         // coverage cyan its plates do.
@@ -701,15 +735,32 @@ private fun entryLook(e: AnthologyEntry): EntryLook =
                 true,
                 0f,
                 false,
+                "a notice pasted on a public wall",
             )
         // A season with no row of its own. Positional, always true, and it never asserts a
         // counting scheme it does not have.
-        else -> EntryLook("№ ${e.idx}", InkColors, true, paperTiltDeg, true)
+        else ->
+            EntryLook(
+                "№ ${e.idx}",
+                InkColors,
+                true,
+                paperTiltDeg,
+                true,
+                "a plate on the season's own stock",
+            )
     }
 
 /**
- * One entry. The plate is gone, a 600x780 JPEG per card and 48 of them, so the card is type only,
- * and the season's identity has to come from the shell instead of from the picture inside it.
+ * One entry, plate and all. The 600x780 plate is streamed from the live origin by [plateUrl] rather
+ * than bundled, so the season's identity comes from the picture again and not only from the shell
+ * around it.
+ *
+ * Two honest differences from the web card, neither faked. The plate is inset inside [CvCard]'s own
+ * 24dp padding instead of bleeding to the card edge, because [CvCard] fixes its padding and the
+ * house rule is to use a primitive as it stands rather than fork it. And season one's plates lose
+ * the `grayscale-[35%] sepia-[10%]` filter that is what makes ten of them read as one filed set: a
+ * `ColorMatrix` through [com.siddharth.cv.shared.media.ProjectShot] is the one-line fix and it is
+ * not worth a parameter on a shared loader for one season.
  *
  * The nested [CvTheme] is the whole per-season mechanism and the exact analogue of `t.vars`: every
  * `cvColors` read below re-resolves against the shadowed local, so nothing here knows that season
@@ -738,6 +789,15 @@ private fun EntryCard(e: AnthologyEntry, index: Int, uri: UriHandler) {
                     ),
             onClick = { openRead(e.slug, uri) },
         ) {
+            val plate = plateUrl(e.plate)
+            if (plate != null) {
+                ProjectShot(
+                    url = plate,
+                    label = "Field plate for ${e.title}: ${look.plateIs}.",
+                    modifier = Modifier.fillMaxWidth().aspectRatio(plateAspect).clip(PlateShape),
+                )
+                Spacer(Modifier.height(16.dp))
+            }
             BasicText(
                 text = look.label,
                 style = cvType.metaMono.copy(color = if (look.kickerAccent) colors.accent else colors.muted),
@@ -843,9 +903,19 @@ private fun TellerCard(w: AnthologyWitness, uri: UriHandler) {
         modifier = Modifier.fillMaxWidth(),
         onClick = home?.let { entry -> { openRead(entry.slug, uri) } },
     ) {
-        // The portrait is a 1100x600 JPEG and this port carries no bitmaps. That makes it
-        // indistinguishable from the web's other state, a record whose art has not been drawn yet,
-        // so the card says what it has rather than framing an empty box that would mean two things.
+        // The 1100x600 rendering, streamed. The null branch is the web's other state and not a
+        // failure: a record whose art has not been drawn yet ships with `art: ""`, and every teller
+        // on the roll today has one, so it degrades to the type-only card rather than carrying an
+        // "Awaiting rendering" box that nothing can currently reach.
+        val art = plateUrl(w.art)
+        if (art != null) {
+            ProjectShot(
+                url = art,
+                label = "Rendered portrait of ${w.name}. ${w.did}",
+                modifier = Modifier.fillMaxWidth().aspectRatio(portraitAspect).clip(PlateShape),
+            )
+            Spacer(Modifier.height(16.dp))
+        }
         BasicText(text = w.name, style = cvType.cardTitle.copy(color = colors.onBackground))
         val of = w.of
         if (of != null) {
@@ -940,6 +1010,17 @@ private fun LazyListScope.siblingSeriesBlock(
 
     gridItems("sibling-${series.slug}-entries", series.entries, columns, key = { it.slug }) { e, _ ->
         CvCard(modifier = Modifier.fillMaxWidth(), onClick = { openRead(e.slug, uri) }) {
+            val plate = plateUrl(e.plate)
+            if (plate != null) {
+                ProjectShot(
+                    url = plate,
+                    // The medium IS the distinction this series exists to make, so the description
+                    // says which one it is rather than repeating the word "plate" ten times.
+                    label = "Retrieval plate for ${e.title}: a ${series.medium} file from ${series.title}.",
+                    modifier = Modifier.fillMaxWidth().aspectRatio(plateAspect).clip(PlateShape),
+                )
+                Spacer(Modifier.height(16.dp))
+            }
             MonoMeta("REQUEST ${e.idx.toString().padStart(2, '0')}")
             Spacer(Modifier.height(10.dp))
             BasicText(text = e.title, style = cvType.cardTitle.copy(color = cvColors.onBackground))
@@ -1305,6 +1386,38 @@ internal fun openRead(slug: String, uri: UriHandler) {
     uri.openUri(profile.portfolio.trimEnd('/') + "/read/" + slug)
 }
 
+/** `600x780` for a field plate, the size every entry and sibling plate is painted at. */
+internal const val plateAspect = 600f / 780f
+
+/** `1100x600` for a teller. Landscape, because a rendering is a scene and not a headshot. */
+internal const val portraitAspect = 1100f / 600f
+
+/** Inside [CvCard]'s own 24dp padding, so the plate needs its own corner rather than the card's. */
+internal val PlateShape: RoundedCornerShape = RoundedCornerShape(8.dp)
+
+/**
+ * The live URL for a plate or a portrait, from the site-relative `.jpg` path the corpus records.
+ *
+ * Streamed, not shipped. [com.siddharth.cv.shared.media.ProjectShot] already does exactly this for
+ * project shots and for the Excelsior scans, so this is a URL rule and not a second image pipeline:
+ * ninety-three plates and portraits would be megabytes on a wasm bundle a visitor pays for before
+ * they have scrolled to one, and the React repo's own daily media job keeps the origin current.
+ *
+ * `.webp` and never `.avif`, the same constraint `CvGallery` and `/excelsior` are built around:
+ * skiko ships no AVIF decoder and an avif URL renders blank with nothing in the log. Every path the
+ * corpus carries has a `.webp` sibling on the origin; [anthologySelfCheck] asserts the extension
+ * swap rather than the file count, because nothing in this build can see the other repo.
+ *
+ * Blank is a real state and not an error: `gen-anthology.mjs` records `""` when a fetch failed
+ * rather than reusing a stale image, so blank returns null and the caller draws type only.
+ */
+internal fun plateUrl(path: String): String? =
+    if (path.isBlank()) {
+        null
+    } else {
+        profile.portfolio.trimEnd('/') + path.substringBeforeLast('.') + ".webp"
+    }
+
 // ---------------------------------------------------------------------------------------------
 // Self-check
 // ---------------------------------------------------------------------------------------------
@@ -1338,6 +1451,27 @@ internal fun anthologySelfCheck() {
         check(key != null) { "${w.id}: no entry key, so it files under no season and never renders" }
         check(seasonOfKey(key) in 1..anthology.seasons.size) { "${w.id}: key '$key' has no season" }
         check(anthologyEntries.any { it.entryKey() == key }) { "${w.id}: key '$key' resolves to no entry" }
+    }
+
+    // The plates. An `.avif` URL is the one failure here that is completely silent: skiko decodes
+    // nothing, logs nothing, and the card degrades to the gradient floor forever. So assert the
+    // extension swap on the two shapes the corpus actually carries, and assert that no entry,
+    // sibling or teller ends up pointed at a path this rule cannot rewrite.
+    check(plateUrl("/p/anthology/plates/s1-01-x.jpg") == "${profile.portfolio}/p/anthology/plates/s1-01-x.webp") {
+        "plateUrl() did not swap a plate to webp: ${plateUrl("/p/anthology/plates/s1-01-x.jpg")}"
+    }
+    check(plateUrl("/p/anthology/witnesses/ossul.jpg")?.endsWith(".webp") == true) {
+        "plateUrl() did not swap a portrait to webp"
+    }
+    check(plateUrl("") == null) { "a lost plate resolved to a URL instead of to nothing" }
+    val plateSources =
+        anthologyEntries.map { it.plate } +
+            siblingSeries.flatMap { s -> s.entries.map { it.plate } } +
+            anthology.witnesses.map { it.art }
+    plateSources.forEach { path ->
+        val url = plateUrl(path) ?: return@forEach
+        check(url.endsWith(".webp")) { "'$path' resolves to $url, which skiko cannot decode" }
+        check(url.startsWith(profile.portfolio)) { "'$path' resolves off the portfolio origin" }
     }
 
     // The kept page is an exception inside season three's own row, not a season of its own.
