@@ -51,6 +51,8 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.siddharth.cv.shared.Route
+import com.siddharth.cv.shared.data.generated.anthology
+import com.siddharth.cv.shared.data.generated.anthologyEntries
 import com.siddharth.cv.shared.data.projects
 import com.siddharth.cv.shared.home.homeSections
 import com.siddharth.cv.shared.staticRoutes
@@ -79,6 +81,18 @@ private fun routeLabel(route: Route): String = when (route) {
     Route.Lab -> "The Lab Bench, the numbers running live"
     Route.Forge -> "The Particle Forge, cursor-reactive swarm"
     Route.Playground -> "The Compose Playground, write Compose and watch it recompose"
+    Route.Hire -> "Hire me, the whole case in ninety seconds"
+    Route.Shipped -> "Shipped, every Play Store listing his commits reached"
+    Route.Weeb -> "Weeb Central, an anime and manga ledger read as evidence"
+    Route.Ops -> "The Ops Board, what reports, what is stale, what is broken"
+    Route.Loopdown -> "Loopdown, the engineering field notes"
+    Route.Ink -> "The Ink, the writing that predates the code"
+    // Layer-less on purpose: the palette is a way in, and the way in is the first layer. The
+    // deep links at named layers are `/canon`'s job, and they carry the layer in the URL.
+    is Route.Anthology ->
+        "The Anthology, ${anthologyEntries.size} entries across ${anthology.seasons.size} seasons"
+    Route.Canon -> "The Canon, the laws and the count"
+    Route.Making -> "The Making, how the anthology was built and audited"
     is Route.ProjectDetail -> "Open project: ${route.slug}"
 }
 

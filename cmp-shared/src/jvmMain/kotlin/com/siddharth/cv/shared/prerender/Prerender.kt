@@ -19,9 +19,10 @@ import com.siddharth.cv.shared.navSelfCheck
 import com.siddharth.cv.shared.routeOrNull
 import com.siddharth.cv.shared.staticRoutes
 import com.siddharth.cv.shared.playground.themeLabSelfCheck
+import com.siddharth.cv.shared.anthology.anthologySelfCheck
+import com.siddharth.cv.shared.anthology.makingSelfCheck
 import com.siddharth.cv.shared.data.CvGallery
 import com.siddharth.cv.shared.data.Experience
-import com.siddharth.cv.shared.data.NamedLink
 import com.siddharth.cv.shared.data.Project
 import com.siddharth.cv.shared.data.SkillGroup
 import com.siddharth.cv.shared.data.caseStudies
@@ -37,8 +38,49 @@ import com.siddharth.cv.shared.data.projects
 import com.siddharth.cv.shared.data.recentGrowth
 import com.siddharth.cv.shared.data.resumeSkills
 import com.siddharth.cv.shared.data.sharedFoundation
+import com.siddharth.cv.shared.data.generated.anthology
+import com.siddharth.cv.shared.data.generated.anthologyEntries
+import com.siddharth.cv.shared.data.generated.auditMethod
+import com.siddharth.cv.shared.data.generated.boardArc
+import com.siddharth.cv.shared.data.generated.boardProfiles
+import com.siddharth.cv.shared.data.generated.countLedger
+import com.siddharth.cv.shared.data.generated.fleetStats
+import com.siddharth.cv.shared.data.generated.liveClients
+import com.siddharth.cv.shared.data.generated.namedThirteen
+import com.siddharth.cv.shared.data.generated.opsDrift
+import com.siddharth.cv.shared.data.generated.opsLeverage
+import com.siddharth.cv.shared.data.generated.opsPerimeter
+import com.siddharth.cv.shared.data.generated.pastClients
+import com.siddharth.cv.shared.data.generated.pipelineStages
+import com.siddharth.cv.shared.data.generated.receipts
+import com.siddharth.cv.shared.data.generated.renderingDoctrine
+import com.siddharth.cv.shared.data.generated.rigConstraints
+import com.siddharth.cv.shared.data.generated.seasonCanon
+import com.siddharth.cv.shared.data.generated.siblingSeries
+import com.siddharth.cv.shared.data.generated.societies
+import com.siddharth.cv.shared.data.generated.spend
+import com.siddharth.cv.shared.data.generated.storeGeneratedAt
+import com.siddharth.cv.shared.data.generated.unfiledPieces
+import com.siddharth.cv.shared.data.generated.voiceConstraints
+import com.siddharth.cv.shared.data.generated.weeb
+import com.siddharth.cv.shared.data.generated.writingArchive
+import com.siddharth.cv.shared.data.generated.writingCast
+import com.siddharth.cv.shared.data.generated.writingLessons
+import com.siddharth.cv.shared.data.generated.writingSeries
+import com.siddharth.cv.shared.anthology.money
+import com.siddharth.cv.shared.data.generated.loopdownOrigin
+import com.siddharth.cv.shared.data.generated.opsGeneratedAt
+import com.siddharth.cv.shared.data.generated.retroactionStandard
+import com.siddharth.cv.shared.data.generated.rigConstraintsNote
+import com.siddharth.cv.shared.data.generated.standardIntervals
+import com.siddharth.cv.shared.data.generated.storeApps
+import com.siddharth.cv.shared.data.generated.tether
+import com.siddharth.cv.shared.data.generated.tetherDoctrine
+import com.siddharth.cv.shared.data.generated.lastShipped
 import com.siddharth.cv.shared.data.siteRooms
 import com.siddharth.cv.shared.data.skills
+import com.siddharth.cv.shared.shipped.shippedFormatSelfCheck
+import com.siddharth.cv.shared.writing.titleize
 import com.siddharth.cv.shared.terminal.TerminalEngine
 import com.siddharth.cv.shared.toPath
 import kotlinx.serialization.json.Json
@@ -101,7 +143,7 @@ object Prerender {
         }
 
         File(outDir, "sitemap.xml").writeText(sitemap(routes, origin))
-        File(outDir, "robots.txt").writeText(robots(origin))
+        File(outDir, "robots.txt").writeText("User-agent: *\nAllow: /\n\nSitemap: $origin/sitemap.xml\n")
 
         println("prerender: ${routes.size} pages + sitemap.xml + robots.txt -> ${outDir.absolutePath} (origin $origin)")
     }
@@ -146,78 +188,45 @@ private fun Route.outputFile(root: File): File {
     return if (path.isEmpty()) File(root, "index.html") else File(root, "$path/index.html")
 }
 
+/**
+ * Route -> page, and nothing else. Every branch is one call, so this stays a table a reader can
+ * check against `Nav.kt` at a glance rather than a function they have to scroll. The head copy each
+ * page needs sits beside the body it belongs to, further down.
+ *
+ * `page` defaults to the website type, no share image and the Person record, which is what most of
+ * these are; only the pages that genuinely differ say so.
+ */
 private fun render(route: Route, origin: String): String = when (route) {
-    Route.Home -> page(
-        route = route,
-        origin = origin,
-        title = "${profile.name} — ${profile.title}",
-        description = profile.intro,
-        ogType = "profile",
-        image = CvGallery.hero("mileway"),
-        jsonLd = personLd(origin, profile.intro),
-        body = homeBody(),
-    )
-
-    Route.Resume -> page(
-        route = route,
-        origin = origin,
-        title = "Résumé — ${profile.name} · ${profile.title}",
-        description = profile.summary,
-        ogType = "profile",
-        image = CvGallery.hero("mileway"),
-        jsonLd = personLd(origin, profile.summary),
-        body = resumeBody(),
-    )
-
-    Route.Terminal -> page(
-        route = route,
-        origin = origin,
-        title = "Terminal — ${profile.name}",
-        description = "A typable shell over this CV: ${TerminalEngine.commands.size} commands — " +
-            "ls the site, cat the résumé, open any project case study by slug.",
-        ogType = "website",
-        image = CvGallery.hero("mileway"),
-        jsonLd = personLd(origin, profile.intro),
-        body = terminalBody(),
-    )
-
-    Route.Lab -> page(
-        route = route,
-        origin = origin,
-        title = "Lab bench — ${profile.name}",
-        description = "Interactive simulations of real production problems: recomposition cost, " +
-            "request fan-out, crash triage, search traversal and module-graph isolation.",
-        ogType = "website",
-        image = CvGallery.hero("mileway"),
-        jsonLd = personLd(origin, profile.intro),
-        // The bench itself is a canvas, so the crawlable body is the captions — which is the part
-        // that carries the meaning anyway.
-        body = labBody(),
-    )
-
-    Route.Playground -> page(
-        route = route,
-        origin = origin,
-        title = "Compose playground — ${profile.name}",
-        description = "Type a Compose subset and see it rendered by real composables in the same " +
-            "runtime — no server round-trip and no compile step.",
-        ogType = "website",
-        image = CvGallery.hero("mileway"),
-        jsonLd = personLd(origin, profile.intro),
-        body = playgroundBody(),
-    )
-
-    Route.Forge -> page(
-        route = route,
-        origin = origin,
-        title = "Particle forge — ${profile.name}",
-        description = "A few thousand particles spring-tied to the wordmark, parting around the " +
-            "cursor and snapping back. Physics on a Compose canvas.",
-        ogType = "website",
-        image = CvGallery.hero("mileway"),
-        jsonLd = personLd(origin, profile.intro),
-        body = forgeBody(),
-    )
+    Route.Home ->
+        page(route, origin, "${profile.name} — ${profile.title}", profile.intro, homeBody(), "profile", HERO)
+    Route.Resume ->
+        page(route, origin, "Résumé — ${profile.name} · ${profile.title}", profile.summary, resumeBody(), "profile", HERO)
+    Route.Hire ->
+        page(route, origin, "Hire me — ${profile.name} · ${profile.title}", HIRE_DESCRIPTION, hireBody(), "profile", HERO)
+    Route.Shipped ->
+        page(route, origin, "Shipped — ${profile.name}", SHIPPED_DESCRIPTION, shippedBody(), image = HERO)
+    Route.Terminal ->
+        page(route, origin, "Terminal — ${profile.name}", TERMINAL_DESCRIPTION, terminalBody(), image = HERO)
+    Route.Lab ->
+        page(route, origin, "Lab bench — ${profile.name}", LAB_DESCRIPTION, labBody(), image = HERO)
+    Route.Playground ->
+        page(route, origin, "Compose playground — ${profile.name}", PLAYGROUND_DESCRIPTION, playgroundBody(), image = HERO)
+    Route.Forge ->
+        page(route, origin, "Particle forge — ${profile.name}", FORGE_DESCRIPTION, forgeBody(), image = HERO)
+    Route.Ops ->
+        page(route, origin, "The ops board — ${profile.name}", OPS_DESCRIPTION, opsBody())
+    Route.Weeb ->
+        page(route, origin, "Weeb Central — ${profile.name}", WEEB_DESCRIPTION, weebBody())
+    Route.Loopdown ->
+        page(route, origin, "Loopdown — ${profile.name}", LOOPDOWN_DESCRIPTION, loopdownBody())
+    Route.Ink ->
+        page(route, origin, "The Ink — ${profile.name}", boardArc, inkBody())
+    is Route.Anthology ->
+        page(route, origin, "${anthology.title} — ${profile.name}", anthology.tagline, anthologyBody())
+    Route.Canon ->
+        page(route, origin, "The Canon — ${anthology.title}", CANON_DESCRIPTION, canonBody())
+    Route.Making ->
+        page(route, origin, "The Making — ${anthology.title}", MAKING_DESCRIPTION, makingBody())
 
     is Route.ProjectDetail -> {
         // Only slugs taken from `projects` reach here (main() builds the list), so this is a
@@ -228,13 +237,23 @@ private fun render(route: Route, origin: String): String = when (route) {
             origin = origin,
             title = "${project.name} — ${profile.name}",
             description = project.detail?.overview ?: project.description,
+            body = projectBody(project),
             ogType = "article",
             image = CvGallery.hero(project.slug),
             jsonLd = projectLd(project, origin),
-            body = projectBody(project),
         )
     }
 }
+
+/**
+ * The one share image this build has for a page that is not a project: a real screenshot of a real
+ * shipped app. The nine rooms added in the second pass deliberately take none. The React route
+ * declares none either (`roomHead` in src/lib/routeHead.ts emits title, description and canonical
+ * only), and the artwork those pages carry on the web is per-entry plates and scanned magazine
+ * pages that this port does not ship. A project screenshot pasted onto /canon would be a card that
+ * misdescribes the page, which is worse than a card with no picture in it.
+ */
+private val HERO: String? = CvGallery.hero("mileway")
 
 // ---------------------------------------------------------------------------------------------
 // The shell — must stay byte-compatible in structure with cmp-web/.../index.html
@@ -257,10 +276,10 @@ private fun page(
     origin: String,
     title: String,
     description: String,
-    ogType: String,
-    image: String?,
-    jsonLd: String,
     body: String,
+    ogType: String = "website",
+    image: String? = null,
+    jsonLd: String = personLd(origin, profile.intro),
 ): String {
     val path = route.toPath()
     val canonical = if (path == "/") "$origin/" else "$origin$path"
@@ -294,7 +313,7 @@ private fun page(
                 <meta property="og:description" content="${esc(desc)}">
                 <meta property="og:type" content="$ogType">
                 <meta property="og:url" content="${esc(canonical)}">
-                <meta name="twitter:card" content="summary_large_image">
+                <meta name="twitter:card" content="${if (image == null) "summary" else "summary_large_image"}">
                 <meta name="twitter:title" content="${esc(title)}">
                 <meta name="twitter:description" content="${esc(desc)}">
             """.trimIndent(),
@@ -390,20 +409,18 @@ private val PAGE_CSS = """
 /**
  * Every route linked from every page. This is the single highest-value thing on the page for
  * indexability: without it a crawler that lands on one project page has no path to the other
- * eleven, because the app's own navigation is canvas clicks it cannot see.
+ * twenty, because the app's own navigation is canvas clicks it cannot see.
+ *
+ * Walks [prerenderRoutes] rather than a second hand-typed list. That list used to be typed here,
+ * and it was already two kinds of wrong: it had never been given `/compose`'s neighbours, and it
+ * linked every project rather than the ones with a detail block, so `/project/portfolio` was
+ * advertised on twelve pages and served on none. Deriving it means a route added to Nav.kt is
+ * linked from every page for free, and a page that is not emitted cannot be linked.
  */
 private fun siteNav(current: Route): String = buildString {
     append("    <nav aria-label=\"Site\">\n")
-    val entries = listOf<Pair<Route, String>>(
-        Route.Home to "Home",
-        Route.Resume to "Résumé",
-        Route.Terminal to "Terminal",
-        Route.Lab to "Lab",
-        Route.Playground to "Playground",
-        Route.Forge to "Forge",
-    ) + projects.map { Route.ProjectDetail(it.slug) to it.slug }
-
-    entries.forEach { (route, label) ->
+    prerenderRoutes.forEach { route ->
+        val label = route.navLabel()
         if (route == current) {
             append("      <span class=\"muted\" aria-current=\"page\">${esc(label)}</span>\n")
         } else {
@@ -411,6 +428,30 @@ private fun siteNav(current: Route): String = buildString {
         }
     }
     append("    </nav>\n")
+}
+
+/**
+ * The one-word name of a route in the site nav. Short on purpose: this strip carries twenty-one
+ * links on every page and the descriptive wording belongs in the `<title>` and the palette, not in
+ * a mono nav rule. Exhaustive, so a new route cannot ship without being named here.
+ */
+private fun Route.navLabel(): String = when (this) {
+    Route.Home -> "Home"
+    Route.Resume -> "Résumé"
+    Route.Terminal -> "Terminal"
+    Route.Lab -> "Lab"
+    Route.Playground -> "Playground"
+    Route.Forge -> "Forge"
+    Route.Hire -> "Hire"
+    Route.Shipped -> "Shipped"
+    Route.Ops -> "Ops"
+    Route.Weeb -> "Weeb"
+    Route.Loopdown -> "Loopdown"
+    Route.Ink -> "Ink"
+    is Route.Anthology -> "Anthology"
+    Route.Canon -> "Canon"
+    Route.Making -> "Making"
+    is Route.ProjectDetail -> slug
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -530,6 +571,10 @@ private fun resumeBody(): String = buildString {
     p(profile.availability)
 }
 
+private val TERMINAL_DESCRIPTION =
+    "A typable shell over this CV: ${TerminalEngine.commands.size} commands — ls the site, " +
+        "cat the résumé, open any project case study by slug."
+
 /**
  * The terminal's `help` output, printed by the engine itself rather than transcribed — a new
  * command documents itself here the same way it does in the shell.
@@ -556,6 +601,10 @@ private fun terminalBody(): String = buildString {
     )
 }
 
+private const val LAB_DESCRIPTION =
+    "Interactive simulations of real production problems: recomposition cost, request fan-out, " +
+        "crash triage, search traversal and module-graph isolation."
+
 /**
  * The bench's crawlable form. Each experiment's description already exists in [cvLabs] — it is
  * precisely what the canvas cannot expose to a crawler or a screen reader, and it is also the only
@@ -581,6 +630,10 @@ private fun labBody(): String = buildString {
     }
 }
 
+private const val PLAYGROUND_DESCRIPTION =
+    "Type a Compose subset and see it rendered by real composables in the same runtime — no " +
+        "server round-trip and no compile step."
+
 /** The presets are the crawlable content — they are the only prose the canvas cannot expose. */
 private fun playgroundBody(): String = buildString {
     h1("Compose playground")
@@ -601,6 +654,10 @@ private fun playgroundBody(): String = buildString {
     )
 }
 
+private const val FORGE_DESCRIPTION =
+    "A few thousand particles spring-tied to the wordmark, parting around the cursor and snapping " +
+        "back. Physics on a Compose canvas."
+
 private fun forgeBody(): String = buildString {
     h1("Particle forge")
     p(
@@ -612,6 +669,391 @@ private fun forgeBody(): String = buildString {
         "There is nothing to read here; it is a toy. " +
             "<a href=\"/\">The portfolio</a> is the point.",
         raw = true,
+    )
+}
+
+private val HIRE_DESCRIPTION = "${profile.tagline} ${profile.availability}."
+
+/**
+ * The recruiter's page. Every sentence on it already exists in `data/` and has already been
+ * through the claim audit, which is the argument hire.tsx makes in a comment and then breaks by
+ * hand-typing its own numbers a paragraph later.
+ */
+private fun hireBody(): String = buildString {
+    h1(profile.name)
+    p("${profile.title} · ${profile.location}", cls = "muted")
+    p(profile.intro, cls = "lead")
+
+    h2("The numbers")
+    ul(metrics.map { "<b>${esc(it.value)}</b> — ${esc(it.label)}. ${esc(it.detail)}" }, raw = true)
+
+    h2("The proof")
+    ul(
+        caseStudies.map {
+            "<b>${esc(it.title.substringBefore(": "))}</b> — ${esc(it.metric)}. ${esc(it.summary)}"
+        },
+        raw = true,
+    )
+
+    h2("Availability")
+    p(profile.availability)
+    appendContact()
+}
+
+// Read off the corpus, never typed: gen-store.mjs re-sweeps the store and both of these move on
+// their own. A hand-written "89 live" here is precisely the drift this pipeline exists to stop.
+private val SHIPPED_DESCRIPTION =
+    "Every Play Store listing his commits reached: ${fleetStats.live} live and " +
+        "${fleetStats.delisted} pulled across ${fleetStats.clients} client branches, swept from " +
+        "the store rather than remembered."
+
+/**
+ * The Play Store fleet. Not one number here is typed: `fleetStats` is what gen-store.mjs derived
+ * from the sweep, and the two client walls are its own grouping, so a re-sweep moves the prose and
+ * the lists together or moves neither.
+ */
+private fun shippedBody(): String = buildString {
+    h1("Shipped")
+    p(
+        "Every Play Store listing his commits reached, read off the store rather than remembered. " +
+            "${fleetStats.live} live and ${fleetStats.delisted} pulled, over ${fleetStats.clients} " +
+            "client branches and ${fleetStats.developers} developer accounts, at least " +
+            "${fleetStats.installFloor} installs. Swept $storeGeneratedAt.",
+        cls = "lead",
+    )
+
+    h2("Named apps")
+    ul(
+        storeApps.map {
+            "${link(it.name, it.url)} — ${esc(it.role)}, ${esc(it.employer)}. " +
+                "${esc(it.installs)} installs, rated ${it.rating}."
+        },
+        raw = true,
+    )
+
+    h2("By year")
+    ul(lastShipped.map { "<b>${it.year}</b> — ${it.live} still live, ${it.gone} pulled" }, raw = true)
+
+    h2("Live clients")
+    ul(
+        liveClients.map { c ->
+            "<b>${esc(c.name)}</b> — ${c.apps.size} listing${plural(c.apps.size)}, ${esc(c.developer)}"
+        },
+        raw = true,
+    )
+
+    h2("Pulled clients")
+    ul(
+        pastClients.map { c ->
+            "<b>${esc(c.name)}</b> — ${c.apps.size} listing${plural(c.apps.size)}, " +
+                "last seen ${esc(c.lastSeen)}"
+        },
+        raw = true,
+    )
+}
+
+/** The two client walls say "listing" 110 times between them. */
+private fun plural(n: Int): String = if (n == 1) "" else "s"
+
+private val WEEB_DESCRIPTION =
+    "${weeb.anime.total} anime and ${weeb.manga.total} manga kept by hand and read as evidence: a " +
+        "status column with no word for quitting, a score scale whose bottom half is unused, and " +
+        "the seasons that aired while the list was not looking."
+
+/** The anime and manga ledger. Every count reads out of `weeb`; the page states no total of its own. */
+private fun weebBody(): String = buildString {
+    h1("Weeb Central")
+    p(
+        "${weeb.anime.total} anime and ${weeb.manga.total} manga kept by hand, " +
+            "${weeb.manga.chaptersRead} chapters of it read, matched against AniList on " +
+            "${weeb.generatedAt}. Read as evidence rather than as a list.",
+        cls = "lead",
+    )
+
+    h2("Status")
+    ul(weeb.anime.byWatch.entries.map { "<b>${esc(it.key)}</b> — ${it.value}" }, raw = true)
+
+    h2("Scores used")
+    ul(
+        weeb.anime.scoreDist.entries.sortedBy { it.key }.map { "<b>${it.key}</b> — ${it.value}" },
+        raw = true,
+    )
+
+    h2("Furthest behind")
+    ul(weeb.anime.deepestGaps.map { "<b>${esc(it.name)}</b> — ${it.gap} unwatched" }, raw = true)
+
+    h2("Sequels out, unstarted")
+    ul(
+        weeb.stale.map {
+            "<b>${esc(it.title)}</b> — ${esc(it.sequel)}, ${esc(it.status)}" +
+                (it.year?.let { y -> ", $y" } ?: "")
+        },
+        raw = true,
+    )
+
+    h2("Where his score parts from the crowd")
+    ul(
+        (weeb.divergence.top + weeb.divergence.bottom).map {
+            "<b>${esc(it.name)}</b> — his ${it.mine}, the crowd's ${it.crowd}"
+        },
+        raw = true,
+    )
+}
+
+private val OPS_DESCRIPTION =
+    "What reports, what has gone stale and what is broken across ${opsPerimeter.size} generated " +
+        "corpora and ${opsDrift.size} vendored pins. A board about failure nobody noticed cannot " +
+        "report a missing feed as a clean one."
+
+/**
+ * The ops board. Four blocks, because four is what this build has a source for: the other four on
+ * the React board need a backend this port does not have, and a board about failure nobody noticed
+ * is the last place to render a missing feed as a clean one.
+ */
+private fun opsBody(): String = buildString {
+    h1("The ops board")
+    p(
+        "What reports, what has gone stale, and what is broken across the generated corpora behind " +
+            "this site. Stamped $opsGeneratedAt.",
+        cls = "lead",
+    )
+
+    h2("Freshness perimeter")
+    ul(
+        opsPerimeter.map {
+            "<b>${esc(it.file)}</b> — generated ${esc(it.generatedAt)} by ${esc(it.generator)}, " +
+                "SLA ${it.slaDays} days"
+        },
+        raw = true,
+    )
+
+    h2("Vendored drift")
+    ul(
+        opsDrift.map {
+            "<b>${esc(it.repo)}</b> — pinned at ${esc(it.pin)} of ${esc(it.upstream)}" +
+                (it.behind?.let { b -> ", $b behind" } ?: "")
+        },
+        raw = true,
+    )
+
+    h2("Leverage")
+    ul(
+        opsLeverage.map {
+            "<b>${esc(it.id)}</b> — ${it.modules} modules across ${esc(it.repos.joinToString(", "))}"
+        },
+        raw = true,
+    )
+}
+
+private val LOOPDOWN_DESCRIPTION =
+    "Engineering field notes: ${writingLessons.size} lessons across ${writingSeries.size} series, " +
+        "and the personified-bug cast that keeps turning up in them."
+
+/** The field-notes index. Each lesson links to wherever it actually published, or to nowhere. */
+private fun loopdownBody(): String = buildString {
+    h1("Loopdown")
+    p(
+        "${writingLessons.size} engineering field notes across ${writingSeries.size} series, and " +
+            "the personified-bug cast that keeps turning up in them.",
+        cls = "lead",
+    )
+
+    h2("Lessons")
+    ul(
+        writingLessons.map { lesson ->
+            val where = lesson.links.devto ?: lesson.links.medium
+                ?: lesson.links.hashnode ?: lesson.links.linkedin
+            val title = if (where != null) link(lesson.title, where) else esc(lesson.title)
+            title + (lesson.pillar?.let { " <span class=\"muted\">${esc(it)}</span>" } ?: "")
+        },
+        raw = true,
+    )
+
+    h2("Series")
+    ul(writingSeries.map { "<b>${esc(it.title)}</b> — ${it.episodes} episodes" }, raw = true)
+
+    h2("The cast")
+    ul(
+        writingCast.map { "<b>${esc(titleize(it.id))}</b> — ${it.appearances} appearances" },
+        raw = true,
+    )
+}
+
+/** The doorway room, and the writing that predates the code. */
+private fun inkBody(): String = buildString {
+    h1("The Ink")
+    p(boardArc, cls = "lead")
+
+    h2("The archive")
+    ul(
+        writingArchive.map {
+            "<b>${esc(it.title)}</b>" + (it.form?.let { f -> " <span class=\"muted\">${esc(f)}</span>" } ?: "") +
+                (it.blurb?.let { b -> " — ${esc(b)}" } ?: "")
+        },
+        raw = true,
+    )
+
+    h2("Excelsior")
+    ul(
+        boardProfiles.map {
+            "<b>${esc(it.year)}, page ${it.page}: ${esc(it.title)}</b> — ${esc(it.role)}. " +
+                "${esc(it.quote)}"
+        },
+        raw = true,
+    )
+    p("${loopdownOrigin.year}, page ${loopdownOrigin.page}. ${loopdownOrigin.story}")
+
+    h2("Societies")
+    ul(
+        societies.map {
+            "<b>${esc(it.name)}</b> — ${esc(it.role)}, ${esc(it.years)}. ${esc(it.blurb)}"
+        },
+        raw = true,
+    )
+}
+
+/** The anthology index. Bodies and plates are not in the Kotlin corpus, so neither are they here. */
+private fun anthologyBody(): String = buildString {
+    h1(anthology.title)
+    p(anthology.tagline, cls = "lead")
+    p(anthology.fourteen)
+
+    h2("Seasons")
+    ul(anthology.seasons.map { "<b>${it.n}. ${esc(it.title)}</b> — ${esc(it.blurb)}" }, raw = true)
+
+    h2("Entries")
+    ul(
+        anthologyEntries.map {
+            "<b>${esc(it.title)}</b> — entry ${it.entry}, ${esc(it.planet)} in ${esc(it.system)}. " +
+                "${esc(it.blurb)}"
+        },
+        raw = true,
+    )
+
+    h2("The tellers")
+    ul(anthology.witnesses.map { "<b>${esc(it.name)}</b> — ${esc(it.did)}" }, raw = true)
+
+    h2("Unfiled")
+    ul(unfiledPieces.map { "<b>${esc(it.title)}</b> — ${esc(it.blurb)}" }, raw = true)
+
+    siblingSeries.forEach { series ->
+        h2(series.title)
+        p("${series.tagline} (${series.medium})", cls = "muted")
+        ul(series.entries.map { "<b>${esc(it.title)}</b> — ${esc(it.blurb)}" }, raw = true)
+    }
+}
+
+private val CANON_DESCRIPTION =
+    "The laws, the count and the doctrine behind ${anthology.title}. The gated half is not in " +
+        "this page, on purpose."
+
+/**
+ * The canon, open half only.
+ *
+ * The screen partitions on `spoils`: a season that declares one sits behind a gate that names its
+ * price before it opens. That partition is honoured here rather than flattened, because a search
+ * result is not a place to put something a reader explicitly asked not to be told, and a crawler
+ * that indexes the gated text would put it there for good.
+ */
+private fun canonBody(): String = buildString {
+    h1("The Canon")
+    p("The laws, the count and the doctrine behind ${anthology.title}.", cls = "lead")
+
+    h2("The count")
+    ul(countLedger.map { "<b>${esc(it.line)}</b> — ${esc(it.value)}" }, raw = true)
+    p("The named: ${namedThirteen.joinToString(", ")}.")
+
+    val open = seasonCanon.entries.filter { it.value.spoils == null }.sortedBy { it.key }
+    open.forEach { (n, canon) ->
+        h2("Season $n")
+        p(canon.thesis)
+        ul(canon.laws.map { "<b>${it.n}. ${esc(it.name)}</b> — ${esc(it.gloss)}" }, raw = true)
+        ul(canon.points.map { "<b>${esc(it.term)}</b> — ${esc(it.gloss)}" }, raw = true)
+    }
+
+    h2("Rendering")
+    p(renderingDoctrine.claim)
+    ul(renderingDoctrine.mechanism)
+    p(renderingDoctrine.pull)
+    ul(renderingDoctrine.consequences.map { "<b>${esc(it.term)}</b> — ${esc(it.gloss)}" }, raw = true)
+
+    h2("Rig constraints")
+    ul(
+        rigConstraints.map { "<b>${esc(it.species)}</b>, ${esc(it.world)} — ${esc(it.constraint)}" },
+        raw = true,
+    )
+    p(rigConstraintsNote, cls = "muted")
+
+    h2("The tether")
+    ul(tether.map { "<b>${it.value}</b> — ${esc(it.label)}" }, raw = true)
+    p(tetherDoctrine)
+
+    h2("Standard intervals")
+    ul(
+        standardIntervals.filterNot { it.blank }.map {
+            "<b>${esc(it.interval)}</b> — ${esc(it.realm)}, ${esc(it.length)}"
+        },
+        raw = true,
+    )
+
+    p(
+        "The gated half of this page is deliberately not in the static layer. It sits behind a " +
+            "spoiler expander that states its price before it opens, and a page in a search result " +
+            "cannot ask first.",
+        cls = "muted",
+    )
+}
+
+private val MAKING_DESCRIPTION =
+    "How ${anthology.title} was built, blind-audited and paid for: the audit gate, the " +
+        "${pipelineStages.size} pipeline stages, and every dollar of it."
+
+/** How the anthology was built and paid for. The season-specific findings are gated; see [canonBody]. */
+private fun makingBody(): String = buildString {
+    h1("The Making")
+    p("How ${anthology.title} was built, blind-audited and paid for.", cls = "lead")
+
+    h2("The audit")
+    p(auditMethod.send)
+    p(auditMethod.gate)
+    p(auditMethod.whyNotSelfAssessed)
+    p(auditMethod.summary)
+
+    h2("Voice")
+    ul(voiceConstraints)
+
+    h2("The pipeline")
+    ul(pipelineStages.map { "<b>${esc(it.step)}</b> — ${esc(it.detail)}" }, raw = true)
+
+    h2("Retroaction")
+    p(retroactionStandard)
+
+    h2("Spend")
+    ul(
+        listOf(
+            "<b>${money(spend.totalUsd)}</b> — total",
+            "${money(spend.firstBuildUsd)} — the first build",
+            "${money(spend.secondBuildUsd)} — the second",
+            "${money(spend.auditsUsd)} — audits",
+            "${money(spend.artUsd)} — art",
+        ),
+        raw = true,
+    )
+    p(spend.note, cls = "muted")
+
+    h2("Receipts")
+    // Some hrefs in this corpus are local paths rather than URLs; a bare label beats a dead link.
+    ul(
+        receipts.map {
+            if (it.href.startsWith("http")) link(it.label, it.href) else esc("${it.label} (${it.href})")
+        },
+        raw = true,
+    )
+
+    p(
+        "The three season-specific findings on this page are behind the same spoiler gates the " +
+            "canon uses, so they are not in the static layer either.",
+        cls = "muted",
     )
 }
 
@@ -671,7 +1113,7 @@ private fun projectBody(project: Project): String = buildString {
 
         if (detail.extraLinks.isNotEmpty()) {
             h2("Links")
-            ul(detail.extraLinks.map { renderLink(it) }, raw = true)
+            ul(detail.extraLinks.map { link(it.label, it.url) }, raw = true)
         }
 
         // Diagrams are raw Mermaid. Nothing renders them yet (see the KDoc on `Diagram`), but the
@@ -834,12 +1276,25 @@ private fun sitemap(routes: List<Route>, origin: String): String = buildString {
         val priority = when (route) {
             Route.Home -> "1.0"
             Route.Resume -> "0.9"
+            // The page written for the reader who is hiring. Same weight as the résumé, because it
+            // is the same errand with less scrolling.
+            Route.Hire -> "0.9"
             is Route.ProjectDetail -> "0.7"
+            // Evidence about the work, one rung under a case study.
+            Route.Shipped -> "0.7"
+            Route.Playground -> "0.6"
+            Route.Loopdown -> "0.6"
             Route.Terminal -> "0.5"
+            Route.Ink -> "0.5"
+            is Route.Anthology -> "0.5"
             // Demos: worth indexing, but they should never outrank a case study in results.
             Route.Lab -> "0.4"
+            Route.Ops -> "0.4"
+            Route.Weeb -> "0.4"
+            // Rooms off a room. Indexable, never a landing page.
+            Route.Canon -> "0.3"
+            Route.Making -> "0.3"
             Route.Forge -> "0.3"
-            Route.Playground -> "0.6"
         }
         append("  <url>\n")
         append("    <loc>${esc(loc)}</loc>\n")
@@ -849,14 +1304,6 @@ private fun sitemap(routes: List<Route>, origin: String): String = buildString {
     }
     append("</urlset>\n")
 }
-
-private fun robots(origin: String): String =
-    """
-    User-agent: *
-    Allow: /
-
-    Sitemap: $origin/sitemap.xml
-    """.trimIndent() + "\n"
 
 // ---------------------------------------------------------------------------------------------
 // Tiny HTML helpers
@@ -900,8 +1347,6 @@ private val WHITESPACE = Regex("\\s+")
 private fun link(label: String, url: String): String =
     "<a href=\"${esc(url)}\">${esc(label)}</a>"
 
-private fun renderLink(l: NamedLink): String = link(l.label, l.url)
-
 private fun StringBuilder.h1(text: String) {
     append("    <h1>${esc(text)}</h1>\n")
 }
@@ -933,6 +1378,13 @@ private fun StringBuilder.ul(items: List<String>, raw: Boolean = false) {
 // It guards the three things that would fail silently in generated HTML: escaping, the clamp, and
 // the route -> file mapping (a wrong path here means a 404 that only shows up in production).
 // ---------------------------------------------------------------------------------------------
+/**
+ * Floor for a page's crawlable body. Nothing here is near it: the thinnest page this build emits is
+ * the forge at about four times this. It exists to catch a route wired into the table with a body
+ * function that returns nothing, which renders as a complete, valid, empty page.
+ */
+private const val MIN_CRAWLABLE_CHARS = 400
+
 internal fun selfCheck() {
     // The shared self-checks piggyback here because this is the ONLY entry point in the project
     // that actually executes on the JVM. Everything under composeMain is `internal` and called
@@ -953,6 +1405,12 @@ internal fun selfCheck() {
     playgroundScreenSelfCheck()
     paletteSelfCheck()
     forgeSelfCheck()
+    // The three the ported screens left behind. Same reason as the rest: composeMain is `internal`
+    // and called from nowhere, so without this line wasm DCE deletes them and they read as coverage
+    // while never executing.
+    shippedFormatSelfCheck()
+    anthologySelfCheck()
+    makingSelfCheck()
     readmeSelfCheck()
 
     check(esc("a & b <c> \"d\" 'e'") == "a &amp; b &lt;c&gt; &quot;d&quot; &#39;e&#39;") { "escaping" }
@@ -970,6 +1428,31 @@ internal fun selfCheck() {
     check(
         Route.ProjectDetail("mileway").outputFile(root).path == "/out/project/mileway/index.html",
     ) { "project pages nest two deep" }
+
+    // Every emitted page has to be a real page: the wasm mount point, a root-absolute bundle src,
+    // a canonical pointing at its own route, and a body with something in it. Walking
+    // `prerenderRoutes` rather than a list typed here means a route added to Nav.kt is checked the
+    // moment it exists, which is what caught /anthology rendering its `?layer=` into a filename.
+    prerenderRoutes.forEach { route ->
+        val html = render(route, "https://example.test")
+        val path = route.toPath()
+        val canonical = if (path == "/") "https://example.test/" else "https://example.test$path"
+        check(html.contains("<div id=\"compose\"></div>")) { "$path: wasm mount point" }
+        check(html.contains("src=\"/cmpWeb.js\"")) { "$path: root-absolute bundle src" }
+        check(html.contains("rel=\"canonical\" href=\"${esc(canonical)}\"")) {
+            "$path: canonical points at its own route"
+        }
+        check(!html.contains("</script>\",")) { "$path: JSON-LD cannot break out of its tag" }
+        // The `#seo` block is the only thing a crawler reads. An empty one is a page that exists
+        // and says nothing, which is worse than no page at all.
+        val seo = html.substringAfter("<div id=\"seo\">").substringBefore("</div>")
+        check(seo.length > MIN_CRAWLABLE_CHARS) {
+            "$path: the crawlable body is ${seo.length} chars, effectively empty"
+        }
+        check(seo.contains("<h1>")) { "$path: no heading in the crawlable body" }
+        // A route the emitter forgot writes its query string into a directory name.
+        check(!route.outputFile(File("/out")).path.contains('?')) { "$path: query leaked into the filename" }
+    }
 
     // The whole point of the file: every project in the data gets a page, and every page's <title>
     // and body actually contain that project's own content.
