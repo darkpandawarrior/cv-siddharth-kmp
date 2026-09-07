@@ -15,36 +15,21 @@ import kotlinx.coroutines.flow.channelFlow
  * `cv-siddharth/src/lib/chatClient.ts`, speaking the framing `api/_lib/chat-handler.ts` actually
  * emits: `data: {"text":"…"}` lines terminated by `data: [DONE]`.
  *
- * NOW ROUTED THROUGH kmp-toolkit's [HttpChatProvider] (llm-chat#52 — `explicitNulls = false` on
- * its request `Json` — is what unblocked this: before it, an unset `mode` serialized as an
- * explicit `"mode": null`, which trips this endpoint's closed allowlist,
- * `undefined | "compose" | "jd"`, exactly the way an unrecognized `mode` string would). This file
- * used to hand-roll the SSE `data:`/`[DONE]` parse loop for that reason; it doesn't any more —
- * [HttpChatProvider] parses the same framing this endpoint speaks and is already proven against it
- * by [com.siddharth.cv.shared.fit.FitCheckScreen]'s `mode = "jd"` call.
+ * ROUTED THROUGH kmp-toolkit's [HttpChatProvider] (llm-chat#52 — `explicitNulls = false` on its
+ * request `Json` — is what unblocked this: before it, an unset `mode` serialized as an explicit
+ * `"mode": null`, which trips this endpoint's closed allowlist, `undefined | "compose" | "jd"`,
+ * exactly the way an unrecognized `mode` string would). This file used to hand-roll the SSE
+ * `data:`/`[DONE]` parse loop for that reason; it doesn't any more — [HttpChatProvider] parses the
+ * same framing this endpoint speaks and is already proven against it by
+ * [com.siddharth.cv.shared.fit.FitCheckScreen]'s `mode = "jd"` call.
  *
- * THREE THINGS THIS SWAP GENUINELY GIVES UP, because [HttpChatProvider]'s public surface has no
- * seam for them (not a bug in this file — see its own KDoc and `HttpChatConfig`):
- *  1. `route` (where the visitor is standing) never reaches the wire any more. `HttpChatConfig`
- *     has exactly `endpoint`/`mode`/`originHeader` — no slot for an app-defined field beyond
- *     `mode`, which this endpoint already spends on the mode allowlist. [streamReply] keeps the
- *     `route` parameter (nothing here to break FloatingChat.kt's call site) but the value is now
- *     inert. // ponytail: ceiling is kmp-toolkit's, not this file's — lift by adding an
- *     `extraFields: Map<String, String>` (or a dedicated `route`) to `HttpChatConfig`.
- *  2. Per-status messages get coarser. [AiChunk.Failed] carries only an [AiFailure] bucket, not
- *     the response body or `Retry-After` header — [HttpChatProvider] reads and discards both. A
- *     403's server-written allowlist sentence and a 429's `Retry-After` seconds no longer reach
- *     [ChatUnavailable]; [statusMessageFor] below gives the same bucket a good generic sentence
- *     instead. `status` and `retryAfterSeconds` stay on [ChatUnavailable] for source compat but are
- *     always null coming out of this path now.
- *  3. A stream that dies mid-reply (some tokens arrived, the connection then dropped with no
- *     `[DONE]`) is no longer distinguishable from one that finished cleanly: [HttpChatProvider]
- *     only fails when the stream produced ZERO tokens ([AiFailure.EmptyReply]); once one token has
- *     emitted, a channel closing early or a `[DONE]` ending the same way both read as success. A
- *     cut-off reply now renders as a (silently truncated) complete one rather than the old "that
- *     reply got cut off mid-sentence" message.
- * None of these three is a wire-shape mismatch left to fix in THIS repo — each needs
- * [HttpChatProvider] itself to grow the seam first.
+ * llm-chat#54 closed the three gaps that swap first opened: [HttpChatConfig.route] gives `route`
+ * a wire slot again, [AiChunk.Failed.detail]/[AiChunk.Failed.retryAfterSeconds] carry the server's
+ * own error text and `Retry-After` back out, and [HttpChatConfig.requireDoneSentinel] turns a
+ * stream that closes after emitting tokens but never a `data: [DONE]` line into a reported
+ * failure instead of a silently truncated success. Fidelity with the old hand-rolled client is
+ * restored; see [statusMessageFor] for the failure→message mapping and [streamReply] for the
+ * request wiring.
  */
 
 /** Production endpoint. Hardcoded: this client exists to talk to exactly one deployment. */
@@ -61,9 +46,10 @@ const val CHAT_CONTACT_FALLBACK: String =
 /**
  * Everything the panel needs to render a failure honestly.
  *
- * [status] and [retryAfterSeconds] are always null coming out of [streamReply] now — see this
- * file's top doc, point 2 — kept on the class only so a future caller that reads them doesn't need
- * a source change, not because this path populates them.
+ * [status] stays null coming out of [streamReply] — [HttpChatProvider] classifies into an
+ * [AiFailure] bucket rather than handing back the raw status code, so there is still no seam for
+ * it here. [retryAfterSeconds] IS populated again (from [AiChunk.Failed.retryAfterSeconds]) — see
+ * [statusMessageFor].
  *
  * [reason] is the same [AiFailure] vocabulary `:result`/`:llm-chat` use, so a caller that already
  * handles the on-device or cloud-vendor AI seams' failures can fold this endpoint's into the same
@@ -76,20 +62,46 @@ class ChatUnavailable(
     val retryAfterSeconds: Int? = null,
 ) : RuntimeException(message)
 
+/** The prefix [HttpChatConfig.requireDoneSentinel]'s cutoff [AiChunk.Failed.detail] always starts with. */
+private const val CUTOFF_DETAIL_PREFIX = "Stream closed before the completion signal"
+
 /**
- * An [AiFailure] bucket → the sentence the visitor sees. Coarser than the old per-status/per-body
- * messages (see this file's top doc, point 2): [HttpChatProvider] hands back the bucket only, not
- * the server's own text or a `Retry-After` value.
+ * An [AiFailure] bucket, plus the server's own [detail] text when [HttpChatProvider] had one, →
+ * the sentence the visitor sees. [detail] wins whenever the server sent one, same priority the old
+ * hand-rolled parser gave it, with one exception: a [CUTOFF_DETAIL_PREFIX] detail is
+ * [HttpChatProvider]'s own technical wording for a stream that died mid-reply (see
+ * [HttpChatConfig.requireDoneSentinel]) and gets translated to the same "cut off mid-sentence"
+ * sentence the old client showed, rather than surfaced verbatim.
+ *
+ * [AiChunk.Failed.retryAfterSeconds] isn't folded in here — it's carried on [ChatUnavailable]
+ * itself instead, for a caller that wants to render a countdown rather than a sentence.
+ *
+ * // ponytail: the old client also gave 400/413 a curated "too long" translation instead of the
+ * // server's raw schema text, keyed off the actual status code. HttpChatProvider only ever hands
+ * // back the coarse Network bucket now, with no status code to key that distinction on, so a
+ * // 400's detail renders as-is here — still better than the old code's generic fallback, but not
+ * // that specific translation. Upgrade needs HttpChatProvider to expose the status too.
  */
-private fun statusMessageFor(reason: AiFailure): String =
+private fun statusMessageFor(reason: AiFailure, detail: String?): String =
     when (reason) {
         AiFailure.Unauthorized ->
-            "This chat endpoint only serves Siddharth's portfolio site, and this build isn't on " +
-                "its allowlist. $CHAT_CONTACT_FALLBACK"
+            detail ?: (
+                "This chat endpoint only serves Siddharth's portfolio site, and this build isn't " +
+                    "on its allowlist. $CHAT_CONTACT_FALLBACK"
+            )
         AiFailure.RateLimited ->
-            "This chat endpoint is getting hit hard right now — give it a moment and ask again. " +
-                CHAT_CONTACT_FALLBACK
+            detail ?: (
+                "This chat endpoint is getting hit hard right now — give it a moment and ask " +
+                    "again. $CHAT_CONTACT_FALLBACK"
+            )
         AiFailure.EmptyReply -> CHAT_CONTACT_FALLBACK
+        AiFailure.Network ->
+            if (detail?.startsWith(CUTOFF_DETAIL_PREFIX) == true) {
+                "That reply got cut off mid-sentence — the connection dropped. Ask again and " +
+                    "I'll finish it."
+            } else {
+                detail ?: transportMessage()
+            }
         else -> transportMessage()
     }
 
@@ -99,30 +111,37 @@ private fun statusMessageFor(reason: AiFailure): String =
  * @param history the whole transcript INCLUDING the just-typed user turn. Trimming to the server's
  *   ceilings happens here (`toWire`), at the one place every caller streams through, so a future
  *   second caller can't reintroduce the "sent the whole session, got a 400" bug.
- * @param route where the visitor is standing. No longer reaches the wire — see this file's top
- *   doc, point 1. Kept so FloatingChat.kt's call site doesn't need to change for a value that may
- *   matter again once `HttpChatConfig` grows a slot for it.
+ * @param route where the visitor is standing — forwarded to the backend via
+ *   [HttpChatConfig.route], the same wire slot the old hand-rolled client used.
  * @param engine the [HttpClientEngine] [HttpChatProvider] sends the request on. Defaults to the
  *   real [httpClientEngine]; a test passes a `MockEngine` instead — this is [HttpChatProvider]'s
  *   own seam, not a bespoke one.
  *
- * The flow completes when the server closes the stream having emitted at least one token. It fails
- * with [ChatUnavailable] for a non-2xx response, a transport error, or a stream that produced no
- * tokens at all.
+ * The flow completes when the server sends `[DONE]`. It fails with [ChatUnavailable] for a
+ * non-2xx response, a transport error, a stream that produced no tokens at all, or — thanks to
+ * [HttpChatConfig.requireDoneSentinel] below, since `api/_lib/chat-handler.ts`'s
+ * `normalizeStream.flush` guarantees `[DONE]` on every clean finish — one that closed without ever
+ * sending it.
  */
-@Suppress("UnusedParameter") // route: see this file's top doc, point 1 — no HttpChatConfig slot yet.
 fun streamReply(
     history: List<ChatMessage>,
     route: String? = null,
     engine: HttpClientEngine = httpClientEngine(),
 ): Flow<String> = channelFlow {
-    val provider = HttpChatProvider(HttpChatConfig(endpoint = CHAT_ENDPOINT), engine)
+    val provider = HttpChatProvider(
+        HttpChatConfig(endpoint = CHAT_ENDPOINT, route = route, requireDoneSentinel = true),
+        engine,
+    )
 
     try {
         provider.completeStream(history.toWire()).collect { chunk ->
             when (chunk) {
                 is AiChunk.Token -> send(chunk.text)
-                is AiChunk.Failed -> throw ChatUnavailable(statusMessageFor(chunk.reason), chunk.reason)
+                is AiChunk.Failed -> throw ChatUnavailable(
+                    statusMessageFor(chunk.reason, chunk.detail),
+                    chunk.reason,
+                    retryAfterSeconds = chunk.retryAfterSeconds,
+                )
             }
         }
     } catch (cancel: CancellationException) {

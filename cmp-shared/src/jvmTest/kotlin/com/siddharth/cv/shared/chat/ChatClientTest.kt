@@ -21,9 +21,9 @@ import kotlin.test.fail
 
 /**
  * Exercises [streamReply] now that it is a thin wrapper over kmp-toolkit's `HttpChatProvider`
- * (llm-chat#52 — `explicitNulls = false` — is what made this swap safe; see `ChatClient.kt`'s file
- * doc for the three things the swap gives up in exchange, and why each is a toolkit-side gap, not
- * a bug here).
+ * (llm-chat#52 — `explicitNulls = false` — is what made this swap safe, and llm-chat#54 — `route`,
+ * `AiChunk.Failed.detail`/`retryAfterSeconds`, `requireDoneSentinel` — is what restored the
+ * fidelity the swap first gave up; see `ChatClient.kt`'s file doc).
  *
  * Runs on the jvm target only (see cmp-shared/build.gradle.kts's jvmTest block for why): the logic
  * under test has no platform branch, so one target is enough to catch a regression in it.
@@ -35,6 +35,7 @@ class ChatClientTest {
     private fun mockEngine(
         vararg sseLines: String,
         status: HttpStatusCode = HttpStatusCode.OK,
+        extraHeaders: List<Pair<String, String>> = emptyList(),
     ): MockEngine =
         MockEngine(
             MockEngineConfig().apply {
@@ -43,7 +44,10 @@ class ChatClientTest {
                     respond(
                         content = sseLines.joinToString("\n"),
                         status = status,
-                        headers = headersOf(HttpHeaders.ContentType, "text/event-stream"),
+                        headers = headersOf(
+                            HttpHeaders.ContentType to listOf("text/event-stream"),
+                            *extraHeaders.map { (k, v) -> k to listOf(v) }.toTypedArray(),
+                        ),
                     )
                 }
             },
@@ -100,9 +104,7 @@ class ChatClientTest {
 
     @Test
     fun streamReply_emptyStream_reportsUnavailable() = runTest {
-        // HttpChatProvider's only "zero tokens" signal — a stream that produced no [DONE] but also
-        // no text (unlike a mid-reply cutoff, which it can no longer distinguish from success, see
-        // ChatClient.kt's file doc point 3).
+        // The zero-tokens signal — a stream that produced no [DONE] and no text either.
         val error = assertFailsWithChatUnavailable {
             streamReply(oneTurn(), engine = mockEngine("")).toList()
         }
@@ -112,7 +114,20 @@ class ChatClientTest {
     }
 
     @Test
-    fun streamReply_403_mapsToUnauthorized_withAllowlistMessage() = runTest {
+    fun streamReply_noTerminator_withText_reportsCutOff_asNetworkFailure() = runTest {
+        // llm-chat#54's requireDoneSentinel: at least one token arrived, but the stream closed
+        // without ever sending [DONE] — the mid-reply cutoff the pre-toolkit client used to catch
+        // and this port's HttpChatProvider swap first lost the ability to see.
+        val error = assertFailsWithChatUnavailable {
+            streamReply(oneTurn(), engine = mockEngine("""data: {"text":"Hel"}""")).toList() // no [DONE]
+        }
+
+        assertEquals(AiFailure.Network, error.reason)
+        assertTrue("cut off" in error.message, error.message)
+    }
+
+    @Test
+    fun streamReply_403_prefersServerText_andMapsToUnauthorized() = runTest {
         val error = assertFailsWithChatUnavailable {
             streamReply(
                 oneTurn(),
@@ -121,27 +136,37 @@ class ChatClientTest {
         }
 
         assertEquals(AiFailure.Unauthorized, error.reason)
-        assertTrue("allowlist" in error.message, error.message)
-        // status/retryAfterSeconds are no longer populated through this path — see the class doc.
+        assertEquals("origin not allowed", error.message)
+        // HttpChatProvider classifies into an AiFailure bucket, not a raw status code — status
+        // stays null through this path; that part of the old client's fidelity isn't restorable
+        // without HttpChatProvider itself exposing the status (see ChatClient.kt's ponytail note).
         assertEquals(null, error.status)
     }
 
     @Test
-    fun streamReply_429_mapsToRateLimited() = runTest {
+    fun streamReply_429_mapsToRateLimited_andKeepsRetryAfter() = runTest {
         val error = assertFailsWithChatUnavailable {
             streamReply(
                 oneTurn(),
-                engine = mockEngine("""{"error":"slow down"}""", status = HttpStatusCode.TooManyRequests),
+                engine = mockEngine(
+                    """{"error":"slow down"}""",
+                    status = HttpStatusCode.TooManyRequests,
+                    extraHeaders = listOf(HttpHeaders.RetryAfter to "30"),
+                ),
             ).toList()
         }
 
         assertEquals(AiFailure.RateLimited, error.reason)
+        assertEquals("slow down", error.message)
+        assertEquals(30, error.retryAfterSeconds)
     }
 
     @Test
     fun streamReply_400_mapsToNetworkBucket() = runTest {
-        // Same bucket as before (AiFailure.Network) — only the message is coarser now, since
-        // HttpChatProvider doesn't surface the server's own error text. See ChatClient.kt point 2.
+        // Same bucket as before (AiFailure.Network). The server's own text now flows into the
+        // message again (llm-chat#54's AiChunk.Failed.detail) — the one thing NOT restored is the
+        // old curated "too long" translation for 400/413 specifically, which needed the raw status
+        // code HttpChatProvider still doesn't expose (see ChatClient.kt's ponytail note).
         val error = assertFailsWithChatUnavailable {
             streamReply(
                 oneTurn(),
@@ -153,6 +178,7 @@ class ChatClientTest {
         }
 
         assertEquals(AiFailure.Network, error.reason)
+        assertEquals("Expected { messages: [...] }", error.message)
     }
 
     @Test
@@ -171,29 +197,19 @@ class ChatClientTest {
     }
 
     @Test
-    fun streamReply_ordinaryChat_omitsModeEntirely() = runTest {
+    fun streamReply_sendsRoute_notMode_andOmitsModeEntirely() = runTest {
         // The regression guard for the wire-incompatibility this file's top doc explains: the
         // production endpoint 400s an explicit `"mode":null`, which is exactly what routing this
         // client through kmp-toolkit's HttpChatProvider used to send on every request before
-        // llm-chat#52 (`explicitNulls = false`).
+        // llm-chat#52 (`explicitNulls = false`). `route` reaching the wire again is llm-chat#54's
+        // HttpChatConfig.route — the regression this test used to only guard the loss of.
         val (engine, lastRequest) = capturingMockEngine("""data: {"text":"hi"}""", "data: [DONE]")
 
         streamReply(oneTurn(), route = "/resume", engine = engine).toList()
 
         val body = (lastRequest()!!.body as TextContent).text
+        assertTrue(""""route":"/resume"""" in body, body)
         assertFalse(""""mode"""" in body, body)
-    }
-
-    @Test
-    fun streamReply_ordinaryChat_neverSendsRoute() = runTest {
-        // `route` no longer reaches the wire at all — HttpChatConfig has no slot for it (see
-        // ChatClient.kt's file doc point 1). This is the documented regression, not a silent one.
-        val (engine, lastRequest) = capturingMockEngine("""data: {"text":"hi"}""", "data: [DONE]")
-
-        streamReply(oneTurn(), route = "/resume", engine = engine).toList()
-
-        val body = (lastRequest()!!.body as TextContent).text
-        assertFalse(""""route"""" in body, body)
     }
 
     private suspend fun assertFailsWithChatUnavailable(block: suspend () -> Unit): ChatUnavailable {
