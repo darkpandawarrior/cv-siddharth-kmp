@@ -1,5 +1,7 @@
 package com.siddharth.cv.shared.chat
 
+import com.siddharth.kmp.network.httpClientEngine
+import com.siddharth.kmp.result.AiFailure
 import io.ktor.client.HttpClient
 import io.ktor.client.request.accept
 import io.ktor.client.request.preparePost
@@ -9,6 +11,7 @@ import io.ktor.client.statement.bodyAsChannel
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.utils.io.readLine
@@ -31,6 +34,18 @@ import kotlinx.serialization.json.Json
  * WHY [io.ktor.client.statement.HttpStatement.execute] AND NOT `client.post(...)`: Ktor buffers the
  * whole body of an ordinary call before returning, which would make every token arrive at once and
  * defeat the entire point. `execute { }` hands over the live channel.
+ *
+ * WHY NOT kmp-toolkit's `HttpChatProvider` (llm-chat), given it exists to speak this exact framing:
+ * its wire body always serializes a `mode` key (an app-defined string; null when unset, since
+ * `HttpChatRequest.mode` has no Kotlin-level default for `encodeDefaults` to skip and its Json
+ * config leaves `explicitNulls` at its true default). This endpoint's `validateRequest` 400s any
+ * `mode` that isn't exactly undefined/`"compose"`/`"jd"` — an explicit `null` included — so routing
+ * this client's normal-chat traffic through `HttpChatProvider` unmodified 400s every request. There
+ * is also no slot in its request shape for this endpoint's separate `route` field (the ambient
+ * page-location hint) — only one app-defined string, which this endpoint already spends on `mode`.
+ * What DOES get reused: [httpClientEngine] (below — every target this module ships on now gets a
+ * real engine, not just wasmJs) and `:result`'s [AiFailure] (the classification [ChatUnavailable]
+ * carries), the two pieces that don't assume a wire shape this endpoint doesn't have.
  */
 
 /** Production endpoint. Hardcoded: this client exists to talk to exactly one deployment. */
@@ -54,12 +69,31 @@ const val CHAT_CONTACT_FALLBACK: String =
  * CORS-rejected 403 looks like (a denied response carries no `access-control-allow-origin`, so
  * `fetch` rejects and the status never reaches us). That ambiguity is why [message] for the null
  * case names the allowlist as the likely cause rather than asserting a network outage.
+ *
+ * [reason] is the same [AiFailure] vocabulary `:result`/`:llm-chat` use, so a caller that already
+ * handles the on-device or cloud-vendor AI seams' failures can fold this endpoint's into the same
+ * `when` instead of inventing a fourth taxonomy. It is coarser than [message] on purpose — a 400
+ * and a 413 both read as [AiFailure.Network] even though [message] tells them apart for the visitor
+ * — see the enum's own doc for why it has no "too long" member.
  */
 class ChatUnavailable(
     override val message: String,
+    val reason: AiFailure,
     val status: Int? = null,
     val retryAfterSeconds: Int? = null,
 ) : RuntimeException(message)
+
+/**
+ * Maps a non-2xx status to the [AiFailure] bucket it belongs in. Mirrors
+ * `HttpStatusCode.toAiFailureOrNull` in kmp-toolkit's `:llm-chat` — same buckets, same ordering,
+ * and matched by the same named [HttpStatusCode] constants rather than raw status numbers — so
+ * this endpoint's failures read the same way a cloud-vendor AI provider's would.
+ */
+private fun HttpStatusCode.toAiFailure(): AiFailure = when (this) {
+    HttpStatusCode.Unauthorized, HttpStatusCode.Forbidden -> AiFailure.Unauthorized
+    HttpStatusCode.TooManyRequests -> AiFailure.RateLimited
+    else -> AiFailure.Network
+}
 
 /**
  * `encodeDefaults = false` is load-bearing, not tidiness: `mode` is a CLOSED allowlist server-side
@@ -77,12 +111,14 @@ private val chatJson = Json {
  * Created once and kept — an [HttpClient] owns a connection pool and a coroutine scope, and one per
  * question would leak both.
  *
- * `by lazy` rather than a top-level `val` because construction can legitimately fail: `HttpClient()`
- * resolves its engine from the classpath, and only `wasmJs` has one wired (`ktor-client-js`). On
- * jvm/android/ios this throws, and it must throw where [streamReply] can catch it and say so,
- * not at class-init time where it would take the whole screen down.
+ * `by lazy` rather than a top-level `val` for the same reason as before this reused
+ * `:network`'s [httpClientEngine] rather than the classpath-scanning bare `HttpClient()`: an engine
+ * is now real and present on every target composeMain ships on (android/jvm/iosArm64/
+ * iosSimulatorArm64/wasmJs — exactly `:network`'s own target set), so construction can no longer
+ * fail for a missing engine. It stays lazy anyway — no reason to spend the connection pool before
+ * the first question.
  */
-private val chatClient: HttpClient by lazy { HttpClient() }
+private val chatClient: HttpClient by lazy { HttpClient(httpClientEngine()) }
 
 /**
  * Streams one reply as incremental text deltas.
@@ -92,6 +128,9 @@ private val chatClient: HttpClient by lazy { HttpClient() }
  *   second caller can't reintroduce the "sent the whole session, got a 400" bug.
  * @param route where the visitor is standing — a hint the server re-validates against its own
  *   allowlist and drops if unknown. Never a turn, so it can't read as something the visitor said.
+ * @param client the [HttpClient] to send the request on. Defaults to the shared, lazily-built
+ *   [chatClient]; a test passes its own client built on a [io.ktor.client.engine.mock.MockEngine]
+ *   instead, since [chatClient] has no other seam for one.
  *
  * The flow completes when the server sends `[DONE]`. It fails with [ChatUnavailable] for every
  * other ending, including a stream that stops mid-reply.
@@ -101,13 +140,17 @@ private val chatClient: HttpClient by lazy { HttpClient() }
  * contract guarantees Ktor won't switch it. `send` carries no such restriction, so the correct
  * version costs one extra line.
  */
-fun streamReply(history: List<ChatMessage>, route: String? = null): Flow<String> = channelFlow {
+fun streamReply(
+    history: List<ChatMessage>,
+    route: String? = null,
+    client: HttpClient = chatClient,
+): Flow<String> = channelFlow {
     val payload = chatJson.encodeToString(
         ChatRequestBody(messages = history.toWire(), route = route),
     )
 
     try {
-        chatClient.preparePost(CHAT_ENDPOINT) {
+        client.preparePost(CHAT_ENDPOINT) {
             contentType(ContentType.Application.Json)
             accept(ContentType.Text.EventStream)
             // Deliberately NOT setting an Origin header. The endpoint spends the owner's API key
@@ -127,8 +170,8 @@ fun streamReply(history: List<ChatMessage>, route: String? = null): Flow<String>
         throw cancel
     } catch (chat: ChatUnavailable) {
         throw chat
-    } catch (transport: Throwable) {
-        throw ChatUnavailable(transportMessage(transport))
+    } catch (_: Throwable) {
+        throw ChatUnavailable(transportMessage(), reason = AiFailure.Network)
     }
     // No `awaitClose` here on purpose: this producer is not callback-based. The block returning IS
     // what closes the channel, so awaiting that close from inside the block would deadlock.
@@ -171,11 +214,12 @@ private suspend fun readSseInto(response: HttpResponse, emit: suspend (String) -
     // emits an EMPTY_STREAM_FALLBACK first if the model produced nothing), so reaching here means
     // the connection died mid-flight — an upstream drop, a closed laptop lid, an Edge timeout.
     throw ChatUnavailable(
-        if (sawText) {
+        message = if (sawText) {
             "That reply got cut off mid-sentence — the connection dropped. Ask again and I'll finish it."
         } else {
             CHAT_CONTACT_FALLBACK
         },
+        reason = AiFailure.Network,
     )
 }
 
@@ -210,25 +254,21 @@ private suspend fun HttpResponse.toChatFailure(): ChatUnavailable {
                 "isn't on its allowlist. $CHAT_CONTACT_FALLBACK"
         else -> serverText ?: CHAT_CONTACT_FALLBACK
     }
-    return ChatUnavailable(message, status = code, retryAfterSeconds = retryAfter)
+    return ChatUnavailable(message, reason = status.toAiFailure(), status = code, retryAfterSeconds = retryAfter)
 }
 
 /**
- * A throw before any status arrived. Three real causes, and the client genuinely cannot tell them
- * apart, so the message names the likeliest one instead of inventing certainty:
+ * A throw before any status arrived. Two real causes, and the client genuinely cannot tell them
+ * apart, so the message names the likelier one instead of inventing certainty:
  *  1. the browser blocked the response because the endpoint's allowlist rejected our origin (a
  *     denied 403 carries no CORS headers, so `fetch` rejects and the status is invisible to us),
- *  2. no HTTP engine on the classpath — every target but `wasmJs` in this module,
- *  3. an actual network failure.
+ *  2. an actual network failure.
  *
  * Naming (1) first is the honest ordering: this port is served from origins the live endpoint has
- * never heard of, so it is the expected outcome, not the exotic one.
+ * never heard of, so it is the expected outcome, not the exotic one. A missing HTTP engine used to
+ * be a third cause here (every target but `wasmJs`) — [httpClientEngine] retired it, every target
+ * composeMain ships on now gets a real one.
  */
-private fun transportMessage(cause: Throwable): String {
-    val detail = cause.message.orEmpty()
-    if ("engine" in detail.lowercase() || "HttpClientEngineContainer" in detail) {
-        return "Chat needs an HTTP engine, and only the web build has one wired. $CHAT_CONTACT_FALLBACK"
-    }
-    return "Couldn't reach the chat backend. It only answers its own site — a build served from " +
+private fun transportMessage(): String =
+    "Couldn't reach the chat backend. It only answers its own site — a build served from " +
         "anywhere else is blocked by its origin allowlist, by design. $CHAT_CONTACT_FALLBACK"
-}
