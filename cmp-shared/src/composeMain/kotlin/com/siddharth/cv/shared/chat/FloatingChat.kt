@@ -102,11 +102,40 @@ import androidx.compose.runtime.rememberCoroutineScope
 @Composable
 fun FloatingChat(modifier: Modifier = Modifier) {
     var open by remember { mutableStateOf(false) }
+    // Checked once per composition, not per click: a build with no engine on this target should
+    // never let a visitor open a panel whose first question is guaranteed to fail.
+    val unavailableReason = remember { chatCapability().unavailableReason }
 
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
         Box(Modifier.padding(24.dp)) {
-            if (open) ChatPanel(onClose = { open = false }) else ChatLauncher(onOpen = { open = true })
+            when {
+                unavailableReason != null -> ChatUnavailableBadge()
+                open -> ChatPanel(onClose = { open = false })
+                else -> ChatLauncher(onOpen = { open = true })
+            }
         }
+    }
+}
+
+/**
+ * What replaces the launcher when [chatCapability] reports no usable engine — a visible reason,
+ * not a silently missing button. [CHAT_CONTACT_FALLBACK] already says exactly this ("the chat
+ * backend isn't reachable from this build") plus the one thing worth telling a visitor to do
+ * about it, so it is reused rather than a second copy of the same sentence.
+ */
+@Composable
+private fun ChatUnavailableBadge() {
+    val shape = RoundedCornerShape(12.dp)
+    val red = Color(0xFFFF5C7A)
+    Box(
+        Modifier
+            .widthIn(max = 220.dp)
+            .background(red.copy(alpha = 0.08f), shape)
+            .border(1.dp, red.copy(alpha = 0.35f), shape)
+            .padding(horizontal = 12.dp, vertical = 10.dp)
+            .semantics { contentDescription = "Chat unavailable. $CHAT_CONTACT_FALLBACK" },
+    ) {
+        BasicText(CHAT_CONTACT_FALLBACK, style = cvType.bodySmall.copy(color = red))
     }
 }
 
