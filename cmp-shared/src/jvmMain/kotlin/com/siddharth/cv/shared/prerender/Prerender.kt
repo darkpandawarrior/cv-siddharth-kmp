@@ -536,6 +536,14 @@ private fun homeBody(): String = buildString {
     p(profile.intro)
     ul(metrics.map { "<b>${esc(it.value)}</b> — ${esc(it.label)}. ${esc(it.detail)}" }, raw = true)
 
+    h2("Fit check", id = "fit")
+    p(
+        "Hiring? The interactive build lets a recruiter paste a job description and get a scored " +
+            "read of where he fits, and where he doesn't — an instant offline keyword match, " +
+            "superseded by the AI assistant's full analysis when it replies. No score inflation: " +
+            "the gaps come with the strengths.",
+    )
+
     h2("Selected work", id = "work")
     caseStudies.forEach { cs ->
         h3(cs.title)
