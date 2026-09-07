@@ -23,7 +23,7 @@ object CvGallery {
 
     /** Slug -> screenshot basenames, extension-free. Order is the on-disk sort. */
     val screenshots: Map<String, List<String>> = mapOf(
-        "mileway" to listOf(
+        "mileway" to listOf( // claim-audit:allow -- stable slug map key, not display copy
             "advance_history_screen",
             "agent_chat_analytics_popular",
             "agent_chat_screen",
@@ -101,7 +101,7 @@ object CvGallery {
             "widget_ios_home",
             "widget_ios_lockscreen",
         ),
-        "paymentslab" to listOf(
+        "paymentslab" to listOf( // claim-audit:allow -- stable slug map key, not display copy
             "animated_amount",
             "checkout_screen_order_summary",
             "checkout_screen_paying",
@@ -129,7 +129,7 @@ object CvGallery {
             "step_timeline_light",
             "success_burst",
         ),
-        "kursi" to listOf(
+        "kursi" to listOf( // claim-audit:allow -- stable slug map key, not display copy
             "10p_pick_action",
             "2p_pick_action",
             "4p_chit_dossier",
@@ -188,12 +188,12 @@ object CvGallery {
             "tutorial_coup_phone",
             "tutorial_intro",
         ),
-        "hiresignal" to listOf(
+        "hiresignal" to listOf( // claim-audit:allow -- stable slug map key, not display copy
             "board_screen",
             "dashboard_screen",
             "pipeline_screen",
         ),
-        "deadlock" to listOf(
+        "deadlock" to listOf( // claim-audit:allow -- stable slug map key, not display copy
             "echo-cooperation",
             "pull",
             "the-sense",

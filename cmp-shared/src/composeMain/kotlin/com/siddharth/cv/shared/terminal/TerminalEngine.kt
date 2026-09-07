@@ -200,7 +200,7 @@ object TerminalEngine {
                     dim("  ${it.status}"),
                 )
             }
-            out(body + dim("") + dim("-> open <slug> for the full case study, e.g. `open mileway`"))
+            out(body + dim("") + dim("-> open <slug> for the full case study, e.g. `open mileway`")) // claim-audit:allow -- example terminal command uses the stable slug
         }
 
         cmd("open", "open a project case study", usage = "open <slug>") { args ->
@@ -344,7 +344,7 @@ object TerminalEngine {
                 hi2("  project   each build overrides accent + surface on its detail page"),
                 dim("  resume    the same mechanism, inverted to dark-on-light"),
                 dim(""),
-                dim("open kursi and watch every accent below the header re-resolve."),
+                dim("open kursi and watch every accent below the header re-resolve."), // claim-audit:allow -- example terminal command uses the stable slug
             )
         }
 
@@ -404,7 +404,7 @@ object TerminalEngine {
                 listOf(
                     dim(""),
                     dim("up/down walks history · Tab completes · `open <slug>` and `cat <file>` complete too"),
-                    dim("try: open mileway · metrics · neofetch · hire"),
+                    dim("try: open mileway · metrics · neofetch · hire"), // claim-audit:allow -- example terminal command uses the stable slug
                 ),
         )
     }
@@ -447,7 +447,7 @@ object TerminalEngine {
  * the clear signal.
  */
 fun demo() {
-    check(TerminalEngine.run("open mileway").navigate == Route.ProjectDetail("mileway")) { "open <slug> must navigate" }
+    check(TerminalEngine.run("open mileway").navigate == Route.ProjectDetail("mileway")) { "open <slug> must navigate" } // claim-audit:allow -- terminal command uses the stable slug
     check(TerminalEngine.run("open ../etc").lines.first().tone == TermTone.ERROR) { "bad slug must error" }
     check(TerminalEngine.complete("pro") == "projects") { "complete(pro) must be projects" }
     check(TerminalEngine.run("clear").clear) { "clear must set the clear flag" }
@@ -459,7 +459,7 @@ fun demo() {
     check(TerminalEngine.run("exit").navigate == Route.Home) { "exit goes home" }
     check(TerminalEngine.run("resume").navigate == Route.Resume) { "resume opens the résumé" }
     check(TerminalEngine.complete("zzz") == null) { "no match completes to null" }
-    check(TerminalEngine.complete("open mile") == "open mileway") { "arg completion" }
+    check(TerminalEngine.complete("open mile") == "open mileway") { "arg completion" } // claim-audit:allow -- terminal command uses the stable slug
     check(TerminalEngine.run("ask anything").lines.first().tone == TermTone.ERROR) { "ask is unavailable offline" }
     check(ROOMS.size == staticRoutes.size + 1) { "ls lists every route this build serves, plus projects/" }
 }

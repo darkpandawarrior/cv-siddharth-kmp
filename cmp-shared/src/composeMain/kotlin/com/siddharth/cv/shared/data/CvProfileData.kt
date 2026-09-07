@@ -150,8 +150,8 @@ val experience = listOf(
 
 val caseStudies = listOf(
     CaseStudy(
-        slug = "mileway",
-        title = "Mileway: offline-first mileage tracker (Android · iOS · Wear OS · watchOS · Desktop)",
+        slug = "mileway", // claim-audit:allow -- stable route slug, not display copy
+        title = "Doori: offline-first mileage tracker (Android · iOS · Wear OS · watchOS · Desktop)",
         metric = "46 modules · 5 platforms · offline AI",
         summary = """An open-source app I designed and built end-to-end: mileage, travel & expense tracking that runs entirely offline across Android, iOS, Wear OS, watchOS and Compose Desktop from one shared Kotlin codebase. Zero backend, Room + DataStore only, so the whole thing is reproducible and reviewable by anyone.""",
         problem = """I wanted a clean, inspectable reference for the architecture I advocate for at scale: Compose Multiplatform, strict module isolation, MVI state, a real location engine and a real policy/reimbursement layer. Built with zero backend, so the whole thing is reproducible and reviewable by anyone.""",
@@ -165,7 +165,7 @@ val caseStudies = listOf(
             """A super-profile & plugin-composition platform (V24, shipped, with a V25→V37 series landed on top spanning on-device intelligence, JWT auth, closeout hardening, home-screen cards/advances and a What's New feature): a single plugin registry drives four persona presets (Corporate Commuter, Super-App Consumer, Gig Driver, Minimal Guest) that reshape hubs, auth flows and tracking behaviour from one account, plus act-on-behalf session delegation, a verification centre, growth/membership surfaces and wallet/payout identity. Every tile, capability and tunable value gates through that registry, resolved by layering FORCED > USER > PRESET > DEFAULT.""",
             """Dual gms / noGms distribution (Google Play + F-Droid) with a dependency-guard that fails the build if proprietary libraries leak into the FOSS flavor; quality gated by 159 Roborazzi JVM screenshot tests (no emulator, no network), Napier logging, detekt, ktlint, Kover and CI.""",
         ),
-        outcome = """All five targets build, run and pass every quality gate from one shared Kotlin codebase, with a real location engine, a policy/reimbursement layer, a durable submit-outbox, a persona-driven plugin-composition platform and an on-device AI assistant layered on the offline data model. Explore the app, architecture diagrams and all rendered screens at github.com/darkpandawarrior/Mileway.""",
+        outcome = """All five targets build, run and pass every quality gate from one shared Kotlin codebase, with a real location engine, a policy/reimbursement layer, a durable submit-outbox, a persona-driven plugin-composition platform and an on-device AI assistant layered on the offline data model. Explore the app, architecture diagrams and all rendered screens at github.com/darkpandawarrior/Doori.""",
         tags = listOf("Kotlin Multiplatform", "Compose Multiplatform", "Android · iOS · Wear OS · watchOS · Desktop", "46 modules", "Offline AI", "Open source"),
     ),
     CaseStudy(
@@ -290,19 +290,19 @@ val resumeSkills = listOf(
 )
 
 val sharedFoundation = SharedFoundation(
-    blurb = """Mileway and PaymentsLab aren't two isolated demos. They're two KMP apps sitting on a common foundation I built and maintain separately. Both pull in my own convention-plugin and MVI-base libraries as composite builds, so the build wiring and the unidirectional-state contract are written once and reused, exactly the platform discipline I bring to a codebase at scale.""",
+    blurb = """Doori and PaymentsLab-KMP aren't two isolated demos. They're two KMP apps sitting on a common foundation I built and maintain separately. Both pull in my own convention-plugin and MVI-base libraries as composite builds, so the build wiring and the unidirectional-state contract are written once and reused, exactly the platform discipline I bring to a codebase at scale.""",
     libs = listOf(
         SharedLib(
             name = "kmp-build-logic",
             url = "https://github.com/darkpandawarrior/kmp-build-logic",
             role = """Gradle convention plugins: one place that configures every KMP module's targets, Compose, lint and test wiring.""",
-            usedBy = listOf("Mileway", "PaymentsLab"),
+            usedBy = listOf("Doori", "PaymentsLab-KMP"),
         ),
         SharedLib(
             name = "kmp-toolkit",
             url = "https://github.com/darkpandawarrior/kmp-toolkit",
             role = """A vendored KMP toolkit: the tiny (State, Event) → Effects mvi-core base (the reducer/store contract the payment state machine is built on), plus shared feedback/common modules.""",
-            usedBy = listOf("Mileway", "PaymentsLab"),
+            usedBy = listOf("Doori", "PaymentsLab-KMP"),
         ),
     ),
 )
@@ -319,7 +319,7 @@ val openSource = listOf(
 val recentGrowth = listOf(
     GrowthItem(
         date = "Jun 2026",
-        title = "Kursi shipped",
+        title = "Kursi shipped", // claim-audit:allow -- dated history entry, named Kursi at the time
         detail = """Full Kotlin Multiplatform social-deduction game across Android, iOS, desktop and web. Deterministic engine + ISMCTS AI.""",
     ),
     GrowthItem(
@@ -329,27 +329,27 @@ val recentGrowth = listOf(
     ),
     GrowthItem(
         date = "Jun 2026",
-        title = "Mileway: five platforms",
+        title = "Mileway: five platforms", // claim-audit:allow -- dated history entry, named Mileway at the time
         detail = """Android, iOS, Wear OS, watchOS and Compose Desktop from one shared codebase, plus Glance/WidgetKit widgets and an iOS Live Activity. 159 Roborazzi tests green.""",
     ),
     GrowthItem(
         date = "Jul 2026",
-        title = "Mileway: offline AI + policy engine",
+        title = "Mileway: offline AI + policy engine", // claim-audit:allow -- dated history entry, named Mileway at the time
         detail = """Retrieval-grounded chat over local data with voice I/O, a reimbursement-rate policy engine and a durable submit-outbox, still zero backend.""",
     ),
     GrowthItem(
         date = "Jul 2026",
-        title = "PaymentsLab: 5 rails + 66 gateways",
+        title = "PaymentsLab: 5 rails + 66 gateways", // claim-audit:allow -- dated history entry, named PaymentsLab at the time
         detail = """40-module KMP payments lab: payouts, mandates, card vault, marketplace Connect and a double-entry wallet ledger beyond one-shot pay-in, all MOCK_MODE-honest.""",
     ),
     GrowthItem(
         date = "Jul 2026",
         title = "Shared KMP foundation",
-        detail = """Extracted kmp-build-logic (convention plugins) and kmp-toolkit (MVI base) as my own libraries, consumed by Mileway and PaymentsLab as composite builds.""",
+        detail = """Extracted kmp-build-logic (convention plugins) and kmp-toolkit (MVI base) as my own libraries, consumed by Mileway and PaymentsLab as composite builds.""", // claim-audit:allow -- dated history entry, named Mileway/PaymentsLab at the time
     ),
     GrowthItem(
         date = "Jul 2026",
-        title = "Mileway: super-profile & plugin platform (V24)",
+        title = "Mileway: super-profile & plugin platform (V24)", // claim-audit:allow -- dated history entry, named Mileway at the time
         detail = """A plugin-composition registry (TILE/CAPABILITY/VALUE, FORCED>USER>PRESET>DEFAULT layering) driving four persona presets, plus delegation, verification, growth, membership and wallet/payout depth. Shipped, with a V25→V37 series (on-device intelligence, JWT auth, closeout hardening, home cards/advances, What's New) landed on top.""",
     ),
 )

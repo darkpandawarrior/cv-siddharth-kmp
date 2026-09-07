@@ -156,7 +156,7 @@ private val LabPanelShape = RoundedCornerShape(16.dp)
 
 /**
  * A project's real accent, read out of the project data rather than re-typed as a hex literal — the
- * fan-out is HireSignal blue and the search tree is Kursi gold because those simulations are *of*
+ * fan-out is Candidai blue and the search tree is Gaddi gold because those simulations are *of*
  * those products, and a colour edited in `CvProjectData.kt` should move this canvas with it.
  *
  * An unknown slug degrades to the site's cyan instead of throwing: a lab going the wrong colour is
@@ -701,7 +701,7 @@ private fun CrashInstrument(experiment: LabExperiment, seconds: State<Float>) {
 // ---------------------------------------------------------------------------------------------
 
 /**
- * Mileway's 46 modules as a radial graph — the one instrument with no clock at all, because the
+ * Doori's 46 modules as a radial graph — the one instrument with no clock at all, because the
  * React original has none either (`ModuleGraphLab.tsx` is static SVG plus a toggle).
  *
  * ponytail: the original's hover/pin highlighting is dropped. On a canvas it would be pointer-only
@@ -711,7 +711,7 @@ private fun CrashInstrument(experiment: LabExperiment, seconds: State<Float>) {
 @Composable
 private fun ModuleGraphInstrument(experiment: LabExperiment) {
     val colors = cvColors
-    val cyan = labAccent("mileway")
+    val cyan = labAccent("mileway") // claim-audit:allow -- labAccent takes the stable slug
     // 13 feature labels plus the two captions, all static: cache them all rather than re-shaping.
     val measurer = rememberTextMeasurer(cacheSize = 24)
     var isolate by remember { mutableStateOf(true) }
@@ -812,7 +812,7 @@ private fun ModuleGraphInstrument(experiment: LabExperiment) {
 // ---------------------------------------------------------------------------------------------
 
 /**
- * Kursi's ISMCTS search, revealed rather than grown.
+ * Gaddi's ISMCTS search, revealed rather than grown.
  *
  * The tree is built once per (tier, run, canvas size) by [buildSearchTreeRun] and the clock only
  * reveals it, so a window resize re-lays-out the same search instead of quietly running a different
@@ -821,7 +821,7 @@ private fun ModuleGraphInstrument(experiment: LabExperiment) {
 @Composable
 private fun SearchTreeInstrument(experiment: LabExperiment, seconds: State<Float>) {
     val reduced = LocalReducedMotion.current
-    val gold = labAccent("kursi")
+    val gold = labAccent("kursi") // claim-audit:allow -- labAccent takes the stable slug
     val measurer = rememberTextMeasurer(cacheSize = 8)
     var tierIndex by remember { mutableStateOf(0) }
     var runIndex by remember { mutableStateOf(0) }
@@ -954,7 +954,7 @@ private fun SearchTreeInstrument(experiment: LabExperiment, seconds: State<Float
 // ---------------------------------------------------------------------------------------------
 
 /**
- * HireSignal's 62-provider fan-out and its SimHash de-dup.
+ * Candidai's 62-provider fan-out and its SimHash de-dup.
  *
  * Scans are a function of `t` too: scan *n* is `FanoutScan(seedBase + n)` and runs in its own
  * [FanoutScanPeriod] slot, so the bench cycles forever without any spawn bookkeeping. "run scan"
@@ -965,7 +965,7 @@ private fun SearchTreeInstrument(experiment: LabExperiment, seconds: State<Float
 private fun FanoutInstrument(experiment: LabExperiment, seconds: State<Float>) {
     val colors = cvColors
     val reduced = LocalReducedMotion.current
-    val blue = labAccent("hiresignal")
+    val blue = labAccent("hiresignal") // claim-audit:allow -- labAccent takes the stable slug
     val measurer = rememberTextMeasurer(cacheSize = 8)
     var dedup by remember { mutableStateOf(true) }
     var seedBase by remember { mutableStateOf(0) }
@@ -1132,7 +1132,7 @@ private fun FanoutInstrument(experiment: LabExperiment, seconds: State<Float>) {
 // ---------------------------------------------------------------------------------------------
 
 /**
- * PaymentsLab's gateway catalog behind one contract.
+ * PaymentsLab-KMP's gateway catalog behind one contract.
  *
  * Toggling the contract shifts the time epoch rather than re-routing calls already in flight, for
  * the same reason the crash feed does: a closed-form feed cannot retroactively re-decide what
@@ -1149,7 +1149,7 @@ private fun FanoutInstrument(experiment: LabExperiment, seconds: State<Float>) {
 private fun GatewayInstrument(experiment: LabExperiment, seconds: State<Float>) {
     val colors = cvColors
     val reduced = LocalReducedMotion.current
-    val violet = labAccent("paymentslab")
+    val violet = labAccent("paymentslab") // claim-audit:allow -- labAccent takes the stable slug
     val feed = remember { GatewayFeed() }
     val measurer = rememberTextMeasurer(cacheSize = 8)
     var routed by remember { mutableStateOf(false) }
@@ -1309,7 +1309,7 @@ private fun GatewayInstrument(experiment: LabExperiment, seconds: State<Float>) 
 // ---------------------------------------------------------------------------------------------
 
 /**
- * Deadlock's determinism gate.
+ * Stutter's determinism gate.
  *
  * This is the one instrument whose state genuinely is not a function of `t` — whether the tape has
  * been perturbed is a decision, not a phase — and that is fine, because the *simulation* still is:
@@ -1320,7 +1320,7 @@ private fun GatewayInstrument(experiment: LabExperiment, seconds: State<Float>) 
 @Composable
 private fun ReplayInstrument(experiment: LabExperiment, seconds: State<Float>) {
     val colors = cvColors
-    val red = labAccent("deadlock")
+    val red = labAccent("deadlock") // claim-audit:allow -- labAccent takes the stable slug
     val log = remember { ReplayLog() }
     val measurer = rememberTextMeasurer(cacheSize = 8)
     var perturbed by remember { mutableStateOf(false) }
@@ -1712,9 +1712,9 @@ internal fun labScreenSelfCheck() {
     check(stillAge < RecomposeFlashSeconds) { "the still frame misses the flash by ${stillAge}s" }
 
     // Accents come from project data. A typo in a slug must be loud, not a quietly wrong hue.
-    check(labAccent("kursi") == cvColor("#E8C874")) { "Kursi's gold moved or the slug is wrong" }
-    check(labAccent("hiresignal") == cvColor("#3B82F6")) { "HireSignal's blue moved or the slug is wrong" }
-    check(labAccent("mileway") == cvColor("#5ee6ff")) { "Mileway's cyan moved or the slug is wrong" }
+    check(labAccent("kursi") == cvColor("#E8C874")) { "Gaddi's gold moved or the slug is wrong" } // claim-audit:allow -- labAccent takes the stable slug
+    check(labAccent("hiresignal") == cvColor("#3B82F6")) { "Candidai's blue moved or the slug is wrong" } // claim-audit:allow -- labAccent takes the stable slug
+    check(labAccent("mileway") == cvColor("#5ee6ff")) { "Doori's cyan moved or the slug is wrong" } // claim-audit:allow -- labAccent takes the stable slug
     check(labAccent("no-such-project") == CvDarkColors.accent2) { "unknown slugs must fall back" }
 
     // The fan-out's still frame is claimed to be mid-flight through its third scan.

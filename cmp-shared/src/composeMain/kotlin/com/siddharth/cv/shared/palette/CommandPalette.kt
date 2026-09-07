@@ -193,11 +193,11 @@ private fun fold(text: String): String =
 /**
  * How well [query] matches [label] — higher is better, `null` is no match at all.
  *
- * Subsequence matching, not `startsWith`: "mw" has to find Mileway and "pl" PaymentsLab, because
+ * Subsequence matching, not `startsWith`: "dr" has to find Doori and "pl" PaymentsLab-KMP, because
  * that is how anyone who already knows the site types. But a subsequence match alone ranks nonsense
  * alongside intent, so the tiers exist:
  *
- *  - [TierPrefix] — the label starts with the query ("mile" -> Mileway).
+ *  - [TierPrefix] — the label starts with the query ("doo" -> Doori).
  *  - [TierWordStart] — the query appears whole, at a word boundary ("forge" -> The Particle Forge).
  *  - [TierContains] — the query appears whole, mid-word.
  *  - [TierSubsequence] — the characters appear in order, scattered.
@@ -595,22 +595,22 @@ internal fun paletteSelfCheck() {
     }
 
     // Case-insensitive, both directions.
-    check(paletteScore("MILE", "Mileway") == paletteScore("mile", "mileway")) { "case-insensitive" }
+    check(paletteScore("DOO", "Doori") == paletteScore("doo", "doori")) { "case-insensitive" }
     check(paletteScore("FORGE", "The Particle Forge, cursor-reactive swarm") != null) { "upper-case query matches" }
     check(paletteScore("resume", "Résumé") == TierPrefix) { "unaccented query is an exact prefix of the accented label" }
 
     // Exact prefix outranks a word-boundary hit outranks a scattered subsequence.
-    val prefix = paletteScore("mile", "Mileway")!!
+    val prefix = paletteScore("doo", "Doori")!!
     val wordStart = paletteScore("way", "Mile way")!!
-    val scattered = paletteScore("mw", "Mileway")!!
+    val scattered = paletteScore("dr", "Doori")!!
     check(prefix > wordStart) { "exact prefix must outrank a word-boundary match ($prefix vs $wordStart)" }
     check(wordStart > scattered) { "word boundary must outrank a scattered subsequence ($wordStart vs $scattered)" }
-    check(paletteScore("mile", "Mileway")!! > paletteScore("mw", "Mileway")!!) { "prefix beats subsequence on the same label" }
+    check(paletteScore("doo", "Doori")!! > paletteScore("dr", "Doori")!!) { "prefix beats subsequence on the same label" }
 
     // No match is null, not zero — zero is a legitimate score (the empty query).
-    check(paletteScore("zzz", "Mileway") == null) { "non-matching query is null" }
-    check(paletteScore("yawelim", "Mileway") == null) { "out-of-order characters do not match" }
-    check(paletteScore("mileways", "Mileway") == null) { "query longer than the label does not match" }
+    check(paletteScore("zzz", "Doori") == null) { "non-matching query is null" }
+    check(paletteScore("irood", "Doori") == null) { "out-of-order characters do not match" }
+    check(paletteScore("dooris", "Doori") == null) { "query longer than the label does not match" }
 
     // Empty (and whitespace-only) query matches everything and preserves declared order.
     check(commands.all { paletteScore("", it.label) != null }) { "empty query matches every label" }
@@ -621,5 +621,5 @@ internal fun paletteSelfCheck() {
     val ranked = paletteFilter("resume", commands)
     check(ranked.firstOrNull()?.id == "route:resume") { "typing 'resume' must put the résumé first, got ${ranked.firstOrNull()?.id}" }
     check(paletteFilter("zzzz", commands).isEmpty()) { "a nonsense query filters everything out" }
-    check(paletteFilter("mileway", commands).firstOrNull()?.id == "project:mileway") { "project rows are reachable by name" }
+    check(paletteFilter("doori", commands).firstOrNull()?.id == "project:mileway") { "project rows are reachable by name" } // claim-audit:allow -- query is the new label, id is the stable slug
 }

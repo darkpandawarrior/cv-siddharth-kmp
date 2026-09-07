@@ -73,7 +73,7 @@ internal class LabExperiment(
 )
 
 /**
- * How many gateways PaymentsLab catalogs, read out of the project's own metrics rather than typed
+ * How many gateways PaymentsLab-KMP catalogs, read out of the project's own metrics rather than typed
  * here. The React lab gets a four-way split (native-SDK / hosted-webview / mobile-money / stub) from
  * `data/projectStats.ts`, which `gen-kotlin-data.mjs` does not emit into Kotlin — so this port draws
  * one shelf of every gateway instead of four bins. That is a real loss of texture and it is the
@@ -83,7 +83,7 @@ internal class LabExperiment(
  */
 internal val gatewayCount: Int =
     projects
-        .firstOrNull { it.slug == "paymentslab" }
+        .firstOrNull { it.slug == "paymentslab" } // claim-audit:allow -- stable route slug, not display copy
         ?.detail
         ?.metrics
         ?.firstOrNull { it.label.contains("gateways") }
@@ -151,7 +151,7 @@ internal val cvLabs: List<LabExperiment> = listOf(
         label = "Module Graph",
         metric = "46 modules",
         group = LabGroup.Personal,
-        caption = "Mileway's 46-module Gradle graph: thirteen feature modules — tracking, " +
+        caption = "Doori's 46-module Gradle graph: thirteen feature modules — tracking, " +
             "logging, travel, approvals, payables, agent and seven more — that never depend on " +
             "each other, wired together only at the :app composition root. Turn isolation off " +
             "to see the alternative: every feature reaching into every other one.",
@@ -180,7 +180,7 @@ internal val cvLabs: List<LabExperiment> = listOf(
         label = "Search Tree",
         metric = "10 personas",
         group = LabGroup.Personal,
-        caption = "Kursi's bots never see your hand — they play with Information Set Monte Carlo " +
+        caption = "Gaddi's bots never see your hand — they play with Information Set Monte Carlo " +
             "Tree Search, growing a tree of plausible futures over the hidden cards and picking " +
             "the branch that wins most often. Harder tiers search deeper: 1,500 iterations on " +
             "Easy, 16,000 on Grandmaster, still landing on one bot's actual move.",
@@ -209,7 +209,7 @@ internal val cvLabs: List<LabExperiment> = listOf(
         label = "Deterministic Replay",
         metric = "0-tolerance",
         group = LabGroup.Personal,
-        caption = "Deadlock's determinism contract in one line: an input frame records intent — a " +
+        caption = "Stutter's determinism contract in one line: an input frame records intent — a " +
             "move vector, a jump, a dash — and never a position. Replay the same log and you get " +
             "the same path, to the float. Perturb one frame of the second log and the paths split " +
             "from exactly that frame on, which is the whole reason the gate can be zero-tolerance.",
@@ -223,7 +223,7 @@ internal val cvLabs: List<LabExperiment> = listOf(
         label = "Chess Search",
         metric = "alpha-beta",
         group = LabGroup.Personal,
-        caption = "The same picture as Kursi's tree, a different algorithm — and this one is not a " +
+        caption = "The same picture as Gaddi's tree, a different algorithm — and this one is not a " +
             "simulation either. Every line is a real edge from an alpha-beta search over a " +
             "position from one of his own games, run here on a legal-move generator this port " +
             "carries and a perft check proves correct. Two more ply is thousands more nodes, and " +
@@ -445,7 +445,7 @@ internal class FanoutPulse(
 }
 
 /**
- * One scan of HireSignal's 62 providers, generated from [seed] so scan *n* is always scan *n*.
+ * One scan of Candidai's 62 providers, generated from [seed] so scan *n* is always scan *n*.
  *
  * Most postings come back from one board; a handful come back from two or three at once, which is
  * the near-duplicate case SimHash exists for. Which copy of a cluster is the keeper depends on
@@ -501,7 +501,7 @@ internal class FanoutScan(seed: Int) {
 
 internal class SearchTier(val label: String, val iterations: Int)
 
-/** The real tiers from the `kursi` profile entry: 1.5k on Easy to 16k on Grandmaster. */
+/** The real tiers from the `kursi` profile entry: 1.5k on Easy to 16k on Grandmaster. */ // claim-audit:allow -- backtick-quoted slug identifier
 internal val searchTiers: List<SearchTier> = listOf(
     SearchTier("Easy", 1500),
     SearchTier("Normal", 4000),
@@ -514,7 +514,7 @@ internal val searchTiers: List<SearchTier> = listOf(
  * The six bot personas the source data actually names. The card says ten; the other four aren't
  * enumerated anywhere, and inventing names to fill a ring would be fabrication.
  */
-internal val kursiRoles: List<String> = listOf(
+internal val gaddiRoles: List<String> = listOf(
     "Netaji Vachan",
     "Bhai Teja",
     "Babu Filewala",
@@ -632,7 +632,7 @@ internal fun buildSearchTreeRun(
         durationSeconds = 1.6f + (tier.iterations - 1500f) / (16000f - 1500f) * 1.8f,
         iterations = tier.iterations,
         tierLabel = tier.label,
-        role = kursiRoles[runIndex.mod(kursiRoles.size)],
+        role = gaddiRoles[runIndex.mod(gaddiRoles.size)],
     )
 }
 
@@ -645,7 +645,7 @@ internal const val ModuleFeatureCount: Int = 13
 internal const val ModuleOtherCount: Int = ModuleTotal - ModuleFeatureCount
 
 /**
- * Interleaved so the six names confirmed in Mileway's architecture diagram don't clump on one side
+ * Interleaved so the six names confirmed in Doori's architecture diagram don't clump on one side
  * of the circle. The other seven feature modules are real; their names are not in the source data,
  * so they stay generic rather than invented.
  */
@@ -746,7 +746,7 @@ internal class GatewayFeed(seed: Int = 20260812) {
 internal class InputFrame(val mx: Float, val my: Float, val jump: Boolean, val dash: Boolean)
 
 /**
- * Deadlock's determinism contract, ported whole.
+ * Stutter's determinism contract, ported whole.
  *
  * The tape is recorded once from a seed and replayed as often as asked. [step] is the fixed-timestep
  * physics tick — `state' = step(state, frame)` — and it is a pure function of its two arguments,
@@ -1028,10 +1028,10 @@ private fun checkModuleGraph() {
  * renamed metric label. Cross-checked against the badge list, which states it independently.
  */
 private fun checkGatewayFeed() {
-    check(gatewayCount > 0) { "the paymentslab gateway metric no longer parses as a number" }
-    val paymentsLab = projects.first { it.slug == "paymentslab" }
-    check(paymentsLab.badges.any { it == "$gatewayCount gateways" }) {
-        "the metric says $gatewayCount gateways but the badges disagree: ${paymentsLab.badges}"
+    check(gatewayCount > 0) { "the paymentslab gateway metric no longer parses as a number" } // claim-audit:allow -- quoting the stable slug, not display copy
+    val paymentsLabProject = projects.first { it.slug == "paymentslab" } // claim-audit:allow -- stable route slug, not display copy
+    check(paymentsLabProject.badges.any { it == "$gatewayCount gateways" }) {
+        "the metric says $gatewayCount gateways but the badges disagree: ${paymentsLabProject.badges}"
     }
     val gateways = GatewayFeed()
     check(gateways.landedCount(0f) == 0) { "no call has routed before the first one falls" }

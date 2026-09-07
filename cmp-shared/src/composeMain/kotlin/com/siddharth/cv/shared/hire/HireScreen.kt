@@ -200,7 +200,7 @@ private fun WorkBehindTheNumbers(featured: List<CaseStudy>, nav: CvNavState) {
 @Composable
 private fun CaseStudyRow(study: CaseStudy, nav: CvNavState) {
     val colors = cvColors
-    // A case study is not always a project. `mileway` is both and has a detail page; `gps-accuracy`
+    // A case study is not always a project. `mileway` is both and has a detail page; `gps-accuracy` // claim-audit:allow -- backtick-quoted slug identifier
     // and `crash-reduction` exist only in `caseStudies`, and routing them to ProjectDetail would
     // send two of the three links on the page a recruiter is handed to the 404 screen. The
     // homepage's Work section renders every case study, so that fallback can never miss.
@@ -212,7 +212,7 @@ private fun CaseStudyRow(study: CaseStudy, nav: CvNavState) {
         },
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            // CaseStudy.title is the full descriptive line ("Mileway: offline-first mileage tracker
+            // CaseStudy.title is the full descriptive line ("Doori: offline-first mileage tracker
             // (Android, iOS, ...)"). On a scan-in-ninety-seconds page that is a paragraph, so the
             // name leads and the metric carries the proof.
             BasicText(

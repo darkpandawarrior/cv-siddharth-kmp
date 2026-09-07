@@ -52,54 +52,54 @@ val storyMapNodes: List<StoryMapNode> = listOf(
         target = "#work",
     ),
     StoryMapNode(
-        id = "mileway",
-        label = "Mileway",
+        id = "mileway", // claim-audit:allow -- stable node id, not display copy
+        label = "Doori",
         sub = "5 platforms",
         x = 0.1,
         y = 0.5,
         r = 14.0,
         color = "#3ddc84",
-        target = "#project/mileway",
+        target = "#project/mileway", // claim-audit:allow -- internal route target keyed on the stable slug
     ),
     StoryMapNode(
-        id = "kursi",
-        label = "Kursi",
+        id = "kursi", // claim-audit:allow -- stable node id, not display copy
+        label = "Gaddi",
         sub = "live web build",
         x = 0.2,
         y = 0.8,
         r = 12.0,
         color = "#3ddc84",
-        target = "#project/kursi",
+        target = "#project/kursi", // claim-audit:allow -- internal route target keyed on the stable slug
     ),
     StoryMapNode(
-        id = "paymentslab",
-        label = "PaymentsLab",
+        id = "paymentslab", // claim-audit:allow -- stable node id, not display copy
+        label = "PaymentsLab-KMP",
         sub = "gateway lab",
         x = 0.38,
         y = 0.88,
         r = 12.0,
         color = "#3ddc84",
-        target = "#project/paymentslab",
+        target = "#project/paymentslab", // claim-audit:allow -- internal route target keyed on the stable slug
     ),
     StoryMapNode(
-        id = "hiresignal",
-        label = "HireSignal",
+        id = "hiresignal", // claim-audit:allow -- stable node id, not display copy
+        label = "Candidai",
         sub = "25-module KMP",
         x = 0.56,
         y = 0.68,
         r = 12.0,
         color = "#3ddc84",
-        target = "#project/hiresignal",
+        target = "#project/hiresignal", // claim-audit:allow -- internal route target keyed on the stable slug
     ),
     StoryMapNode(
-        id = "deadlock",
-        label = "DEADLOCK",
+        id = "deadlock", // claim-audit:allow -- stable node id, not display copy
+        label = "STUTTER",
         sub = "time-loop game",
         x = 0.7,
         y = 0.58,
         r = 12.0,
         color = "#3ddc84",
-        target = "#project/deadlock",
+        target = "#project/deadlock", // claim-audit:allow -- internal route target keyed on the stable slug
     ),
     StoryMapNode(
         id = "experience",
@@ -166,22 +166,22 @@ val storyMapNodes: List<StoryMapNode> = listOf(
 /** Undirected wiring between node ids. Both endpoints resolve against storyMapNodes. */
 val storyMapEdges: List<StoryMapEdge> = listOf(
     StoryMapEdge(from = "sid", to = "work"),
-    StoryMapEdge(from = "sid", to = "mileway"),
-    StoryMapEdge(from = "sid", to = "kursi"),
-    StoryMapEdge(from = "sid", to = "paymentslab"),
-    StoryMapEdge(from = "sid", to = "hiresignal"),
-    StoryMapEdge(from = "sid", to = "deadlock"),
+    StoryMapEdge(from = "sid", to = "mileway"), // claim-audit:allow -- stable node id edges, not display copy
+    StoryMapEdge(from = "sid", to = "kursi"), // claim-audit:allow -- stable node id edges, not display copy
+    StoryMapEdge(from = "sid", to = "paymentslab"), // claim-audit:allow -- stable node id edges, not display copy
+    StoryMapEdge(from = "sid", to = "hiresignal"), // claim-audit:allow -- stable node id edges, not display copy
+    StoryMapEdge(from = "sid", to = "deadlock"), // claim-audit:allow -- stable node id edges, not display copy
     StoryMapEdge(from = "sid", to = "experience"),
     StoryMapEdge(from = "sid", to = "skills"),
     StoryMapEdge(from = "sid", to = "writing"),
     StoryMapEdge(from = "sid", to = "chat"),
-    StoryMapEdge(from = "mileway", to = "writing"),
+    StoryMapEdge(from = "mileway", to = "writing"), // claim-audit:allow -- stable node id edges, not display copy
     StoryMapEdge(from = "work", to = "writing"),
     StoryMapEdge(from = "books", to = "writing"),
-    StoryMapEdge(from = "mileway", to = "kursi"),
-    StoryMapEdge(from = "kursi", to = "paymentslab"),
-    StoryMapEdge(from = "paymentslab", to = "hiresignal"),
-    StoryMapEdge(from = "hiresignal", to = "deadlock"),
+    StoryMapEdge(from = "mileway", to = "kursi"), // claim-audit:allow -- stable node id edges, not display copy
+    StoryMapEdge(from = "kursi", to = "paymentslab"), // claim-audit:allow -- stable node id edges, not display copy
+    StoryMapEdge(from = "paymentslab", to = "hiresignal"), // claim-audit:allow -- stable node id edges, not display copy
+    StoryMapEdge(from = "hiresignal", to = "deadlock"), // claim-audit:allow -- stable node id edges, not display copy
     StoryMapEdge(from = "chat", to = "writing"),
     StoryMapEdge(from = "chat", to = "work"),
     StoryMapEdge(from = "sid", to = "blueprint"),

@@ -93,7 +93,7 @@ val CvDarkColors: CvColors =
         card = cvColor("#171c1a"),
         line = cvColor("#262e2b"),
         onBackground = cvColor("#e8efe9"),
-        // WCAG-AA floor: 4.65:1 against Kursi's #33241c card, the lightest themed ground on the
+        // WCAG-AA floor: 4.65:1 against Gaddi's #33241c card, the lightest themed ground on the
         // site. Do NOT lighten or darken — this exact value is what let the a11y suite drop its
         // color-contrast allowlist.
         muted = cvColor("#8b909a"),

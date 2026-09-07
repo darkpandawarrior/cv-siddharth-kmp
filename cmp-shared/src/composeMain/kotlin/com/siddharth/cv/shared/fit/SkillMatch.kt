@@ -89,7 +89,7 @@ val SKILLS: List<Skill> = listOf(
     Skill(
         "Room / SQLite", Depth.Deep,
         "24 schema migrations across 2 production databases; 47 sequential non-destructive " +
-            "migrations in Mileway (schema v48)",
+            "migrations in Doori (schema v48)",
         listOf("room", "sqlite", "sqldelight", "local database", "persistence", "orm", "datastore"),
     ),
     Skill(
@@ -127,7 +127,7 @@ val SKILLS: List<Skill> = listOf(
     Skill(
         "Location & motion engineering", Depth.Deep,
         "Predictive dead reckoning over GPS/IMU with Kalman smoothing and spike rejection — " +
-            "accuracy 50% → 95%; MotionFusion gravity/linear-acceleration filtering in Mileway",
+            "accuracy 50% → 95%; MotionFusion gravity/linear-acceleration filtering in Doori",
         listOf(
             "location", "gps", "geolocation", "sensor", "sensors", "maps", "google maps",
             "geofencing", "location tracking", "imu", "accelerometer", "kalman",

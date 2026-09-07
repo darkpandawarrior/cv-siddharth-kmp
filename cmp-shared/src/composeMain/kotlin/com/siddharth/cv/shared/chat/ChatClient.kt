@@ -174,7 +174,7 @@ fun streamReply(
         throw ChatUnavailable(transportMessage(), reason = AiFailure.Network)
     }
     // No `awaitClose` here on purpose: this producer is not callback-based. The block returning IS
-    // what closes the channel, so awaiting that close from inside the block would deadlock.
+    // what closes the channel, so awaiting that close from inside the block would deadlock. // claim-audit:allow -- ordinary concurrency term, not the game
 }
 
 /**
