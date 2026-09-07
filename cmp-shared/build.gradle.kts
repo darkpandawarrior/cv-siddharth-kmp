@@ -71,14 +71,6 @@ kotlin {
             implementation(libs.ktor.serialization.kotlinx.json)
         }
 
-        // SkillMatch.kt (fit/) is the first commonMain logic with tests of its own — pure string
-        // matching over data, no Compose and no engine, so it's exercised once here rather than
-        // per-target the way ChatClient.kt is (jvmTest, see below): a target-specific branch would
-        // be the only reason to also run it on android/ios/wasmJs, and this module has none.
-        commonTest.dependencies {
-            implementation(kotlin("test"))
-        }
-
         // Compose UI lives here, not in commonMain, so it's only on the classpath of targets
         // Compose Multiplatform actually supports (android, jvm, iosArm64, iosSimulatorArm64).
         val composeMain by creating {

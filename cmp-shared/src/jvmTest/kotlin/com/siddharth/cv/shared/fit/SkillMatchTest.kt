@@ -12,6 +12,10 @@ import kotlin.test.assertTrue
  * module ships with no test file of its own, so this is new coverage, not a port of existing
  * assertions) plus the one thing this port adds that the web build doesn't need: parsing the
  * `[[jdfit:{…}]]` directive back out of the model's streamed reply.
+ *
+ * Runs on the jvm target only, same as [com.siddharth.cv.shared.chat.ChatClientTest] and for the
+ * same reason: the logic under test has no platform branch. [SkillMatch.kt] itself lives in
+ * composeMain rather than commonMain for an unrelated toolchain reason (see its own file doc).
  */
 class SkillMatchTest {
 
@@ -142,14 +146,14 @@ class SkillMatchTest {
     // parseJdFitDirective() — the ONE thing this port needs that skillMatch.ts doesn't
     // -----------------------------------------------------------------------------------------
 
-    private val VALID_DIRECTIVE =
+    private val validDirective =
         """He is a strong fit for this role.
           |[[jdfit:{"score":82,"role":"Senior Android Engineer","summary":"Strong platform match.","strengths":[{"need":"Kotlin","evidence":"5+ years"}],"gaps":[{"need":"Backend","note":"Not on his CV"}]}]]
         """.trimMargin()
 
     @Test
     fun `parseJdFitDirective reads a well-formed directive`() {
-        val report = parseJdFitDirective(VALID_DIRECTIVE)
+        val report = parseJdFitDirective(validDirective)
         assertNotNull(report)
         assertEquals(82, report.score)
         assertEquals("Senior Android Engineer", report.role)

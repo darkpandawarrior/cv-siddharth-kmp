@@ -7,6 +7,16 @@ import kotlin.math.roundToInt
 /**
  * A job description scored against Siddharth's stack with no model involved.
  *
+ * LIVES IN composeMain, NOT commonMain, despite being plain Kotlin with zero Compose imports —
+ * same reason `ChatClient.kt` does: `iosX64`/watchOS are bare Kotlin/Native targets with no
+ * Compose runtime on their classpath (see cmp-shared/build.gradle.kts's own comment), but the
+ * Compose Compiler Gradle plugin still activates for every compilation in this module. A
+ * commonMain file with real content is enough to trigger `compileKotlinIosX64` for the first
+ * time and hit "Compose Compiler requires the Compose Runtime to be on the classpath, but none
+ * could be found" — confirmed by moving this file here, which was the first thing to add any
+ * `.kt` content to commonMain at all. FitCheckScreen (composeMain) is this file's only consumer
+ * anyway, so composeMain costs nothing.
+ *
  * Port of `cv-siddharth/src/lib/skillMatch.ts` — same table, same weights, same scoring formula.
  * See that file's own doc comment for the full "why this exists" (the LLM path can rate-limit,
  * 502, or stream back nothing at all; this module means the analyzer always has something true
@@ -401,8 +411,8 @@ private val WHITESPACE_RUN = Regex("\\s+")
 fun extractRole(text: String): String? {
     for (raw in text.split("\n").take(6)) {
         val t = stripTitlePrefix(raw.trim()).trim()
-        if (t.isEmpty() || t.length > 100) continue
-        if (!TITLE_SHAPE.containsMatchIn(t)) continue
+        val looksLikeATitle = t.isNotEmpty() && t.length <= 100 && TITLE_SHAPE.containsMatchIn(t)
+        if (!looksLikeATitle) continue
         // Return the line rather than just the matched span, so a trailing qualifier like
         // "(ModalX)" or "— Payments" survives into the card.
         return t.replace(WHITESPACE_RUN, " ")
@@ -518,8 +528,10 @@ fun toFitReport(m: SkillMatchResult, final: Boolean = false): JdFitReport {
 /** The pasted-JD cap. Mirrors `MAX_JD_CHARS` in `cv-siddharth/api/_lib/chat-handler.ts`. */
 const val JD_MAX_CHARS: Int = 12_000
 
+private const val JD_NEAR_CAP_FRACTION = 0.9
+
 /** Whether the composer should flag the paste as close to the server's ceiling. */
-fun isJdNearCap(length: Int): Boolean = length > JD_MAX_CHARS * 0.9
+fun isJdNearCap(length: Int): Boolean = length > JD_MAX_CHARS * JD_NEAR_CAP_FRACTION
 
 private const val DIRECTIVE_PREFIX = "[[jdfit:"
 private const val DIRECTIVE_SUFFIX = "]]"
@@ -612,16 +624,23 @@ private fun JdFitWire.toReport(): JdFitReport? {
  * fallback), the payload was cut off mid-stream, or it failed to decode. Every one of those is
  * "nothing to supersede the offline card with yet", never a crash.
  */
-fun parseJdFitDirective(text: String): JdFitReport? {
+/**
+ * The `{…}` object's span, or null when there is nothing to decode yet — no directive, an
+ * unterminated payload (the stream hasn't finished it), or one not immediately closed by `]]`.
+ */
+private fun directiveObjectRange(text: String): IntRange? {
     val start = text.indexOf(DIRECTIVE_PREFIX)
     if (start == -1) return null
     val objStart = start + DIRECTIVE_PREFIX.length
-    if (objStart >= text.length || text[objStart] != '{') return null
-    val objEnd = endOfJson(text, objStart)
-    if (objEnd == -1) return null // unterminated — the stream hasn't finished the payload yet
-    if (!text.startsWith(DIRECTIVE_SUFFIX, objEnd)) return null // not immediately closed
+    val objEnd = if (objStart < text.length && text[objStart] == '{') endOfJson(text, objStart) else -1
+    if (objEnd == -1 || !text.startsWith(DIRECTIVE_SUFFIX, objEnd)) return null
+    return objStart until objEnd
+}
+
+fun parseJdFitDirective(text: String): JdFitReport? {
+    val range = directiveObjectRange(text) ?: return null
     val wire = runCatching {
-        directiveJson.decodeFromString(JdFitWire.serializer(), text.substring(objStart, objEnd))
+        directiveJson.decodeFromString(JdFitWire.serializer(), text.substring(range.first, range.last + 1))
     }.getOrNull() ?: return null
     return wire.toReport()
 }

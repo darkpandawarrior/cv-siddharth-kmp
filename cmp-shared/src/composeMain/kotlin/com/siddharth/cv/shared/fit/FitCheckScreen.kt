@@ -270,9 +270,14 @@ private fun FitRow(need: String, note: String, tint: Color) {
     }
 }
 
+private const val FIT_SCORE_STRONG = 70
+private const val FIT_SCORE_MODERATE = 45
+private val FIT_COLOR_STRONG = Color(0xFF3DD68C)
+private val FIT_COLOR_WEAK = Color(0xFFFF5C7A)
+
 /** Green above a strong match, amber in the middle, red below — same bands hire.tsx's copy uses. */
 private fun fitColor(score: Int, accent: Color): Color = when {
-    score >= 70 -> Color(0xFF3DD68C)
-    score >= 45 -> accent
-    else -> Color(0xFFFF5C7A)
+    score >= FIT_SCORE_STRONG -> FIT_COLOR_STRONG
+    score >= FIT_SCORE_MODERATE -> accent
+    else -> FIT_COLOR_WEAK
 }
