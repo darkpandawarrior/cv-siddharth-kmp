@@ -35,16 +35,20 @@ rootProject.name = providers.gradleProperty("fork.project.name").getOrElse("cv-s
 
 // kmp-toolkit monorepo — vendored as one submodule, wired via composite build so its coordinates
 // resolve to the local checkout instead of remote repos (nothing under com.siddharth.kmp is
-// published anywhere). Only the two modules ChatClient.kt actually needs are substituted:
+// published anywhere). Three modules are substituted:
 // :network for a real per-platform HttpClientEngine (this app had none outside wasmJs before),
-// :result for the shared AiResult<T>/AiFailure vocabulary. NOT :llm-chat — its HttpChatProvider
-// always serializes a `mode` key (null when unset), and this app's production endpoint 400s on
-// exactly that (validateRequest in chat-handler.ts rejects any mode that isn't undefined/"compose"/
-// "jd", explicit null included) — see ChatClient.kt's own comment for the full story.
+// :result for the shared AiResult<T>/AiFailure vocabulary.
+// :llm-chat for FitCheckScreen.kt's JD analyzer ONLY — its HttpChatProvider always serializes a
+// `mode` key (null when unset), and this app's production endpoint 400s on exactly that
+// (validateRequest in chat-handler.ts rejects any mode that isn't undefined/"compose"/"jd",
+// explicit null included). ChatClient.kt's ordinary chat traffic still bypasses HttpChatProvider
+// for that reason — see its own comment — but the JD path always sends the literal string "jd",
+// never null, so the same provider that 400s plain chat is exactly right here.
 includeBuild("external/kmp-toolkit") {
     dependencySubstitution {
         substitute(module("com.siddharth.kmp:network")).using(project(":network"))
         substitute(module("com.siddharth.kmp:result")).using(project(":result"))
+        substitute(module("com.siddharth.kmp:llm-chat")).using(project(":llm-chat"))
     }
 }
 
