@@ -182,7 +182,7 @@ data class SiteRoom(
 )
 
 /**
- * True for in-app destinations — "#work", "#project/paymentslab", "/compose".
+ * True for in-app destinations — "#work", "#project/paymentslab", "/compose". // claim-audit:allow -- route fragment example uses the stable slug
  * Callers navigate on true and open a browser on false; handing an in-app hash
  * to a URL opener is the bug this exists to prevent.
  */

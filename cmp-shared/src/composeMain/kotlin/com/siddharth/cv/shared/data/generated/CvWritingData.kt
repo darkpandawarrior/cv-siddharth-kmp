@@ -235,7 +235,7 @@ val writingLessons: List<WritingLesson> = listOf(
     ),
     WritingLesson(
         title = "Teaching a phone to disbelieve its own GPS",
-        slug = "mileway-dead-reckoning",
+        slug = "mileway-dead-reckoning", // claim-audit:allow -- stable slug, not display copy
         pillar = "location",
         series = "sensors-who-lie",
         status = "published",

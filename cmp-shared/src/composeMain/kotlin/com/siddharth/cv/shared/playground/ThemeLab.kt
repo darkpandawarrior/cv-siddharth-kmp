@@ -86,7 +86,7 @@ import kotlin.math.pow
 data class ThemeSeed(val label: String, val color: Color, val fromData: Boolean)
 
 /**
- * The site default, then every project that declares a `theme` (5 of 6 — Deadlock through Kursi),
+ * The site default, then every project that declares a `theme` (5 of 6 — Stutter through Gaddi),
  * then three hues that exist only to prove the derivation isn't tuned per-brand. The project seeds
  * are read out of `data/CvProjectData.kt`, never re-typed: a colour edited there moves this row.
  */
@@ -111,7 +111,7 @@ val themeLabSeeds: List<ThemeSeed> =
  * The ground ladder is built from the seed's *hue direction* — the seed scaled so its brightest
  * channel is 1.0 — rather than from the seed itself, so a dark seed and a bright seed of the same
  * hue produce the same ink/surface/card/line. Multiplying that direction by a fixed ratio is enough
- * to land within a few points of the hand-tuned tokens in `CvProjectData.kt` (Kursi's gold seed
+ * to land within a few points of the hand-tuned tokens in `CvProjectData.kt` (Gaddi's gold seed
  * derives #1F1A0E / #33291C-ish against its authored #1E1008 / #33241c), which is the strongest
  * argument that the hand-tuning was never the value — the token layer was.
  *

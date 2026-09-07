@@ -101,7 +101,7 @@ val seasonCanon: Map<Int, SeasonCanon> = mapOf(
             CanonLaw(
                 n = 3,
                 name = "The Halving",
-                gloss = "A deadlock ends only when someone voluntarily divides themselves and spends both halves.",
+                gloss = "A deadlock ends only when someone voluntarily divides themselves and spends both halves.", // claim-audit:allow -- ordinary-word usage (impasse), not the game
                 contested = null,
                 seenAt = CanonRef(slug = "the-tide-that-owes", label = "named by its absence, Entry #2259"),
                 alsoAt = listOf(

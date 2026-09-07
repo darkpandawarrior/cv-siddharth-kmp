@@ -164,7 +164,7 @@ private val DIAGRAM_PAD = 18.dp
 private val NODE_PAD_X = 14.dp
 private val NODE_PAD_Y = 9.dp
 
-/** So a one-character id like Kursi's `s` doesn't render as a sliver. */
+/** So a one-character id like Gaddi's `s` doesn't render as a sliver. */
 private val NODE_MIN_W = 56.dp
 
 /** Wrap rather than let one long label set the width of the entire diagram. */
@@ -312,7 +312,7 @@ private fun buildFlowLayout(
 
     // Every label between the same pair of ranks lands on that band's midline, and the chip behind
     // it is opaque — so two labels whose cross-axis footprints overlap don't merely touch, the later
-    // one erases the earlier. Kursi's "redact per viewer" is three copies of a 21-character label
+    // one erases the earlier. Gaddi's "redact per viewer" is three copies of a 21-character label
     // whose centres sit ~85dp apart behind ~167dp chips: it drew as one smear, with two of the three
     // half-painted over. Pack each band's labels into rows and give every label a `t` that puts it on
     // its own row, still on its own curve. A band that fits in one row writes nothing, keeps t = 0.5,
@@ -404,7 +404,7 @@ private fun buildFlowLayout(
                     c2 = Offset(p3.x, mid)
                     dir = Offset(0f, 1f)
                 }
-                // Back edge (Kursi's replay loop) — bow out past the far side of the content rather
+                // Back edge (Gaddi's replay loop) — bow out past the far side of the content rather
                 // than draw a straight line back through every box in between.
                 lr -> {
                     p0 = Offset(a.centerX, a.y + a.h)
@@ -625,7 +625,7 @@ private fun DrawScope.drawArrowHead(tip: Offset, dir: Offset, color: Color, len:
  * `mermaidLayoutSelfCheck()`, so it needs no extra wiring in `Prerender.kt`.
  */
 internal fun mermaidLabelSelfCheck() {
-    // Kursi's "redact per viewer" to scale: three 160-wide chips whose centres are 85 apart, so each
+    // Gaddi's "redact per viewer" to scale: three 160-wide chips whose centres are 85 apart, so each
     // one covers half of its neighbour. The middle label steps out; the outer two never met.
     val redact = listOf(93f to 253f, 178f to 338f, 263f to 423f)
     check(packLabelRows(redact) == listOf(0, 1, 0)) { "overlapping labels must not share a row" }

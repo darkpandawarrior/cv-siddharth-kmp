@@ -3,8 +3,9 @@
 ### cv-siddharth-kmp
 
 **A [Compose Multiplatform](https://www.jetbrains.com/compose-multiplatform/) port of
-[cv-siddharth.vercel.app](https://cv-siddharth.vercel.app/)**, one Kotlin `commonMain` rendering the
-same portfolio to web (Kotlin/Wasm), desktop, Android and iOS.
+[cv-siddharth.vercel.app](https://cv-siddharth.vercel.app/)** (also served at
+[siddharth-pandalai.vercel.app](https://siddharth-pandalai.vercel.app/)), one Kotlin `commonMain`
+rendering the same portfolio to web (Kotlin/Wasm), desktop, Android and iOS.
 
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.4.20--RC-7F52FF?logo=kotlin&logoColor=white)
 ![Compose Multiplatform](https://img.shields.io/badge/Compose%20Multiplatform-1.12.0--rc01-4285F4?logo=jetpackcompose&logoColor=white)
@@ -254,7 +255,7 @@ one hero image costs on the React one, and the nine pieces of prose cost less th
 prose is the one payload brotli is genuinely good at.
 
 One incidental finding worth writing down, because it only appears once the prerendered routes are
-servable: **Compose Resources builds its font URLs relative to the document**, so on `/project/mileway`
+servable: **Compose Resources builds its font URLs relative to the document**, so on `/project/mileway` <!-- claim-audit:allow -- URL route example uses the stable slug -->
 the browser asks for `/project/composeResources/…` and 404s every face, silently falling back to the
 system sans. Every prerendered page therefore carries `<base href="/">`. Nothing in a green build
 tells you this; only loading a nested route in a browser does.

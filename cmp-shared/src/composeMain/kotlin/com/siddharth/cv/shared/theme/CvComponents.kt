@@ -310,7 +310,7 @@ fun CvCard(
 
 /**
  * `.tag-chip` — the skills tag cloud, project tech stacks, badges. [tint] overrides the accent
- * (Kursi's role chips, diagram series colours).
+ * (Gaddi's role chips, diagram series colours).
  */
 @Composable
 fun TagChip(

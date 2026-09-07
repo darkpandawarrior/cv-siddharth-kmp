@@ -317,7 +317,7 @@ private fun roomBlurb(path: String): String =
  * pages that this port does not ship. A project screenshot pasted onto /canon would be a card that
  * misdescribes the page, which is worse than a card with no picture in it.
  */
-private val HERO: String? = CvGallery.hero("mileway")
+private val HERO: String? = CvGallery.hero("mileway") // claim-audit:allow -- stable slug argument
 
 // ---------------------------------------------------------------------------------------------
 // The shell — must stay byte-compatible in structure with cmp-web/.../index.html
@@ -359,7 +359,7 @@ private fun page(
                 <meta name="viewport" content="width=device-width, initial-scale=1">
                 <!-- REQUIRED on every nested route, not cosmetic. Compose Resources builds its
                      font URLs relative to the document ("composeResources/.../space_grotesk_
-                     regular.ttf"), so on /project/mileway the browser asks for
+                     regular.ttf"), so on /project/mileway the browser asks for // claim-audit:allow -- URL route example uses the stable slug
                      /project/composeResources/... and 404s all five faces — the page then renders
                      in the system sans with none of the site's type. Root-absolute is not an
                      option there; the paths come from generated resource accessors. One <base>
@@ -1490,7 +1490,7 @@ private fun personLd(origin: String, description: String): String = ld {
 }
 
 /**
- * `SoftwareSourceCode` when there is a repository to point at, `CreativeWork` otherwise — DEADLOCK
+ * `SoftwareSourceCode` when there is a repository to point at, `CreativeWork` otherwise — STUTTER
  * is a public case study over a private repo, and claiming source code that nobody can fetch is
  * the kind of structured-data lie that gets rich results pulled.
  */
@@ -1718,7 +1718,7 @@ internal fun selfCheck() {
     readmeSelfCheck()
 
     check(esc("a & b <c> \"d\" 'e'") == "a &amp; b &lt;c&gt; &quot;d&quot; &#39;e&#39;") { "escaping" }
-    check(esc("Kursi — “Panda”") == "Kursi — “Panda”") { "non-ASCII passes through; the file is UTF-8" }
+    check(esc("Gaddi — “Panda”") == "Gaddi — “Panda”") { "non-ASCII passes through; the file is UTF-8" }
 
     check(clamp("short line") == "short line") { "short strings are untouched" }
     check(clamp("a\n  b   c") == "a b c") { "multi-line data collapses to one line" }
@@ -1730,7 +1730,7 @@ internal fun selfCheck() {
     check(Route.Home.outputFile(root).path == "/out/index.html") { "home is the directory index" }
     check(Route.Resume.outputFile(root).path == "/out/resume/index.html") { "extensionless route -> dir" }
     check(
-        Route.ProjectDetail("mileway").outputFile(root).path == "/out/project/mileway/index.html",
+        Route.ProjectDetail("mileway").outputFile(root).path == "/out/project/mileway/index.html", // claim-audit:allow -- stable route slug
     ) { "project pages nest two deep" }
 
     // Every emitted page has to be a real page: the wasm mount point, a root-absolute bundle src,

@@ -890,7 +890,7 @@ private val ChartPadTop: Dp = 22.dp
 private val ChartPadBottom: Dp = 28.dp
 
 /**
- * Kursi's gold, the site's own third series colour. The two curves take `accent` and `accent2` so
+ * Gaddi's gold, the site's own third series colour. The two curves take `accent` and `accent2` so
  * they follow a reskin; the win-rate line needs a hue neither of those owns.
  */
 private val WinRateTint: Color = cvColor("#E8C874")

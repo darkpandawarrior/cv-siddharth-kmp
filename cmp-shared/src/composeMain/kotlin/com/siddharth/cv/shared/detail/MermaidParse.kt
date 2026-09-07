@@ -11,10 +11,10 @@ import com.siddharth.cv.shared.data.projects
  * - headers: `graph TD` and `graph LR`, nothing else
  * - one node shape: `id["quoted label"]` — every single node, every diagram
  * - two connectors: `-->` and `-.->`, both with an optional `|"quoted label"|`
- * - chains on one line: `gps --> jit --> spk --> fus --> ...` (Mileway's location pipeline)
- * - `&` groups on both sides: `app --> t & s & tr & ap & pa & ag` (Mileway's module graph)
+ * - chains on one line: `gps --> jit --> spk --> fus --> ...` (Doori's location pipeline)
+ * - `&` groups on both sides: `app --> t & s & tr & ap & pa & ag` (Doori's module graph)
  * - `<br/>` inside labels for a forced line break
- * - one genuine cycle: Kursi's `s --> r --> s2` plus `s2 -.-> s`
+ * - one genuine cycle: Gaddi's `s --> r --> s2` plus `s2 -.-> s`
  *
  * We support a little more than that — the other bracket shapes and the `---`/`==>` connectors —
  * because the scanner gets them almost free and a future diagram shouldn't fall back to raw source
@@ -87,7 +87,7 @@ fun parseMermaidFlow(source: String): FlowGraph? {
  * Longest-path layering — the "assign a rank" half of Sugiyama. Nodes come back grouped by rank in
  * declaration order, which is also the order they're drawn in within a rank.
  *
- * Cycles are the interesting case: Kursi's replay diagram loops `s2` back to `s`, so an in-degree-0
+ * Cycles are the interesting case: Gaddi's replay diagram loops `s2` back to `s`, so an in-degree-0
  * root doesn't exist and naive layering would spin. A DFS marks every edge that points at a node
  * still on the recursion stack as a back edge and drops it from the ranking only — the edge is
  * still drawn, it just draws *backwards*, which is exactly what "byte-for-byte replay" should look
@@ -385,7 +385,7 @@ private class Scan(private val s: String) {
                 }
             }
             // A bare reference never overwrites an earlier declaration; the label can appear on any
-            // one mention, and in Mileway's module graph it appears on a line of its own.
+            // one mention, and in Doori's module graph it appears on a line of its own.
             if (declared != null) nodes[id] = declared
             else if (id !in nodes) nodes[id] = FlowNode(id, id, NodeShape.Box)
 
@@ -463,27 +463,27 @@ private fun normalizeLabel(raw: String): String =
  * be right about is the strings the site actually ships.
  */
 internal fun mermaidParseSelfCheck() {
-    // Kursi — chained edge, edge labels, parens inside a quoted label, and a genuine cycle.
-    val kursi = parseMermaidFlow(
+    // Gaddi — chained edge, edge labels, parens inside a quoted label, and a genuine cycle.
+    val gaddi = parseMermaidFlow(
         """graph LR
   s["GameState"] -->|"+ Intent"| r["reduce()<br/>pure · RNG in state"] --> s2["GameState'"]
   s2 -.->|"byte-for-byte replay"| s""",
     )
-    checkNotNull(kursi) { "the Kursi replay diagram must parse" }
-    check(kursi.direction == FlowDirection.LeftRight) { "graph LR" }
-    check(kursi.nodes.map { it.id } == listOf("s", "r", "s2")) { "declaration order preserved" }
-    check(kursi.byId["r"]!!.label == "reduce()\npure · RNG in state") { "<br/> becomes a newline, parens survive" }
-    check(kursi.edges.size == 3) { "a --> b --> c is two edges, plus the loop back" }
-    check(kursi.edges[0].label == "+ Intent") { "|\"…\"| edge label" }
-    check(kursi.edges[1].label == null) { "an unlabelled link in a chain stays unlabelled" }
-    check(kursi.edges[2].let { it.from == "s2" && it.to == "s" && it.dashed }) { "-.-> is dashed" }
+    checkNotNull(gaddi) { "the Gaddi replay diagram must parse" }
+    check(gaddi.direction == FlowDirection.LeftRight) { "graph LR" }
+    check(gaddi.nodes.map { it.id } == listOf("s", "r", "s2")) { "declaration order preserved" }
+    check(gaddi.byId["r"]!!.label == "reduce()\npure · RNG in state") { "<br/> becomes a newline, parens survive" }
+    check(gaddi.edges.size == 3) { "a --> b --> c is two edges, plus the loop back" }
+    check(gaddi.edges[0].label == "+ Intent") { "|\"…\"| edge label" }
+    check(gaddi.edges[1].label == null) { "an unlabelled link in a chain stays unlabelled" }
+    check(gaddi.edges[2].let { it.from == "s2" && it.to == "s" && it.dashed }) { "-.-> is dashed" }
     // The cycle must not hang the layering, and the back edge must not push `s` off rank 0.
-    check(kursi.ranks().map { r -> r.map { it.id } } == listOf(listOf("s"), listOf("r"), listOf("s2"))) {
+    check(gaddi.ranks().map { r -> r.map { it.id } } == listOf(listOf("s"), listOf("r"), listOf("s2"))) {
         "longest-path layering ignores the back edge"
     }
 
-    // Mileway — standalone declarations, then `&` groups on both sides of a link.
-    val mileway = parseMermaidFlow(
+    // Doori — standalone declarations, then `&` groups on both sides of a link.
+    val doori = parseMermaidFlow(
         """graph TD
   app[":app composition root"]
   t["feature: tracking"]
@@ -492,12 +492,12 @@ internal fun mermaidParseSelfCheck() {
   app --> t & s
   t & s --> core""",
     )
-    checkNotNull(mileway) { "the Mileway module diagram must parse" }
-    check(mileway.direction == FlowDirection.TopDown) { "graph TD" }
-    check(mileway.byId["app"]!!.label == ":app composition root") { "a colon-leading label is not a shape" }
-    check(mileway.byId["core"]!!.label.endsWith("Room(KMP)")) { "unquoted-looking parens inside a quoted label" }
-    check(mileway.edges.size == 4) { "1x2 fan-out plus 2x1 fan-in" }
-    check(mileway.ranks().map { r -> r.map { it.id } } == listOf(listOf("app"), listOf("t", "s"), listOf("core"))) {
+    checkNotNull(doori) { "the Doori module diagram must parse" }
+    check(doori.direction == FlowDirection.TopDown) { "graph TD" }
+    check(doori.byId["app"]!!.label == ":app composition root") { "a colon-leading label is not a shape" }
+    check(doori.byId["core"]!!.label.endsWith("Room(KMP)")) { "unquoted-looking parens inside a quoted label" }
+    check(doori.edges.size == 4) { "1x2 fan-out plus 2x1 fan-in" }
+    check(doori.ranks().map { r -> r.map { it.id } } == listOf(listOf("app"), listOf("t", "s"), listOf("core"))) {
         "the fan-in sinks to its own rank"
     }
 

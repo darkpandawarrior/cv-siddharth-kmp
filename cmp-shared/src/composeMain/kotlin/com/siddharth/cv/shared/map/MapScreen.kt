@@ -861,7 +861,7 @@ internal fun mapScreenSelfCheck() {
 
     check(classifyTarget("chat") is MapTarget.Absent) { "the chat bubble is not a destination" }
     check(classifyTarget("https://example.com") is MapTarget.External) { "a bare url is external" }
-    check(classifyTarget("#project/mileway") == MapTarget.Go(Route.ProjectDetail("mileway"))) {
+    check(classifyTarget("#project/mileway") == MapTarget.Go(Route.ProjectDetail("mileway"))) { // claim-audit:allow -- stable route slug, not display copy
         "a project hash carries its slug"
     }
     check(classifyTarget("#work") == MapTarget.Section("work")) { "a home section stays on the page" }

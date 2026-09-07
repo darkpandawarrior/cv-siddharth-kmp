@@ -404,11 +404,11 @@ internal fun navSelfCheck() {
     check(nav.current == Route.Home) { "starts home" }
     check(!nav.canGoBack) { "nothing to go back to at the floor" }
 
-    nav.go(Route.ProjectDetail("mileway"))
-    check(nav.current == Route.ProjectDetail("mileway")) { "push" }
+    nav.go(Route.ProjectDetail("mileway")) // claim-audit:allow -- stable route slug, not display copy
+    check(nav.current == Route.ProjectDetail("mileway")) { "push" } // claim-audit:allow -- stable route slug, not display copy
     check(nav.canGoBack) { "can go back off a pushed route" }
 
-    nav.go(Route.ProjectDetail("mileway"))
+    nav.go(Route.ProjectDetail("mileway")) // claim-audit:allow -- stable route slug, not display copy
     nav.back()
     check(nav.current == Route.Home) { "re-navigating to the current route must not stack a duplicate" }
 
@@ -425,8 +425,8 @@ internal fun navSelfCheck() {
     check(nav.pendingSection == null) { "one-shot" }
 
     // reset() is popstate's path: it must land on the route without growing the stack past it.
-    nav.reset(Route.ProjectDetail("kursi"))
-    check(nav.current == Route.ProjectDetail("kursi")) { "reset lands on the route" }
+    nav.reset(Route.ProjectDetail("kursi")) // claim-audit:allow -- stable route slug, not display copy
+    check(nav.current == Route.ProjectDetail("kursi")) { "reset lands on the route" } // claim-audit:allow -- stable route slug, not display copy
     check(nav.canGoBack) { "reset keeps home underneath so back still means home" }
     nav.reset(Route.Home)
     check(nav.current == Route.Home && !nav.canGoBack) { "reset home collapses to the floor" }
@@ -468,7 +468,7 @@ internal fun navSelfCheck() {
         Route.Home, Route.Resume, Route.Terminal, Route.Lab, Route.Forge, Route.Playground,
         Route.Hire, Route.Shipped, Route.Weeb, Route.Ops, Route.Loopdown, Route.Ink,
         Route.Anthology(), Route.Anthology(AnthologyLayer.Tellers), Route.Canon, Route.Making,
-        Route.Chess, Route.Map, Route.ProjectDetail("mileway"), Route.Read("deadline"),
+        Route.Chess, Route.Map, Route.ProjectDetail("mileway"), Route.Read("deadline"), // claim-audit:allow -- stable route slug, not display copy
         // Every combination of the two optional fields, because each one is written into the URL
         // independently and a joiner that drops the wrong half round-trips as a different spread.
         Route.Excelsior(), Route.Excelsior("2021"), Route.Excelsior(page = 5),
@@ -489,8 +489,8 @@ internal fun navSelfCheck() {
     check(routeOrNull("/anthology?layer=map#worlds") == Route.Anthology(AnthologyLayer.Map)) {
         "a fragment is not part of the query"
     }
-    check(routeFromPath("/project/mileway/") == Route.ProjectDetail("mileway")) { "trailing slash" }
-    check(routeFromPath("/project/mileway?utm=x") == Route.ProjectDetail("mileway")) { "query stripped" }
+    check(routeFromPath("/project/mileway/") == Route.ProjectDetail("mileway")) { "trailing slash" } // claim-audit:allow -- stable route slug, not display copy
+    check(routeFromPath("/project/mileway?utm=x") == Route.ProjectDetail("mileway")) { "query stripped" } // claim-audit:allow -- stable route slug, not display copy
     check(routeFromPath("/nonsense") == Route.Home) { "unknown path falls back home" }
 
     // The second free-text route. Same trailing-slash and query handling as /project, and one
@@ -534,8 +534,8 @@ internal fun navSelfCheck() {
 
     // The legacy inbound addresses. Every one of these is a link that already exists somewhere he
     // does not control — a LinkedIn Featured card, an old share, a pasted hash URL.
-    check(routeOrNull("/#project/mileway") == Route.ProjectDetail("mileway")) { "the old hash project link" }
-    check(routeOrNull("/?project=kursi") == Route.ProjectDetail("kursi")) { "LinkedIn Featured keeps the query" }
+    check(routeOrNull("/#project/mileway") == Route.ProjectDetail("mileway")) { "the old hash project link" } // claim-audit:allow -- stable route slug, not display copy
+    check(routeOrNull("/?project=kursi") == Route.ProjectDetail("kursi")) { "LinkedIn Featured keeps the query" } // claim-audit:allow -- stable route slug, not display copy
     check(routeOrNull("/#terminal") == Route.Terminal) { "an old hash route resolves to its page" }
     check(routeOrNull("/#compose") == Route.Playground) { "including one whose slug is not its name" }
     check(routeOrNull("/#projects") == Route.Home) { "a homepage section anchor is the homepage, not a route" }

@@ -7,22 +7,22 @@ package com.siddharth.cv.shared.data
  * generated writing corpus this repo does not vendor, so a Kotlin copy would freeze a count that
  * changes on the next generation run.
  *
- * Deliberate inconsistency preserved: Mileway's `status` says 46 modules while its
+ * Deliberate inconsistency preserved: Doori's `status` says 46 modules while its
  * detail metric says 36 — 36 local + 10 composed. Both are correct; do not reconcile.
  */
 
 val projects = listOf(
     Project(
-        slug = "kursi",
-        name = "Kursi",
-        tagline = """A Hinglish social-deduction bluffing game of power, satire & second chances. Kursi ke liye kuch bhi karega.""",
+        slug = "kursi", // claim-audit:allow -- stable route slug, not display copy
+        name = "Gaddi",
+        tagline = """A Hinglish social-deduction bluffing game of power, satire & second chances. Gaddi ke liye kuch bhi karega.""",
         description = """Deterministic Kotlin Multiplatform social-deduction game with ISMCTS bot AI, shipped across Android, iOS, Desktop, and Web.""",
         stack = listOf("Kotlin Multiplatform", "Compose Multiplatform", "Android", "iOS", "Desktop", "Web (Wasm)"),
         highlights = listOf(
             """Pure (GameState, Intent) → GameState reducer drives the AI, UI, and a future server.""",
             """ISMCTS AI with 10 bot personas plus a DARBAR social layer for bluffing and alliances.""",
         ),
-        links = listOf(NamedLink("GitHub", "https://github.com/darkpandawarrior/Kursi")),
+        links = listOf(NamedLink("GitHub", "https://github.com/darkpandawarrior/Gaddi")),
         status = "13 modules · 4 platforms · 10 bot personas",
         badges = listOf("Kotlin Multiplatform", "Game engine", "ISMCTS AI"),
         theme = ProjectTheme(
@@ -40,7 +40,7 @@ val projects = listOf(
             ProjectTarget("Web", 1, """Live: the real Compose/Wasm build, playable right here. One codebase, running in your browser."""),
         ),
         detail = ProjectDetailData(
-            overview = """Kursi is a Hinglish social-deduction bluffing game set in a satirical India corporate-political underworld where six archetypes scheme for an empty chair, the Gaddi, and everyone is lying about what they hold. The Neta makes promises he'll forget tomorrow, the Bhai owns silence, the Babu approves nothing, the Jugaadu knows a shortcut, the Vakil has read every exception. Satire targets the archetype, never the person. Under the deadpan Hinglish voice ("सब मिले हुए हैं") sits a serious engineering exercise: one deterministic Kotlin engine that runs identically on Android, iOS, desktop and the web, and powers the AI, the UI and a server-authoritative backend from the same code.""",
+            overview = """Gaddi is a Hinglish social-deduction bluffing game set in a satirical India corporate-political underworld where six archetypes scheme for an empty chair, the Gaddi, and everyone is lying about what they hold. The Neta makes promises he'll forget tomorrow, the Bhai owns silence, the Babu approves nothing, the Jugaadu knows a shortcut, the Vakil has read every exception. Satire targets the archetype, never the person. Under the deadpan Hinglish voice ("सब मिले हुए हैं") sits a serious engineering exercise: one deterministic Kotlin engine that runs identically on Android, iOS, desktop and the web, and powers the AI, the UI and a server-authoritative backend from the same code.""",
             sections = listOf(
                 ProjectDetailSection(
                     heading = "Deterministic engine",
@@ -114,7 +114,7 @@ val projects = listOf(
                 SkillGroup("Build & quality", listOf("Koin", "Fastlane", "CI")),
             ),
             extraLinks = listOf(
-                NamedLink("README (full rules)", "https://github.com/darkpandawarrior/Kursi#readme"),
+                NamedLink("README (full rules)", "https://github.com/darkpandawarrior/Gaddi#readme"),
             ),
             diagrams = listOf(
                 Diagram(
@@ -134,8 +134,8 @@ val projects = listOf(
         ),
     ),
     Project(
-        slug = "mileway",
-        name = "Mileway",
+        slug = "mileway", // claim-audit:allow -- stable route slug, not display copy
+        name = "Doori",
         tagline = """Offline-first mileage, travel & expense tracker on one Kotlin codebase across Android, iOS, Wear OS, watchOS & Desktop.""",
         description = """Offline-first mileage, travel, and expense tracker spanning five platforms from one Kotlin codebase, zero backend.""",
         stack = listOf("Kotlin Multiplatform", "Compose Multiplatform", "Android", "iOS", "Wear OS", "watchOS", "Desktop", "Room (KMP)", "Koin"),
@@ -144,9 +144,9 @@ val projects = listOf(
             """Real location engine, reimbursement policy engine, durable submit-outbox, and an on-device AI assistant.""",
         ),
         links = listOf(
-            NamedLink("GitHub", "https://github.com/darkpandawarrior/Mileway"),
+            NamedLink("GitHub", "https://github.com/darkpandawarrior/Doori"),
             NamedLink("Case study", "#work"),
-            NamedLink("PaymentsLab (sibling KMP app)", "#project/paymentslab"),
+            NamedLink("PaymentsLab-KMP (sibling KMP app)", "#project/paymentslab"), // claim-audit:allow -- internal route fragment keyed on the stable slug
         ),
         status = "46 modules · 5 platforms · 159 tests",
         badges = listOf("Kotlin Multiplatform", "46 modules", "5 platforms", "Open source"),
@@ -168,7 +168,7 @@ val projects = listOf(
             ProjectTarget("Web", 1, """Live, a Compose/Wasm preview shell: dashboard, live simulated tracking and the expense log, running the real design system and location math in your browser."""),
         ),
         detail = ProjectDetailData(
-            overview = """Mileway is an original, fully-offline mileage / travel / expense tracker I designed and built end-to-end in Kotlin & Compose Multiplatform. It runs on Android, iOS, Wear OS, watchOS and Compose Desktop from one shared codebase, with zero backend so the whole thing is reproducible and reviewable. It's my reference implementation for the architecture I advocate at scale: strict module isolation, a real location engine, a policy/reimbursement layer and a durable submit-outbox, all over local data.""",
+            overview = """Doori is an original, fully-offline mileage / travel / expense tracker I designed and built end-to-end in Kotlin & Compose Multiplatform. It runs on Android, iOS, Wear OS, watchOS and Compose Desktop from one shared codebase, with zero backend so the whole thing is reproducible and reviewable. It's my reference implementation for the architecture I advocate at scale: strict module isolation, a real location engine, a policy/reimbursement layer and a durable submit-outbox, all over local data.""",
             sections = listOf(
                 ProjectDetailSection(
                     heading = "46-module clean architecture (36 local + 10 composed)",
@@ -218,9 +218,9 @@ val projects = listOf(
                 SkillGroup("Quality", listOf("Roborazzi (159 JVM screenshot tests)", "detekt", "ktlint", "Kover", "CI")),
             ),
             extraLinks = listOf(
-                NamedLink("Feature modules", "https://github.com/darkpandawarrior/Mileway/tree/main/feature"),
+                NamedLink("Feature modules", "https://github.com/darkpandawarrior/Doori/tree/main/feature"),
                 NamedLink("kmp-build-logic (shared)", "https://github.com/darkpandawarrior/kmp-build-logic"),
-                NamedLink("README", "https://github.com/darkpandawarrior/Mileway#readme"),
+                NamedLink("README", "https://github.com/darkpandawarrior/Doori#readme"),
             ),
             diagrams = listOf(
                 Diagram(
@@ -256,8 +256,8 @@ val projects = listOf(
         ),
     ),
     Project(
-        slug = "paymentslab",
-        name = "PaymentsLab",
+        slug = "paymentslab", // claim-audit:allow -- stable route slug, not display copy
+        name = "PaymentsLab-KMP",
         tagline = """An Integration Lab for the Android payments ecosystem: every gateway behind one abstraction, with a live look at what actually happens on each transaction.""",
         description = """A Kotlin Multiplatform systems showcase: real payment flows across dozens of providers, all behind a single PaymentGateway abstraction, backed by a Ktor server that owns order creation, signature verification and webhook reconciliation.""",
         stack = listOf("Kotlin Multiplatform", "Compose Multiplatform", "Ktor", "Android", "iOS", "Room"),
@@ -266,8 +266,8 @@ val projects = listOf(
             """Five money-movement rails plus split payments, all idempotency-keyed and MOCK_MODE-honest.""",
         ),
         links = listOf(
-            NamedLink("GitHub", "https://github.com/darkpandawarrior/PaymentsLab"),
-            NamedLink("Mileway (sibling KMP app)", "#project/mileway"),
+            NamedLink("GitHub", "https://github.com/darkpandawarrior/PaymentsLab-KMP"),
+            NamedLink("Doori (sibling KMP app)", "#project/mileway"), // claim-audit:allow -- internal route fragment keyed on the stable slug
         ),
         status = "40 modules · 66 gateways · 5 rails",
         badges = listOf("Kotlin Multiplatform", "40 modules", "66 gateways", "Open source"),
@@ -285,7 +285,7 @@ val projects = listOf(
             ProjectTarget("Web", 0, """Live, a Compose/Wasm preview shell running the gateway catalog and the explained-checkout demo in your browser, in MOCK_MODE: the real orchestrator FSM and hosted-webview archetype, in-memory fakes for the server."""),
         ),
         detail = ProjectDetailData(
-            overview = """Payments is the hardest integration surface on Android: every gateway ships a different SDK, most of them are Activity-callback-era, the client can lie about the outcome, and the interesting logic (signatures, webhooks, idempotency, recovery) lives on the server. PaymentsLab runs real payment flows across a 66-gateway catalog behind a single PaymentGateway abstraction, and visualizes them step by step. A Ktor server does the order creation, signature verification and webhook reconciliation a real integration requires. Beyond one-shot pay-in it models five money-movement rails.""",
+            overview = """Payments is the hardest integration surface on Android: every gateway ships a different SDK, most of them are Activity-callback-era, the client can lie about the outcome, and the interesting logic (signatures, webhooks, idempotency, recovery) lives on the server. PaymentsLab-KMP runs real payment flows across a 66-gateway catalog behind a single PaymentGateway abstraction, and visualizes them step by step. A Ktor server does the order creation, signature verification and webhook reconciliation a real integration requires. Beyond one-shot pay-in it models five money-movement rails.""",
             sections = listOf(
                 ProjectDetailSection(
                     heading = "The one idea worth stealing",
@@ -327,7 +327,7 @@ val projects = listOf(
             extraLinks = listOf(
                 NamedLink("kmp-toolkit (shared)", "https://github.com/darkpandawarrior/kmp-toolkit"),
                 NamedLink("kmp-build-logic (shared)", "https://github.com/darkpandawarrior/kmp-build-logic"),
-                NamedLink("README", "https://github.com/darkpandawarrior/PaymentsLab#readme"),
+                NamedLink("README", "https://github.com/darkpandawarrior/PaymentsLab-KMP#readme"),
             ),
             diagrams = listOf(
                 Diagram(
@@ -364,8 +364,8 @@ val projects = listOf(
         ),
     ),
     Project(
-        slug = "hiresignal",
-        name = "HireSignal",
+        slug = "hiresignal", // claim-audit:allow -- stable route slug, not display copy
+        name = "Candidai",
         tagline = """A native, multiplatform AI career-intelligence engine, and the open-source project it's built on.""",
         description = """A local-first job-search engine (resume onboarding, reverse-ATS discovery, evidence-based fit scoring and tailored résumés) rebuilt from scratch in Kotlin Multiplatform, with its scoring engine ported and verified against the open-source career-ops project I actively contribute to upstream.""",
         stack = listOf("Kotlin Multiplatform", "Compose Multiplatform", "Spring Boot 4", "Room (KMP)", "Ktor", "62 ATS/board providers"),
@@ -393,7 +393,7 @@ val projects = listOf(
             ProjectTarget("Android", 3, """Real Roborazzi captures: first screenshots off the actual Compose UI, not mockups."""),
         ),
         detail = ProjectDetailData(
-            overview = """HireSignal is a local-first AI career-intelligence engine: resume onboarding, reverse-ATS discovery, evidence-based fit scoring and tailored résumés, in one pipeline. The product idea and scoring model started on career-ops, an open-source Node.js job-search engine (⭐60k+) that I actively contribute to upstream. The native app is a from-scratch Kotlin Multiplatform rebuild: the same A-F fit-scoring engine, ported and verified line-for-line against the original, now running identically on Android, iOS, Desktop, Web and a Spring Boot server instead of a single Node process.""",
+            overview = """Candidai is a local-first AI career-intelligence engine: resume onboarding, reverse-ATS discovery, evidence-based fit scoring and tailored résumés, in one pipeline. The product idea and scoring model started on career-ops, an open-source Node.js job-search engine (⭐60k+) that I actively contribute to upstream. The native app is a from-scratch Kotlin Multiplatform rebuild: the same A-F fit-scoring engine, ported and verified line-for-line against the original, now running identically on Android, iOS, Desktop, Web and a Spring Boot server instead of a single Node process.""",
             sections = listOf(
                 ProjectDetailSection(
                     heading = "One engine, five targets",
@@ -405,7 +405,7 @@ val projects = listOf(
                 ),
                 ProjectDetailSection(
                     heading = "Offline-first, agent-reachable",
-                    body = """Room (KMP) plus DataStore caches everything locally over a Ktor REST + NDJSON/SSE sync layer, so the dashboard stays usable offline and catches up when connectivity returns. An agent-interop surface lets other agents, and the OS itself, drive the app without going through the UI. It covers Android AppFunctions, iOS App Intents/Shortcuts, hiresignal:// deep links, and a documented OpenAPI contract.""",
+                    body = """Room (KMP) plus DataStore caches everything locally over a Ktor REST + NDJSON/SSE sync layer, so the dashboard stays usable offline and catches up when connectivity returns. An agent-interop surface lets other agents, and the OS itself, drive the app without going through the UI. It covers Android AppFunctions, iOS App Intents/Shortcuts, hiresignal:// deep links, and a documented OpenAPI contract.""", // claim-audit:allow -- literal deep-link scheme, unchanged code
                 ),
                 ProjectDetailSection(
                     heading = "On-device AI, with a fallback that always works",
@@ -433,7 +433,7 @@ val projects = listOf(
             techStack = listOf(
                 SkillGroup("Native app", listOf("Kotlin Multiplatform", "Compose Multiplatform", "Spring Boot 4 server", "Room (KMP) + DataStore", "Ktor REST + NDJSON/SSE")),
                 SkillGroup("On-device AI", listOf("ML Kit GenAI / Gemini Nano (Android)", "Apple Foundation Models (iOS)", "deterministic-heuristic fallback")),
-                SkillGroup("Agent interop", listOf("Android AppFunctions", "iOS App Intents / Shortcuts", "hiresignal:// deep links", "OpenAPI contract")),
+                SkillGroup("Agent interop", listOf("Android AppFunctions", "iOS App Intents / Shortcuts", "hiresignal:// deep links", "OpenAPI contract")), // claim-audit:allow -- literal deep-link scheme, unchanged code
                 SkillGroup("Open-source engine (career-ops)", listOf("Node.js", "62 ATS/job-board providers", "zero-token Greenhouse/Ashby/Lever scanning", "A-F fit rubric")),
             ),
             extraLinks = listOf(
@@ -482,8 +482,8 @@ val projects = listOf(
         badges = listOf("React 19", "Vercel", "LLM chat"),
     ),
     Project(
-        slug = "deadlock",
-        name = "DEADLOCK",
+        slug = "deadlock", // claim-audit:allow -- stable route slug, not display copy
+        name = "STUTTER",
         tagline = """A first-person time-loop game about a moment someone could not let end.""",
         description = """Godot 4.7 in GDScript. A deterministic echo-replay spine powers cooperative echoes, ghosts, and boss desync from one system, with recorded input intent replayed through the same physics step. Built solo as an AI-orchestrated dev crew.""",
         stack = listOf("Godot 4.7", "GDScript", "Deterministic fixed-timestep sim", "gdUnit4", "AI-orchestrated content pipeline"),
@@ -507,7 +507,7 @@ val projects = listOf(
             line = "#4A2530",
         ),
         detail = ProjectDetailData(
-            overview = """DEADLOCK is a first-person time-loop game about a moment someone could not let end: a grieving mind's mathematics, rendered as a room that lies about its own floor. Under the mood sits one deterministic engine: every action is recorded as intent, never position, and replayed through the exact same physics step. That one idea is reused, unmodified, five different ways across the game's core systems: record intent, replay deterministically.""",
+            overview = """STUTTER is a first-person time-loop game about a moment someone could not let end: a grieving mind's mathematics, rendered as a room that lies about its own floor. Under the mood sits one deterministic engine: every action is recorded as intent, never position, and replayed through the exact same physics step. That one idea is reused, unmodified, five different ways across the game's core systems: record intent, replay deterministically.""",
             sections = listOf(
                 ProjectDetailSection(
                     heading = "Record intent, never position",
@@ -584,7 +584,7 @@ val projects = listOf(
             """kmp-toolkit: 39 modules, each extracted the moment a second consumer needed the same logic, never designed as a "platform" up front: typed Result, an MVI ViewModel core, an offline-first store, network, security, on-device AI behind one seam, device-integrity, an operation-log outbox, and a 19-provider payment-gateway abstraction.""",
             """kmp-build-logic: 17 convention plugins here (22 authored across all repos). The AGP / Kotlin / Compose / test / lint / Firebase / Room / Koin setup written once and applied with one line.""",
             """kmp-app-template, the app shape the toolkit slots into: one shared Compose UI, a wired Splash → Login → Home nav scaffold, thin Android + Desktop shells, and a customizer.sh that renames the whole project in one command.""",
-            """Consumed by Mileway (10 of its 46 modules), PaymentsLab (25 of its 40) and Kursi. The composition is the proof the extraction was real, not a library nobody uses.""",
+            """Consumed by Doori (10 of its 46 modules), PaymentsLab-KMP (25 of its 40) and Gaddi. The composition is the proof the extraction was real, not a library nobody uses.""",
         ),
         links = listOf(
             NamedLink("kmp-toolkit", "https://github.com/darkpandawarrior/kmp-toolkit"),
@@ -594,11 +594,11 @@ val projects = listOf(
         status = "Active · MIT · vendored across 5 repos",
         badges = listOf("Kotlin Multiplatform", "39 modules", "22 convention plugins", "MIT"),
         detail = ProjectDetailData(
-            overview = """The KMP toolkit family is three decoupled repos (kmp-toolkit, kmp-build-logic and kmp-app-template) instead of one "platform" repo, so that using one of them never means dragging the other two along. None of the three were designed up front: each exists because a second consumer needed something the first one already had, and extracting it once was cheaper than copy-pasting it again. The family is vendored into Mileway, PaymentsLab, Kursi and this portfolio's own Compose Multiplatform twin via Gradle includeBuild, so a fix or a version bump lands once and every consumer picks it up on its own schedule.""",
+            overview = """The KMP toolkit family is three decoupled repos (kmp-toolkit, kmp-build-logic and kmp-app-template) instead of one "platform" repo, so that using one of them never means dragging the other two along. None of the three were designed up front: each exists because a second consumer needed something the first one already had, and extracting it once was cheaper than copy-pasting it again. The family is vendored into Doori, PaymentsLab-KMP, Gaddi and this portfolio's own Compose Multiplatform twin via Gradle includeBuild, so a fix or a version bump lands once and every consumer picks it up on its own schedule.""",
             sections = listOf(
                 ProjectDetailSection(
                     heading = "kmp-toolkit: 39 modules, extracted, never designed",
-                    body = """The library repo: typed Result, an MVI ViewModel core, an offline-first store, network, security, on-device AI behind one seam, device-integrity, an operation-log outbox, and a 19-provider payment-gateway abstraction. 39 modules, each pulled out the moment a second consumer needed the same logic rather than sketched in ahead of demand. It is the smaller of the two contracts described in the shared-foundation write-up: the tiny (State, Event) → Effects mvi-core base that both Mileway and PaymentsLab build their reducer/store layer on.""",
+                    body = """The library repo: typed Result, an MVI ViewModel core, an offline-first store, network, security, on-device AI behind one seam, device-integrity, an operation-log outbox, and a 19-provider payment-gateway abstraction. 39 modules, each pulled out the moment a second consumer needed the same logic rather than sketched in ahead of demand. It is the smaller of the two contracts described in the shared-foundation write-up: the tiny (State, Event) → Effects mvi-core base that both Doori and PaymentsLab-KMP build their reducer/store layer on.""",
                 ),
                 ProjectDetailSection(
                     heading = "kmp-build-logic: the setup written once",
@@ -610,11 +610,11 @@ val projects = listOf(
                 ),
                 ProjectDetailSection(
                     heading = "The composition is the proof",
-                    body = """Mileway consumes 10 of its 46 modules from the toolkit; PaymentsLab consumes 25 of its 40; Kursi draws on the same foundation. This portfolio's own Compose Multiplatform twin is built on kmp-app-template too, which is the reason that project's write-up can say the template carries a real four-target app rather than a hello-world, the same claim this family makes about itself, checked by a fourth independent consumer.""",
+                    body = """Doori consumes 10 of its 46 modules from the toolkit; PaymentsLab-KMP consumes 25 of its 40; Gaddi draws on the same foundation. This portfolio's own Compose Multiplatform twin is built on kmp-app-template too, which is the reason that project's write-up can say the template carries a real four-target app rather than a hello-world, the same claim this family makes about itself, checked by a fourth independent consumer.""",
                 ),
                 ProjectDetailSection(
                     heading = "One MVI contract, two apps",
-                    body = """Mileway and PaymentsLab are not two isolated demos: they share a build-wiring contract and a unidirectional-state contract, both written once in this family and pulled in as composite builds rather than re-derived per app. The discipline the toolkit exists to enforce is exactly what a platform team is supposed to bring to a codebase at scale: one seam, reused, instead of the same decision made differently five times.""",
+                    body = """Doori and PaymentsLab-KMP are not two isolated demos: they share a build-wiring contract and a unidirectional-state contract, both written once in this family and pulled in as composite builds rather than re-derived per app. The discipline the toolkit exists to enforce is exactly what a platform team is supposed to bring to a codebase at scale: one seam, reused, instead of the same decision made differently five times.""",
                 ),
             ),
             metrics = listOf(
@@ -633,11 +633,11 @@ val projects = listOf(
                 Diagram(
                     title = "Three repos, one seam each",
                     code = """graph LR
-  bl["kmp-build-logic<br/>17 plugins"] -.->|"includeBuild"| m["Mileway"]
-  bl -.->|"includeBuild"| p["PaymentsLab"]
+  bl["kmp-build-logic<br/>17 plugins"] -.->|"includeBuild"| m["Doori"]
+  bl -.->|"includeBuild"| p["PaymentsLab-KMP"]
   tk["kmp-toolkit<br/>39 modules"] -.->|"includeBuild"| m
   tk -.->|"includeBuild"| p
-  tk -.->|"includeBuild"| ku["Kursi"]
+  tk -.->|"includeBuild"| ku["Gaddi"]
   at["kmp-app-template"] -.->|"scaffold"| cv["cv-siddharth-kmp"]""",
                 ),
             ),
@@ -649,7 +649,7 @@ val projects = listOf(
  * Reading order for the "next build" pager. Deliberately omits `portfolio`, the one project with no
  * detail page: the pager can only land on a page that exists.
  */
-val projectOrder = listOf("mileway", "kursi", "paymentslab", "hiresignal", "deadlock", "kmp-family")
+val projectOrder = listOf("mileway", "kursi", "paymentslab", "hiresignal", "deadlock", "kmp-family") // claim-audit:allow -- stable route slugs, not display copy
 
 /**
  * The one place a slug becomes a project. Every externally-supplied slug — the
