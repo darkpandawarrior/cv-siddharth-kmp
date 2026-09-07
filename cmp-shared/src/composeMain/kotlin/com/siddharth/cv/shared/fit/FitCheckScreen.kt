@@ -62,9 +62,10 @@ import kotlinx.coroutines.launch
  *
  * SAME OFFLINE-FIRST CONTRACT as the web build: [matchJd] renders a real scorecard in the same
  * frame as the paste, from a stack shipped in this bundle, no network and nothing to fail. The
- * model's reply — mode `"jd"` through kmp-toolkit's [HttpChatProvider], which is the ONE caller in
- * this app that provider is safe for (see settings.gradle.kts) — supersedes it if and when it
- * arrives; a rate limit, a 502 or a dead provider still leaves a recruiter with a real answer.
+ * model's reply — mode `"jd"` through kmp-toolkit's [HttpChatProvider], the same provider
+ * [com.siddharth.cv.shared.chat.streamReply] now uses for ordinary chat too (see
+ * settings.gradle.kts) — supersedes it if and when it arrives; a rate limit, a 502 or a dead
+ * provider still leaves a recruiter with a real answer.
  */
 @Composable
 fun FitCheckScreen(modifier: Modifier = Modifier) {

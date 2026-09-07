@@ -38,12 +38,14 @@ rootProject.name = providers.gradleProperty("fork.project.name").getOrElse("cv-s
 // published anywhere). Three modules are substituted:
 // :network for a real per-platform HttpClientEngine (this app had none outside wasmJs before),
 // :result for the shared AiResult<T>/AiFailure vocabulary.
-// :llm-chat for FitCheckScreen.kt's JD analyzer ONLY — its HttpChatProvider always serializes a
-// `mode` key (null when unset), and this app's production endpoint 400s on exactly that
-// (validateRequest in chat-handler.ts rejects any mode that isn't undefined/"compose"/"jd",
-// explicit null included). ChatClient.kt's ordinary chat traffic still bypasses HttpChatProvider
-// for that reason — see its own comment — but the JD path always sends the literal string "jd",
-// never null, so the same provider that 400s plain chat is exactly right here.
+// :llm-chat for FitCheckScreen.kt's JD analyzer AND ChatClient.kt's ordinary chat, both via
+// HttpChatProvider. Ordinary chat only became safe once llm-chat#52 shipped `explicitNulls =
+// false` on HttpChatProvider's request Json — before that, an unset `mode` serialized as an
+// explicit `"mode": null`, which this app's production endpoint 400s on (validateRequest in
+// chat-handler.ts rejects any mode that isn't undefined/"compose"/"jd", explicit null included).
+// See ChatClient.kt's file doc for what the swap still can't carry (route, per-status message
+// fidelity, mid-stream-cutoff detection) — each a HttpChatConfig/AiChunk gap in the toolkit, not
+// a wire-shape mismatch left here.
 includeBuild("external/kmp-toolkit") {
     dependencySubstitution {
         substitute(module("com.siddharth.kmp:network")).using(project(":network"))
