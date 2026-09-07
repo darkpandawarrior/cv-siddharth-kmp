@@ -45,6 +45,7 @@ import com.siddharth.cv.shared.data.profile
 import com.siddharth.cv.shared.playground.ThemeLabSection
 import com.siddharth.cv.shared.data.projectBySlug
 import com.siddharth.cv.shared.data.projectOrder
+import com.siddharth.cv.shared.fit.FitCheckScreen
 import com.siddharth.cv.shared.theme.CircuitDivider
 import com.siddharth.cv.shared.theme.CvContentMaxWidth
 import com.siddharth.cv.shared.theme.CvGutter
@@ -78,14 +79,18 @@ data class HomeSection(val id: String, val label: String, val index: Int)
 val homeSections: List<HomeSection> =
     listOf(
         HomeSection("top", "Home", 0),
-        HomeSection("work", "Work", 1),
-        HomeSection("projects", "Projects", 2),
-        HomeSection("source", "The Source", 3),
-        HomeSection("experience", "Experience", 4),
-        HomeSection("skills", "Skills", 5),
-        HomeSection("theme", "Theme Engine", 6),
-        HomeSection("explore", "Explore", 7),
-        HomeSection("contact", "Contact", 8),
+        // Straight after the hero and before the case studies, mirroring App.tsx: the numbers are
+        // what makes a recruiter want to check fit, and the scorecard is meant to be seen before
+        // anything that has to be scrolled to.
+        HomeSection("fit", "Fit Check", 1),
+        HomeSection("work", "Work", 2),
+        HomeSection("projects", "Projects", 3),
+        HomeSection("source", "The Source", 4),
+        HomeSection("experience", "Experience", 5),
+        HomeSection("skills", "Skills", 6),
+        HomeSection("theme", "Theme Engine", 7),
+        HomeSection("explore", "Explore", 8),
+        HomeSection("contact", "Contact", 9),
     )
 
 @Composable
@@ -109,6 +114,7 @@ fun HomeScreen(listState: LazyListState, modifier: Modifier = Modifier) {
             SectionSlot(last = section.index == homeSections.lastIndex) {
                 when (section.id) {
                     "top" -> HeroSection()
+                    "fit" -> FitCheckScreen()
                     "work" -> CaseStudiesSection()
                     "projects" -> ProjectsSection()
                     "source" -> SourceSection()

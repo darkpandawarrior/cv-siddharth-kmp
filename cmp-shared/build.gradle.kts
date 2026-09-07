@@ -94,6 +94,9 @@ kotlin {
                 // checkout, so no version is ever actually resolved from a repo.
                 implementation("com.siddharth.kmp:network:1.0.0") // real per-platform HttpClientEngine
                 implementation("com.siddharth.kmp:result:1.0.0") // shared AiResult<T>/AiFailure
+                // FitCheckScreen.kt's JD analyzer only — see settings.gradle.kts for why the
+                // ordinary chat client (ChatClient.kt) deliberately does not use this provider.
+                implementation("com.siddharth.kmp:llm-chat:1.0.0")
             }
         }
         // Skiko-backed targets. `org.jetbrains.skia.*` (RuntimeEffect / RuntimeShaderBuilder —
