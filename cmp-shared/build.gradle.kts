@@ -86,6 +86,14 @@ kotlin {
                 // Mandatory companion: coil-core ships no coil3.network package, so
                 // coil-compose alone silently renders nothing for an https:// URL.
                 implementation(libs.coil.network.ktor3)
+                // kmp-toolkit, composite-built from external/kmp-toolkit (see settings.gradle.kts).
+                // Both modules publish exactly composeMain's target set (android/jvm/iosArm64/
+                // iosSimulatorArm64/wasmJs) — no iosX64/watchOS artifacts exist, which is why this
+                // dependency lives here and not in commonMain. The "1.0.0" is a placeholder: the
+                // settings.gradle.kts dependencySubstitution always redirects it to the local
+                // checkout, so no version is ever actually resolved from a repo.
+                implementation("com.siddharth.kmp:network:1.0.0") // real per-platform HttpClientEngine
+                implementation("com.siddharth.kmp:result:1.0.0") // shared AiResult<T>/AiFailure
             }
         }
         // Skiko-backed targets. `org.jetbrains.skia.*` (RuntimeEffect / RuntimeShaderBuilder —
@@ -96,6 +104,18 @@ kotlin {
 
         androidMain.get().dependsOn(composeMain)
         jvmMain.get().dependsOn(skikoMain)
+        // ChatClient.kt's tests run on the jvm target only: its logic is plain Ktor/kotlinx, not
+        // Compose, and jvmMain already carries composeMain (see above) so ChatClient.kt is visible
+        // here. Testing every target that has an engine (android/ios/wasmJs too) would mean an
+        // instrumented/simulator/karma run for logic that has no platform-specific branch — one
+        // target is enough to catch a regression in the parsing/mapping code itself.
+        getByName("jvmTest").apply {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation(libs.kotlinx.coroutines.test)
+                implementation(libs.ktor.client.mock)
+            }
+        }
         getByName("wasmJsMain").apply {
             dependsOn(skikoMain)
             dependencies {
