@@ -9,6 +9,8 @@ import com.siddharth.cv.shared.routeFromPath
 import com.siddharth.cv.shared.toPath
 import kotlinx.browser.document
 import kotlinx.browser.window
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.configureWebResources
 
 /**
  * The web shell. Three jobs beyond calling [App]: pick the mount point, keep the URL bar honest,
@@ -20,8 +22,20 @@ import kotlinx.browser.window
  * Compose owns that subtree and nothing else, so `#seo` survives boot and a crawler (or a reader
  * with JS off, or a browser too old for wasm) still gets real HTML.
  */
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalResourceApi::class)
 fun main() {
+    // The bundle is served under /cv/portfolio-app/ on GitHub Pages, not the origin root. The
+    // default mapping still resolves every resource against `${origin}/$path` — a plain relative
+    // path (e.g. "./$path") gets that same origin-root prefix glued back on, it is not resolved
+    // against the document's own directory. Read window.location on the main thread now, once,
+    // rather than inside the mapping lambda — resource fetches run off the Skiko render thread,
+    // where `window` isn't reliably available, and a scheme-absolute URL is the one form the
+    // resolver passes through untouched.
+    val documentDir = window.location.href.substringBeforeLast('/')
+    configureWebResources {
+        resourcePathMapping { path -> "$documentDir/$path" }
+    }
+
     val nav = CvNavState()
 
     // Deep links work: /resume, /terminal and /project/<slug> all boot straight into that route
