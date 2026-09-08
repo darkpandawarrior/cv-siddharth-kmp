@@ -102,7 +102,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
     slug = "the-morkinstar-journals",
     title = "The Morkinstar Journals",
     tagline = "Fourteen gods. Fourteen monsters. Thirteen names.",
-    fourteen = "/p/anthology/plates/the-fourteen.jpg",
+    fourteen = "https://darkpandawarrior.github.io/cv/p/anthology/plates/the-fourteen.jpg",
     witnesses = listOf(
         AnthologyWitness(
             id = "feeriko",
@@ -110,7 +110,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s1-01"),
             of = "Exxobar",
             did = "Talked a serpent out of giving up, for a full momenta, because the deal was that if she stopped, he would stop.",
-            art = "/p/anthology/witnesses/feeriko.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/feeriko.jpg",
         ),
         AnthologyWitness(
             id = "tveggi",
@@ -118,7 +118,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s1-02"),
             of = "Grïnjdarlay",
             did = "Could not hear names being eaten, so she was the only one who could keep the count. Then she worked out that a name does not have to be a sound, and cut a mark.",
-            art = "/p/anthology/witnesses/tveggi.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/tveggi.jpg",
         ),
         AnthologyWitness(
             id = "soebra",
@@ -126,7 +126,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s1-03"),
             of = "Vædrun",
             did = "Wrote the terms down on wet bark in a hurry. The bark burned that night. They put her in the pantheon anyway, over the priesthood's objections.",
-            art = "/p/anthology/witnesses/soebra.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/soebra.jpg",
         ),
         AnthologyWitness(
             id = "soelvi",
@@ -134,7 +134,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s1-04"),
             of = "Marlt",
             did = "Became the first Marltain who was one, found the grammar had no way to say it, and invented the act of addressing someone who is not there.",
-            art = "/p/anthology/witnesses/soelvi.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/soelvi.jpg",
         ),
         AnthologyWitness(
             id = "aedri",
@@ -142,7 +142,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s1-05"),
             of = "Killuga Var",
             did = "Kept the first ledger of cold-holds. It is still public, it is still updated, and it is still not a small number.",
-            art = "/p/anthology/witnesses/aedri.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/aedri.jpg",
         ),
         AnthologyWitness(
             id = "hild-ronn",
@@ -150,7 +150,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s1-06"),
             of = "Jötunheimr",
             did = "Worked out that the line did not need power, it needed occupancy. Then she dug the first shaft and put her own mother in it, standing up.",
-            art = "/p/anthology/witnesses/hild-ronn.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/hild-ronn.jpg",
         ),
         AnthologyWitness(
             id = "the-cendran-child",
@@ -158,7 +158,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s1-07"),
             of = "Cendre",
             did = "Was handed a stylus on the morning after everything burned and asked for one thing nobody had ever written down. Wrote the fourteenth's name.",
-            art = "/p/anthology/witnesses/the-cendran-child.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/the-cendran-child.jpg",
         ),
         AnthologyWitness(
             id = "ilta",
@@ -166,7 +166,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s1-08"),
             of = "Solvei",
             did = "Walked around to the other side. Described in every telling as unremarkable, and in most as slightly annoying.",
-            art = "/p/anthology/witnesses/ilta.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/ilta.jpg",
         ),
         AnthologyWitness(
             id = "ossul",
@@ -174,7 +174,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s1-10"),
             of = "Deep Registry",
             did = "Quietly failed to action four correction requests for twenty-two galaxals, because the safest place for a number is a queue nobody reads.",
-            art = "/p/anthology/witnesses/ossul.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/ossul.jpg",
         ),
         AnthologyWitness(
             id = "hallovar",
@@ -182,7 +182,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s2-04"),
             of = "Ilmarrow",
             did = "Announced the hour he would stop, then spent three hundred clicks teaching them to do his job. He did not finish lesson three hundred and forty one.",
-            art = "/p/anthology/witnesses/hallovar.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/hallovar.jpg",
         ),
         AnthologyWitness(
             id = "emmerin",
@@ -190,7 +190,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s2-02"),
             of = "Vœrhan",
             did = "Stood on the Semmer flats on an ordinary evening with nothing wrong and nothing happening, could not bear that this was going to be true forever, and said it might rain. Nine generations later her family still checks the cord every morning and writes still.",
-            art = "/p/anthology/witnesses/emmerin.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/emmerin.jpg",
         ),
         AnthologyWitness(
             id = "the-dhurin-examiner",
@@ -198,7 +198,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s2-03"),
             of = "Dhurin",
             did = "Walked an outsider through four thousand clicks of unsolved deaths, handed him the file because he had no stake in the answer, let him talk himself all the way to a theory, and then told him kindly that a theory is not evidence and evidence is not a career.",
-            art = "/p/anthology/witnesses/the-dhurin-examiner.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/the-dhurin-examiner.jpg",
         ),
         AnthologyWitness(
             id = "ilvra",
@@ -206,7 +206,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s2-04"),
             of = "Ilmarrow",
             did = "Keeps the plain stone room where every attempt anyone has ever made at Lesson three hundred and forty one is kept, six generations of her family before her, and asked a stranger if he wanted to hold the original. He gave it back with both hands.",
-            art = "/p/anthology/witnesses/ilvra.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/ilvra.jpg",
         ),
         AnthologyWitness(
             id = "yssa",
@@ -214,7 +214,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s2-05"),
             of = "Threnn",
             did = "Noticed a visitor was carrying something, told him the story of Sevra so he would have the mechanism and not just the rule, and offered twice to sit with him for as long as it took. She asked the second time quietly, at the dock, not in front of anyone.",
-            art = "/p/anthology/witnesses/yssa.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/yssa.jpg",
         ),
         AnthologyWitness(
             id = "torsa",
@@ -222,7 +222,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s2-08"),
             of = "Kaunis",
             did = "Said it slowly, twice, because she has said it many times to people about to get it wrong: the Vedrei keep the method and throw away the answer, and a child who is only ever handed the answer never learns that a sky is a thing you have to go and look at.",
-            art = "/p/anthology/witnesses/torsa.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/torsa.jpg",
         ),
         AnthologyWitness(
             id = "soelrun",
@@ -230,7 +230,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s3-02"),
             of = "Mrit'havn",
             did = "Tended other people's burnings for forty years and never once asked her own question, having a hundred and six of them and no way to get the stone down past three lines. Decided it was better to die with the wrong hundred than bury the one right one underneath all the others.",
-            art = "/p/anthology/witnesses/soelrun.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/soelrun.jpg",
         ),
         AnthologyWitness(
             id = "orvaskt",
@@ -238,7 +238,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s3-07"),
             of = "Sorvann",
             did = "Fed a stranger for a tick and a half, never once asked why he kept declining the soup, and told him without a trace of complaint that on Sorvann being noticed is the entire function of a god or a monster. Her world later looked at the shape he left behind and gave its unnamed fourteenth his name.",
-            art = "/p/anthology/witnesses/orvaskt.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/orvaskt.jpg",
         ),
         AnthologyWitness(
             id = "yska",
@@ -246,7 +246,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s3-09"),
             of = "Ilyrsk",
             did = "Could not sleep, so past midnight she gave a stranger with a stylus the lineage her people had never written down, because there was nobody left on that world whose ear it belonged to. Gave a syllable back twice, identically, and confirmed twice that the line ends on her own name.",
-            art = "/p/anthology/witnesses/yska.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/yska.jpg",
         ),
         AnthologyWitness(
             id = "sarn",
@@ -254,7 +254,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s3-11"),
             of = "Threnn",
             did = "Taught him Threnn's numeral system backward on purpose, because forward is how every outsider tries to learn it and backward is how every outsider ends up with it. Thought that was funny in a way she never once smiled about while saying it.",
-            art = "/p/anthology/witnesses/sarn.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/sarn.jpg",
         ),
         AnthologyWitness(
             id = "oyla",
@@ -262,7 +262,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s3-11"),
             of = "Kaunis",
             did = "Ran a supply skiff off Kaunis and lied to a customs officer twice, on two separate mornings, so a man she owed nothing would not miss a ship he had no real claim on missing. Asked once why, she changed the subject so cleanly he did not notice for an hour that she had done it.",
-            art = "/p/anthology/witnesses/oyla.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/oyla.jpg",
         ),
         AnthologyWitness(
             id = "hevrit",
@@ -270,7 +270,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s4-01", "s4-14"),
             of = "The Long Concourse",
             did = "Resurfaces the Long Concourse notice wall on a forty tick cycle, on a knuckle worn pale and smooth from the bucket she has carried for longer than she is willing to work out. Worked the manual side gate open with a bar for a man the fare gates could not read, handed him the paste brush first, and told him which day she paints, in case that was useful. Reads every notice in the nine minutes the primer takes to flash off, in the order the route gives them to her. Keeps none of them. That is not the job.",
-            art = "/p/anthology/witnesses/hevrit.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/hevrit.jpg",
         ),
         AnthologyWitness(
             id = "ondrit",
@@ -278,7 +278,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s4-02"),
             of = "The Stepped Quarter",
             did = "Certifies public stairs in the Stepped Quarter and four adjoining districts, about forty thousand of them so far. Carries a second tape, out of code, calibrated at her own expense to a standard retired two rebasings ago, because the old stairs were cut to it and a current tape only tells you a lie about them. Measured twenty two flights that predate the building code three times over, on different cycles, with different hands writing the figures down, and got the same wrong answer every time. Let a stranger hold the whole drum. He gave it back with both hands.",
-            art = "/p/anthology/witnesses/ondrit.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/ondrit.jpg",
         ),
         AnthologyWitness(
             id = "aedrin",
@@ -286,7 +286,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s4-03"),
             of = "Eleven Hold",
             did = "Keeps the municipal continuation of Ædri's ledger of cold-holds, now four hundred and six entries deep and every one of them a platform rail that has never once been warm at eleven. Before she logs a hold she goes out and takes the rail herself, both hands, and counts, because she will not put a figure in the field she did not get with her own hands. Writes the sheet up flat against her own forearm before she types it in at the end of a shift. Found out one quarter that nobody reads the dataset. Keeps logging it exactly the same.",
-            art = "/p/anthology/witnesses/aedrin.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/aedrin.jpg",
         ),
         AnthologyWitness(
             id = "saevrin",
@@ -294,7 +294,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s4-04"),
             of = "The Middle Window",
             did = "Administers the midpoint of a queue with no front, and chalks its new position by hand every morning with the outer edge of a hand gone white to the wrist and never washing out. Has never once got the marker exactly right in his whole time on the post, knows the difference between inside the tolerance and right, and moves it anyway, because a marker approximately correct is the entire difference between a queue and a crowd.",
-            art = "/p/anthology/witnesses/saevrin.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/saevrin.jpg",
         ),
         AnthologyWitness(
             id = "ashvi",
@@ -302,7 +302,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s4-05"),
             of = "The Covered Levels",
             did = "Puts a bowl out at fourteen past every tick, not to catch anything, has done since she was small: two fingers underneath, one on the rim so it does not ring on the grating, then dries it whether it is wet or not. Carries all nine generations of the rain story in the right order, and knows which generation is the one that matters, and it is not the woman who first said it. Asked a stranger twice, once at her stall and once at the transit dock, whether he was all right.",
-            art = "/p/anthology/witnesses/ashvi.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/ashvi.jpg",
         ),
         AnthologyWitness(
             id = "vessik",
@@ -310,7 +310,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s4-06"),
             of = "The Returns Hall",
             did = "Designs residency return forms for the merged jurisdiction, one hand stained cyan for years and not coming off from reading pages flat under it. Searched every retained return in the archive for one filled fourteenth box before she disabled the field, and found none. Keeps the earlier proof, the one where the box is still white and waiting, in a drawer, because she likes to see what a thing looked like before she changed it. Told him, in passing, what closes a file: somebody fills the last one.",
-            art = "/p/anthology/witnesses/vessik.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/vessik.jpg",
         ),
         AnthologyWitness(
             id = "ilvath",
@@ -318,7 +318,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s4-07"),
             of = "The Lower Plenum",
             did = "Runs Mixing House Six, checking a third of the city's air by running the flat of her hand down every lagging seam so she never comes back a stranger to it. Off the clock, opens the calibration kit's certified reference bottles for anyone who asks, warming each one against her own wrist first so it does not read cold and wrong. Agrees with every one of them, every time and without softening, that it is close and not right. They come back next month anyway.",
-            art = "/p/anthology/witnesses/ilvath.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/ilvath.jpg",
         ),
         AnthologyWitness(
             id = "halkri",
@@ -326,7 +326,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s4-08"),
             of = "The Great Gauge",
             did = "Commutes two flicks each way to service the Great Gauge's door mechanisms, the only fittings in the district still built to her hand. Trues every witness mark with the one fine digit that does the work of the rest of an enormous hand, and scribes her lines with her grandmother's sighting stone, the flattest thing she owns, carried down from a ridge where the old woman could set a bearing to within a third of a degree by eye. Told him twice, unprompted, that she likes the job. Sent him to file a correction on somebody else's stair instead of her own rent, then went and stood on it herself to check.",
-            art = "/p/anthology/witnesses/halkri.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/halkri.jpg",
         ),
         AnthologyWitness(
             id = "roest",
@@ -334,7 +334,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s4-09"),
             of = "The Settlement Rows",
             did = "Raises fourteen thousand demands a quarter off a surveyor's figure and answers for every one of them at the counter, wearing through a thimble at a time and keeping the dead ones in the drawer, in order. Has kept her own working of the pension arithmetic folded in eighths in her hip pocket for eleven years, and showed him only as far as the second fold. Asked him directly not to write it, and told him she has never settled whether eleven years of not saying it herself makes her a coward.",
-            art = "/p/anthology/witnesses/roest.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/roest.jpg",
         ),
         AnthologyWitness(
             id = "ummi",
@@ -342,7 +342,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s4-10"),
             of = "The Reconciliation Floor",
             did = "Keeps the reject aisle on the Reconciliation Floor, which is every sentence Morkinstar was ever unsure of, in order, and nothing else of his at all: her flattening hand is worn to a soft grey shine from three strokes on every fold. Noticed, on her own time and not as part of the job, that rejection density per source entry is a curve, found where it spikes and never comes back down, and named the entry to him before he could ask her anything. Files a note about the loss every year. It is acknowledged every year and nothing changes.",
-            art = "/p/anthology/witnesses/ummi.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/ummi.jpg",
         ),
         AnthologyWitness(
             id = "danvik",
@@ -350,7 +350,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s4-11"),
             of = "Deep Registry Annexe",
             did = "Works the counter at the Deep Registry Annexe with a hand lamp clipped at his collar and turned down, so the light lands only on the paper in front of him. Went off without being asked and came back with a chair before starting the search. Found the correspondent's own accreditation, unlapsed by a filing error a very long time old, in six minutes without hesitating, then raised it as unvalidated, telling him first exactly what that would do and waiting until he said he understood.",
-            art = "/p/anthology/witnesses/danvik.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/danvik.jpg",
         ),
         AnthologyWitness(
             id = "osvaer",
@@ -358,7 +358,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s4-12"),
             of = "The Holding Tiers",
             did = "Counts a shelf on the Holding Tiers by running a thumb worn pale and flat along the box spines without looking, the way you would know a room in the dark. Tells new starters the joke about the thing in the deep aisles that grows by exactly what you file, because a new starter afraid of it writes a careful manifest. Walked a stranger eleven minutes to the pillar where the deep hands cut a measure into the concrete once a year, and put his own thumb in this year's cut without being asked.",
-            art = "/p/anthology/witnesses/osvaer.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/osvaer.jpg",
         ),
         AnthologyWitness(
             id = "yrmund",
@@ -366,7 +366,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s4-13"),
             of = "The Unrendered Mile",
             did = "Chairs the Unrendered Mile residents' association, forty years at number nine, and finds a page in the tribunal folder by running the edge of her thumb down the stack until it catches, a skill she does not know she has. Applied the hardship cap to a stranger on his first morning without being asked and told him she had. Told him, unasked, that her partner left for a served address after two years and that she likes him better now than when he lived there, then asked if that was a terrible thing to say and did not wait for an answer before putting the kettle on.",
-            art = "/p/anthology/witnesses/yrmund.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/yrmund.jpg",
         ),
         AnthologyWitness(
             id = "guldri",
@@ -374,7 +374,7 @@ val anthology: AnthologyMeta = AnthologyMeta(
             entries = listOf("s4-13"),
             of = "The Unrendered Mile",
             did = "Holds the maintenance contract on Lot 1, the reserved parcel nobody may live on, and sweeps ground nobody walks, working its edge from the public side because he has never once stepped over the kerb line. Answers every question about the parcel as a clause of that contract and nothing more; asked why he would not simply talk, said only that the contract says maintain. When a lamp went, held the burnt glass out sideways without turning round and took the new one back the same way, both of them silent, and that wordless exchange was the only interview he gave.",
-            art = "/p/anthology/witnesses/guldri.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/guldri.jpg",
         ),
     ),
     seasons = listOf(
@@ -658,14 +658,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "Why it snows for a half momenta every click",
         blurb = "A galactic field reporter transcribes why it snows on a frozen planet — a fire serpent, a water god, and the fisherwoman who talked one of them out of giving up.",
         words = 1804,
-        plate = "/p/anthology/plates/s1-01-legend-of-koaeluae-scales.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s1-01-legend-of-koaeluae-scales.jpg",
         witness = AnthologyWitness(
             id = "feeriko",
             name = "Feeriko",
             entries = emptyList(),
             of = null,
             did = "Talked a serpent out of giving up, for a full momenta, because the deal was that if she stopped, he would stop.",
-            art = "/p/anthology/witnesses/feeriko.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/feeriko.jpg",
         ),
     ),
     AnthologyEntry(
@@ -681,14 +681,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "The Ösk, a half-momenta every click in which nobody speaks aloud",
         blurb = "On the coldest world in Alpha Axmoiri, everything has ninety-nine names, and once a click ninety-eight of them are gone. A deaf child, a god with no name of his own, and the invention of writing as an act of war.",
         words = 1891,
-        plate = "/p/anthology/plates/s1-02-ninety-nine-names-of-silence.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s1-02-ninety-nine-names-of-silence.jpg",
         witness = AnthologyWitness(
             id = "tveggi",
             name = "Tveggi",
             entries = emptyList(),
             of = null,
             did = "Could not hear names being eaten, so she was the only one who could keep the count. Then she worked out that a name does not have to be a sound, and cut a mark.",
-            art = "/p/anthology/witnesses/tveggi.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/tveggi.jpg",
         ),
     ),
     AnthologyEntry(
@@ -704,14 +704,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "The Withdrawal, nine days a click in which the sea leaves and does not come back",
         blurb = "A queen borrowed nine days of ocean to end a famine. Nobody wrote down the terms. Four thousand clicks later, the sea is still collecting.",
         words = 1988,
-        plate = "/p/anthology/plates/s1-03-the-tide-that-owes.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s1-03-the-tide-that-owes.jpg",
         witness = AnthologyWitness(
             id = "soebra",
             name = "Sœbra",
             entries = emptyList(),
             of = null,
             did = "Wrote the terms down on wet bark in a hurry. The bark burned that night. They put her in the pantheon anyway, over the priesthood's objections.",
-            art = "/p/anthology/witnesses/soebra.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/soebra.jpg",
         ),
     ),
     AnthologyEntry(
@@ -727,14 +727,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "Marltains are born in pairs and have no word for being alone",
         blurb = "The Directory logged the Marltain binary wrong, and I repeated the error. Here is the correction, and the story of the first Marltain to be one.",
         words = 2519,
-        plate = "/p/anthology/plates/s1-04-the-word-marltains-do-not-have.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s1-04-the-word-marltains-do-not-have.jpg",
         witness = AnthologyWitness(
             id = "soelvi",
             name = "Sœlvi",
             entries = emptyList(),
             of = null,
             did = "Became the first Marltain who was one, found the grammar had no way to say it, and invented the act of addressing someone who is not there.",
-            art = "/p/anthology/witnesses/soelvi.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/soelvi.jpg",
         ),
     ),
     AnthologyEntry(
@@ -750,14 +750,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "Killugans embrace strangers on meeting, and hold for a count of eleven",
         blurb = "I made a joke about this system in Entry #2245. Then I came here and found out that the hug is not a greeting. It is a test, it has been running for four thousand clicks, and it has never been switched off.",
         words = 1907,
-        plate = "/p/anthology/plates/s1-05-the-arm-shake.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s1-05-the-arm-shake.jpg",
         witness = AnthologyWitness(
             id = "aedri",
             name = "Ædri",
             entries = emptyList(),
             of = null,
             did = "Kept the first ledger of cold-holds. It is still public, it is still updated, and it is still not a small number.",
-            art = "/p/anthology/witnesses/aedri.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/aedri.jpg",
         ),
     ),
     AnthologyEntry(
@@ -773,14 +773,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "The dead are buried standing, and every grave on the planet faces the same fixed celestial bearing",
         blurb = "On Jötunheimr the dead do not lie down. They are surveyed, aimed, and set into a line four thousand clicks long, and the line is still being extended, and I made the mistake of asking what it points at.",
         words = 2581,
-        plate = "/p/anthology/plates/s1-06-the-standing-dead.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s1-06-the-standing-dead.jpg",
         witness = AnthologyWitness(
             id = "hild-ronn",
             name = "Hild-Ronn",
             entries = emptyList(),
             of = null,
             did = "Worked out that the line did not need power, it needed occupancy. Then she dug the first shaft and put her own mother in it, standing up.",
-            art = "/p/anthology/witnesses/hild-ronn.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/hild-ronn.jpg",
         ),
     ),
     AnthologyEntry(
@@ -796,14 +796,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "Every ninth generation the Væhn destroy their complete written record, on purpose, entirely",
         blurb = "Every ninth generation, an entire civilisation burns everything it has ever written. They keep one page. A child writes it. I read the oldest one and then I did something I have never done in 2284 entries.",
         words = 2644,
-        plate = "/p/anthology/plates/s1-07-the-kindling.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s1-07-the-kindling.jpg",
         witness = AnthologyWitness(
             id = "the-cendran-child",
             name = "The Cendran child",
             entries = emptyList(),
             of = null,
             did = "Was handed a stylus on the morning after everything burned and asked for one thing nobody had ever written down. Wrote the fourteenth's name.",
-            art = "/p/anthology/witnesses/the-cendran-child.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/the-cendran-child.jpg",
         ),
     ),
     AnthologyEntry(
@@ -819,14 +819,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "Two stars in the sky, and every object on the surface casts exactly one shadow",
         blurb = "On Solvei the word for god and the word for monster are the same word, inflected by which way you are standing. I went to file a linguistic curiosity. I came back with an arithmetic problem.",
         words = 2832,
-        plate = "/p/anthology/plates/s1-08-two-suns-one-shadow.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s1-08-two-suns-one-shadow.jpg",
         witness = AnthologyWitness(
             id = "ilta",
             name = "Ilta",
             entries = emptyList(),
             of = null,
             did = "Walked around to the other side. Described in every telling as unremarkable, and in most as slightly annoying.",
-            art = "/p/anthology/witnesses/ilta.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/ilta.jpg",
         ),
     ),
     AnthologyEntry(
@@ -842,7 +842,7 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "None. That is the phenomenon.",
         blurb = "I found a world that is not in the Directory. It has people on it. They are well. They have no gods, no monsters, and no word for why. This is the shortest entry I have ever filed.",
         words = 1283,
-        plate = "/p/anthology/plates/s1-09-the-world-with-no-number.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s1-09-the-world-with-no-number.jpg",
         witness = null,
     ),
     AnthologyEntry(
@@ -858,14 +858,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "Every date in Galactic Standard is written in units named after afterlives",
         blurb = "Four hundred entries of filing complaints about a conversion table that does not multiply out. I finally went and asked in person. The error is not an error. It is a headstone.",
         words = 2419,
-        plate = "/p/anthology/plates/s1-10-why-we-measure-time-in-hells.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s1-10-why-we-measure-time-in-hells.jpg",
         witness = AnthologyWitness(
             id = "ossul",
             name = "Ossul",
             entries = emptyList(),
             of = null,
             did = "Quietly failed to action four correction requests for twenty-two galaxals, because the safest place for a number is a queue nobody reads.",
-            art = "/p/anthology/witnesses/ossul.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/ossul.jpg",
         ),
     ),
     AnthologyEntry(
@@ -881,7 +881,7 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "A case with ninety-one slots, built badly, on purpose.",
         blurb = "I bought wood, I borrowed a number I did not earn, and I wrote down the first thing that has never been on file anywhere: a man nine decks down and what he eats for breakfast.",
         words = 2262,
-        plate = "/p/anthology/plates/s2-01-the-second-chair.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s2-01-the-second-chair.jpg",
         witness = null,
     ),
     AnthologyEntry(
@@ -897,14 +897,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "A family that has maintained a rain which does not exist for nine generations",
         blurb = "On a Concluded world where nobody wonders about anything any more, one family still waits for a rain that was never real, and their children are the only children on the planet who ask why.",
         words = 2048,
-        plate = "/p/anthology/plates/s2-02-the-weather-they-made-up.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s2-02-the-weather-they-made-up.jpg",
         witness = AnthologyWitness(
             id = "emmerin",
             name = "Emmerin",
             entries = emptyList(),
             of = null,
             did = "Stood on the Semmer flats on an ordinary evening with nothing wrong and nothing happening, could not bear that this was going to be true forever, and said it might rain. Nine generations later her family still checks the cord every morning and writes still.",
-            art = "/p/anthology/witnesses/emmerin.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/emmerin.jpg",
         ),
     ),
     AnthologyEntry(
@@ -920,14 +920,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "All fourteen gods and all fourteen monsters of Dhurin died in the same night, four thousand clicks ago, and the Directory file on it has never closed",
         blurb = "A civilisation of detectives hands an outsider their oldest cold case: twenty eight murders, one night, no suspects, four thousand clicks unsolved. I got close enough to the answer that I wish I hadn't.",
         words = 2041,
-        plate = "/p/anthology/plates/s2-03-the-cold-case-of-all-fourteen.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s2-03-the-cold-case-of-all-fourteen.jpg",
         witness = AnthologyWitness(
             id = "the-dhurin-examiner",
             name = "The Examiner",
             entries = emptyList(),
             of = null,
             did = "Walked an outsider through four thousand clicks of unsolved deaths, handed him the file because he had no stake in the answer, let him talk himself all the way to a theory, and then told him kindly that a theory is not evidence and evidence is not a career.",
-            art = "/p/anthology/witnesses/the-dhurin-examiner.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/the-dhurin-examiner.jpg",
         ),
     ),
     AnthologyEntry(
@@ -943,14 +943,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "A planet's axial wander corrected by a god who trained his own replacements and ran out of time by exactly one lesson",
         blurb = "A god announced the hour he would stop, three hundred clicks out, and spent every one of them teaching a room full of people to do his job. They finished the syllabus. They did not finish in time.",
         words = 2153,
-        plate = "/p/anthology/plates/s2-04-the-last-thing-he-taught-them.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s2-04-the-last-thing-he-taught-them.jpg",
         witness = AnthologyWitness(
             id = "hallovar",
             name = "Hallovar",
             entries = emptyList(),
             of = null,
             did = "Announced the hour he would stop, then spent three hundred clicks teaching them to do his job. He did not finish lesson three hundred and forty one.",
-            art = "/p/anthology/witnesses/hallovar.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/hallovar.jpg",
         ),
     ),
     AnthologyEntry(
@@ -966,14 +966,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "Every Ovai narrates what they feel, in full and out loud, to whoever is nearest, continuously, as a matter of survival",
         blurb = "On Threnn a thing can only hurt you if you have not said it out loud, so they say everything, immediately, to whoever is near. They noticed I was not doing that. I left anyway.",
         words = 2364,
-        plate = "/p/anthology/plates/s2-05-what-you-have-not-said-out-loud.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s2-05-what-you-have-not-said-out-loud.jpg",
         witness = AnthologyWitness(
             id = "yssa",
             name = "Ÿssa",
             entries = emptyList(),
             of = null,
             did = "Noticed a visitor was carrying something, told him the story of Sevra so he would have the mechanism and not just the rule, and offered twice to sit with him for as long as it took. She asked the second time quietly, at the dock, not in front of anyone.",
-            art = "/p/anthology/witnesses/yssa.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/yssa.jpg",
         ),
     ),
     AnthologyEntry(
@@ -989,7 +989,7 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "A case that weighs more than the sum of its own empty weight and its own pages, by a small and growing margin",
         blurb = "I weighed the case. Then I weighed the pages. Then I weighed the case with nothing in it. The numbers do not add up the way numbers are supposed to, and I have decided the honest thing to do about that is write down the numbers and nothing else.",
         words = 1381,
-        plate = "/p/anthology/plates/s2-06-the-weight-of-the-case.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s2-06-the-weight-of-the-case.jpg",
         witness = null,
     ),
     AnthologyEntry(
@@ -1005,7 +1005,7 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "Six standing bearings, plotted as real lines from each world's own position instead of as directions, land on each other in pairs",
         blurb = "I promised to keep measuring and report the result either way. I reported a negative from Entry #2300. It was true and it was not the whole answer, and Ossul owns a sewing kit that proved it.",
         words = 1932,
-        plate = "/p/anthology/plates/s2-07-six-worlds-six-fences.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s2-07-six-worlds-six-fences.jpg",
         witness = null,
     ),
     AnthologyEntry(
@@ -1021,14 +1021,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "A calendar that is knowingly, deliberately, and permanently wrong",
         blurb = "One world pulled back from Concluded. They did it by breaking their own calendar on purpose and forbidding anyone, ever, from fixing it. I met the woman who explains why, and I still cannot tell you if she is right.",
         words = 2158,
-        plate = "/p/anthology/plates/s2-08-the-one-that-stayed-open.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s2-08-the-one-that-stayed-open.jpg",
         witness = AnthologyWitness(
             id = "torsa",
             name = "Torsa",
             entries = emptyList(),
             of = null,
             did = "Said it slowly, twice, because she has said it many times to people about to get it wrong: the Vedrei keep the method and throw away the answer, and a child who is only ever handed the answer never learns that a sky is a thing you have to go and look at.",
-            art = "/p/anthology/witnesses/torsa.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/torsa.jpg",
         ),
     ),
     AnthologyEntry(
@@ -1044,7 +1044,7 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "Two measurements that no longer say what he wrote, in his own hand, inside a case nobody could have reached.",
         blurb = "Two figures in my own ink, in a case only I open, corrected themselves while the lid was shut. Nineteen days from any dock, I run the suspects.",
         words = 2511,
-        plate = "/p/anthology/plates/s2-09-someone-has-been-reading.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s2-09-someone-has-been-reading.jpg",
         witness = null,
     ),
     AnthologyEntry(
@@ -1060,7 +1060,7 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "A Standard Interval assigned a length for the first time since the Directory's founding, sitting beside one that still has none",
         blurb = "I wrote the last page of this case thirty-two pages before I had any right to reach it, and put the one word I have refused all season somewhere it will never be spoken aloud again. Then I went and found out a unit of time has been assigned a length for the first time since the Directory was founded, and nobody will say why.",
         words = 2400,
-        plate = "/p/anthology/plates/s2-10-the-back-of-the-case.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s2-10-the-back-of-the-case.jpg",
         witness = null,
     ),
     AnthologyEntry(
@@ -1076,7 +1076,7 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "",
         blurb = "I wrote the last page of this case first and forgot what that did to the count. Tonight I found out, and the first thing out of the case is the first thing that ever went in: a meal, a stone, and a word I can no longer read my own handwriting well enough to burn honestly.",
         words = 892,
-        plate = "/p/anthology/plates/s3-01-the-page-about-ossul.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s3-01-the-page-about-ossul.jpg",
         witness = null,
     ),
     AnthologyEntry(
@@ -1092,14 +1092,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "",
         blurb = "Page twelve was a world I never filed: one question, once, to your dead, a stone you spend a lifetime arguing with, and a woman who tended other people's smoke for forty years because she could not get her own question down past three lines.",
         words = 798,
-        plate = "/p/anthology/plates/s3-02-a-world-that-asks-the-dead-one-question.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s3-02-a-world-that-asks-the-dead-one-question.jpg",
         witness = AnthologyWitness(
             id = "soelrun",
             name = "Sölrun",
             entries = emptyList(),
             of = null,
             did = "Tended other people's burnings for forty years and never once asked her own question, having a hundred and six of them and no way to get the stone down past three lines. Decided it was better to die with the wrong hundred than bury the one right one underneath all the others.",
-            art = "/p/anthology/witnesses/soelrun.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/soelrun.jpg",
         ),
     ),
     AnthologyEntry(
@@ -1115,7 +1115,7 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "",
         blurb = "Page sixteen is Ilmarrow, and the god who taught his own replacements until he ran out of time by exactly one lesson. I am holding it, I am not going to reread it, and I will tell you the real reason why.",
         words = 978,
-        plate = "/p/anthology/plates/s3-03-the-lesson-he-does-not-reread.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s3-03-the-lesson-he-does-not-reread.jpg",
         witness = null,
     ),
     AnthologyEntry(
@@ -1131,7 +1131,7 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "",
         blurb = "Page twenty three is Threnn, the one world where saying a thing out loud is the cure, and a woman who offered twice to sit and hear mine.",
         words = 447,
-        plate = "/p/anthology/plates/s3-04-the-thing-i-did-not-say-on-threnn.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s3-04-the-thing-i-did-not-say-on-threnn.jpg",
         witness = null,
     ),
     AnthologyEntry(
@@ -1147,7 +1147,7 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "",
         blurb = "The shortest page in the case is one sentence and an apology for being one sentence. It went faster than I could explain why I wrote it.",
         words = 280,
-        plate = "/p/anthology/plates/s3-05-the-shortest-page-in-the-case.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s3-05-the-shortest-page-in-the-case.jpg",
         witness = null,
     ),
     AnthologyEntry(
@@ -1163,7 +1163,7 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "",
         blurb = "Page thirty was never a story, only a table: three weighings and a difference that would not sit still. Tonight I run it one more time before it goes, and the case comes out heavier than the paper in it.",
         words = 802,
-        plate = "/p/anthology/plates/s3-06-the-table-that-was-the-entire-entry.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s3-06-the-table-that-was-the-entire-entry.jpg",
         witness = null,
     ),
     AnthologyEntry(
@@ -1179,14 +1179,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "",
         blurb = "A marsh world I visited once, wrote down, and left. Long after, it gave its unnamed fourteenth a name, and the name was mine.",
         words = 804,
-        plate = "/p/anthology/plates/s3-07-the-world-that-named-it-after-me.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s3-07-the-world-that-named-it-after-me.jpg",
         witness = AnthologyWitness(
             id = "orvaskt",
             name = "Órvaskt",
             entries = emptyList(),
             of = null,
             did = "Fed a stranger for a tick and a half, never once asked why he kept declining the soup, and told him without a trace of complaint that on Sorvann being noticed is the entire function of a god or a monster. Her world later looked at the shape he left behind and gave its unnamed fourteenth his name.",
-            art = "/p/anthology/witnesses/orvaskt.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/orvaskt.jpg",
         ),
     ),
     AnthologyEntry(
@@ -1202,7 +1202,7 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "",
         blurb = "Page forty seven was the good one. The Vedrei carve their cost into a wall and resurface it every generation so nobody stops reading it. He has no wall. He is about to have less of one.",
         words = 370,
-        plate = "/p/anthology/plates/s3-08-the-wall-with-the-number-on-it.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s3-08-the-wall-with-the-number-on-it.jpg",
         witness = null,
     ),
     AnthologyEntry(
@@ -1218,14 +1218,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "",
         blurb = "Page sixty-one is the only page in this case I did not write alone. I built a very good reason to keep it, and then burned it exactly like the other eighty-nine.",
         words = 1097,
-        plate = "/p/anthology/plates/s3-09-the-only-page-i-did-not-write-alone.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s3-09-the-only-page-i-did-not-write-alone.jpg",
         witness = AnthologyWitness(
             id = "yska",
             name = "Yska",
             entries = emptyList(),
             of = null,
             did = "Could not sleep, so past midnight she gave a stranger with a stylus the lineage her people had never written down, because there was nobody left on that world whose ear it belonged to. Gave a syllable back twice, identically, and confirmed twice that the line ends on her own name.",
-            art = "/p/anthology/witnesses/yska.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/yska.jpg",
         ),
     ),
     AnthologyEntry(
@@ -1241,7 +1241,7 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "",
         blurb = "Page thirty eight is six worlds, six fences, and three old wars nobody knows they are still fighting. He is the only entity who has ever seen all six lines on one table, and in a minute there will be nobody who has.",
         words = 887,
-        plate = "/p/anthology/plates/s3-10-the-map-i-never-showed-them.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s3-10-the-map-i-never-showed-them.jpg",
         witness = null,
     ),
     AnthologyEntry(
@@ -1257,14 +1257,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "",
         blurb = "Page seventy three is four names in his hand and nothing else. He can place two of them. He tries very hard on the other two, and loses, and cannot decide whose fault that is.",
         words = 580,
-        plate = "/p/anthology/plates/s3-11-four-names-and-nothing-else.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s3-11-four-names-and-nothing-else.jpg",
         witness = AnthologyWitness(
             id = "sarn",
             name = "Sarn",
             entries = emptyList(),
             of = null,
             did = "Taught him Threnn's numeral system backward on purpose, because forward is how every outsider tries to learn it and backward is how every outsider ends up with it. Thought that was funny in a way she never once smiled about while saying it.",
-            art = "/p/anthology/witnesses/sarn.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/sarn.jpg",
         ),
     ),
     AnthologyEntry(
@@ -1280,7 +1280,7 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "",
         blurb = "Page fifty eight is where I ruled out everyone who could have reached the case and worked out, in my own hand, that an archive of one author is a self portrait. I am burning the only proof I understood that, and there will be no way to tell, once it is ash, whether that makes me right or simply lucky.",
         words = 947,
-        plate = "/p/anthology/plates/s3-12-the-page-where-i-worked-it-out.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s3-12-the-page-where-i-worked-it-out.jpg",
         witness = null,
     ),
     AnthologyEntry(
@@ -1296,7 +1296,7 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "",
         blurb = "Page ninety-one is the last page in the case, the fourteenth's name, written once and on purpose in the one place he was certain nobody would ever go. Tonight the fire is that place too, and he knows it, and says so before he lets it burn.",
         words = 1100,
-        plate = "/p/anthology/plates/s3-13-the-name-goes-last.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s3-13-the-name-goes-last.jpg",
         witness = null,
     ),
     AnthologyEntry(
@@ -1312,7 +1312,7 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "",
         blurb = "The case is empty, and the rule says he has to keep one page holding something nobody has ever written down. He goes looking for that in everything he has ever been, finds nothing, and understands, at last, what the only unwritten thing left in this case could only ever be.",
         words = 891,
-        plate = "/p/anthology/plates/s3-14-one-page-kept.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s3-14-one-page-kept.jpg",
         witness = null,
     ),
     AnthologyEntry(
@@ -1328,14 +1328,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "",
         blurb = "I cannot get through a fare gate in this city, because there is nothing of me for the gate to resolve. So it plays me a recorded courtesy instead. The courtesy is a sentence I wrote when I was young because I thought it sounded professional, and there is a licence code stencilled under the speaker.",
         words = 2110,
-        plate = "/p/anthology/plates/s4-01-the-line-it-plays-when-it-cannot-see-you.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s4-01-the-line-it-plays-when-it-cannot-see-you.jpg",
         witness = AnthologyWitness(
             id = "hevrit",
             name = "Hevrit",
             entries = emptyList(),
             of = null,
             did = "Resurfaces the Long Concourse notice wall on a forty tick cycle, on a knuckle worn pale and smooth from the bucket she has carried for longer than she is willing to work out. Worked the manual side gate open with a bar for a man the fare gates could not read, handed him the paste brush first, and told him which day she paints, in case that was useful. Reads every notice in the nine minutes the primer takes to flash off, in the order the route gives them to her. Keeps none of them. That is not the job.",
-            art = "/p/anthology/witnesses/hevrit.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/hevrit.jpg",
         ),
     ),
     AnthologyEntry(
@@ -1351,14 +1351,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "",
         blurb = "Every public stair in this city has one riser cut to the wrong height, always the fourth from the top, and it is in the building code, and everybody trips. I went to find out who it was granted for. Then a stair inspector let me hold her tape and showed me a flight that predates the code by a very long way, and it is already wrong.",
         words = 1944,
-        plate = "/p/anthology/plates/s4-02-the-fourth-riser.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s4-02-the-fourth-riser.jpg",
         witness = AnthologyWitness(
             id = "ondrit",
             name = "Ondrit",
             entries = emptyList(),
             of = null,
             did = "Certifies public stairs in the Stepped Quarter and four adjoining districts, about forty thousand of them so far. Carries a second tape, out of code, calibrated at her own expense to a standard retired two rebasings ago, because the old stairs were cut to it and a current tape only tells you a lie about them. Measured twenty two flights that predate the building code three times over, on different cycles, with different hands writing the figures down, and got the same wrong answer every time. Let a stranger hold the whole drum. He gave it back with both hands.",
-            art = "/p/anthology/witnesses/ondrit.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/ondrit.jpg",
         ),
     ),
     AnthologyEntry(
@@ -1374,14 +1374,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "",
         blurb = "This city holds a number for what an Ombri body ought to be doing. The number is correct, it is applied consistently, and every reading it was averaged from was taken off somebody in the middle of the worst thing that happens to them. I copied that ledger into an entry myself, a very long time ago, and did not think about it again.",
         words = 2099,
-        plate = "/p/anthology/plates/s4-03-read-as-a-fever.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s4-03-read-as-a-fever.jpg",
         witness = AnthologyWitness(
             id = "aedrin",
             name = "Ædrin",
             entries = emptyList(),
             of = null,
             did = "Keeps the municipal continuation of Ædri's ledger of cold-holds, now four hundred and six entries deep and every one of them a platform rail that has never once been warm at eleven. Before she logs a hold she goes out and takes the rail herself, both hands, and counts, because she will not put a figure in the field she did not get with her own hands. Writes the sheet up flat against her own forearm before she types it in at the end of a shift. Found out one quarter that nobody reads the dataset. Keeps logging it exactly the same.",
-            art = "/p/anthology/witnesses/aedrin.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/aedrin.jpg",
         ),
     ),
     AnthologyEntry(
@@ -1397,14 +1397,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "",
         blurb = "In this district you join a queue at its middle and it grows outward at both ends, so nobody is ever first and nobody is ever last, and the whole arrangement is a third slower than a line with a front. I asked why. The answer is a byelaw, and I have filed the shape of it before, on a world where nobody halved.",
         words = 2224,
-        plate = "/p/anthology/plates/s4-04-the-queue-with-no-front.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s4-04-the-queue-with-no-front.jpg",
         witness = AnthologyWitness(
             id = "saevrin",
             name = "Sævrin",
             entries = emptyList(),
             of = null,
             did = "Administers the midpoint of a queue with no front, and chalks its new position by hand every morning with the outer edge of a hand gone white to the wrist and never washing out. Has never once got the marker exactly right in his whole time on the post, knows the difference between inside the tolerance and right, and moves it anyway, because a marker approximately correct is the entire difference between a queue and a crowd.",
-            art = "/p/anthology/witnesses/saevrin.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/saevrin.jpg",
         ),
     ),
     AnthologyEntry(
@@ -1420,14 +1420,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "",
         blurb = "It rains indoors on this level at fourteen minutes past, every tick, and nine generations have grown up under it saying an ancestor made the rain up and it came true. The filing that actually does it is public and took me an hour. I did not say so out loud, and I am not going to pretend to you that I can account for why.",
         words = 2100,
-        plate = "/p/anthology/plates/s4-05-it-rains-at-fourteen-past.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s4-05-it-rains-at-fourteen-past.jpg",
         witness = AnthologyWitness(
             id = "ashvi",
             name = "Ashvi",
             entries = emptyList(),
             of = null,
             did = "Puts a bowl out at fourteen past every tick, not to catch anything, has done since she was small: two fingers underneath, one on the rim so it does not ring on the grating, then dries it whether it is wet or not. Carries all nine generations of the rain story in the right order, and knows which generation is the one that matters, and it is not the woman who first said it. Asked a stranger twice, once at her stall and once at the transit dock, whether he was all right.",
-            art = "/p/anthology/witnesses/ashvi.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/ashvi.jpg",
         ),
     ),
     AnthologyEntry(
@@ -1443,14 +1443,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "",
         blurb = "The residency return in this city still asks every resident to list their fourteen monsters, and it gives them thirteen boxes and a fourteenth that has been greyed out. I went to find the person who greyed it. She had checked properly before she did it, she was right, and she asked me for the one piece of evidence I cannot produce.",
         words = 2026,
-        plate = "/p/anthology/plates/s4-06-field-fourteen-is-disabled.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s4-06-field-fourteen-is-disabled.jpg",
         witness = AnthologyWitness(
             id = "vessik",
             name = "Vessik",
             entries = emptyList(),
             of = null,
             did = "Designs residency return forms for the merged jurisdiction, one hand stained cyan for years and not coming off from reading pages flat under it. Searched every retained return in the archive for one filled fourteenth box before she disabled the field, and found none. Keeps the earlier proof, the one where the box is still white and waiting, in a drawer, because she likes to see what a thing looked like before she changed it. Told him, in passing, what closes a file: somebody fills the last one.",
-            art = "/p/anthology/witnesses/vessik.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/vessik.jpg",
         ),
     ),
     AnthologyEntry(
@@ -1466,14 +1466,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "",
         blurb = "The air in every public room in this jurisdiction is one blend, fourteen parts by volume, weighted off a headcount somebody took at the merge. Nobody is comfortable in it. Everybody is survivable in it. I went down to the plant that mixes it for a third of the city, expecting something broken, and found the best run room I have ever stood in.",
         words = 2047,
-        plate = "/p/anthology/plates/s4-07-fourteen-parts-by-volume.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s4-07-fourteen-parts-by-volume.jpg",
         witness = AnthologyWitness(
             id = "ilvath",
             name = "Ilvath",
             entries = emptyList(),
             of = null,
             did = "Runs Mixing House Six, checking a third of the city's air by running the flat of her hand down every lagging seam so she never comes back a stranger to it. Off the clock, opens the calibration kit's certified reference bottles for anyone who asks, warming each one against her own wrist first so it does not read cold and wrong. Agrees with every one of them, every time and without softening, that it is close and not right. They come back next month anyway.",
-            art = "/p/anthology/witnesses/ilvath.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/ilvath.jpg",
         ),
     ),
     AnthologyEntry(
@@ -1489,14 +1489,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "",
         blurb = "They built a whole district at the scale of the largest people in the city, and then the largest people in the city could not afford to live in it, and the arithmetic that did it is four lines long and every line of it is correct. Halkri comes in to service the door mechanisms. She likes the job. She told me twice, because she could see exactly what I was trying to do with her.",
         words = 2171,
-        plate = "/p/anthology/plates/s4-08-the-doors-she-maintains-and-cannot-use.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s4-08-the-doors-she-maintains-and-cannot-use.jpg",
         witness = AnthologyWitness(
             id = "halkri",
             name = "Halkri",
             entries = emptyList(),
             of = null,
             did = "Commutes two flicks each way to service the Great Gauge's door mechanisms, the only fittings in the district still built to her hand. Trues every witness mark with the one fine digit that does the work of the rest of an enormous hand, and scribes her lines with her grandmother's sighting stone, the flattest thing she owns, carried down from a ridge where the old woman could set a bearing to within a third of a degree by eye. Told him twice, unprompted, that she likes the job. Sent him to file a correction on somebody else's stair instead of her own rent, then went and stood on it herself to check.",
-            art = "/p/anthology/witnesses/halkri.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/halkri.jpg",
         ),
     ),
     AnthologyEntry(
@@ -1512,14 +1512,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "",
         blurb = "There is a ground levy on the Rows, collected every quarter, forever, and the document that created it does not exist and never has. It took me an afternoon to find that out. Rœst has known it for eleven years, and she keeps the working folded in her pocket, and she asked me not to write it, and I did not.",
         words = 2185,
-        plate = "/p/anthology/plates/s4-09-the-levy-with-no-instrument.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s4-09-the-levy-with-no-instrument.jpg",
         witness = AnthologyWitness(
             id = "roest",
             name = "Rœst",
             entries = emptyList(),
             of = null,
             did = "Raises fourteen thousand demands a quarter off a surveyor's figure and answers for every one of them at the counter, wearing through a thimble at a time and keeping the dead ones in the drawer, in order. Has kept her own working of the pension arithmetic folded in eighths in her hip pocket for eleven years, and showed him only as far as the second fold. Asked him directly not to write it, and told him she has never settled whether eleven years of not saying it herself makes her a coward.",
-            art = "/p/anthology/witnesses/roest.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/roest.jpg",
         ),
     ),
     AnthologyEntry(
@@ -1535,14 +1535,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "",
         blurb = "They did not read my corpus. They loaded it. Every sentence had to land in a column, and there is no column for a sentence a man was not sure about, so all of mine went into a reject log instead, and the reject log is longer than the thing it was rejected from. A clerk called Ummi has read every line of it, in order, and nothing else of mine at all.",
         words = 2103,
-        plate = "/p/anthology/plates/s4-10-every-sentence-where-he-was-not-sure.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s4-10-every-sentence-where-he-was-not-sure.jpg",
         witness = AnthologyWitness(
             id = "ummi",
             name = "Ummi",
             entries = emptyList(),
             of = null,
             did = "Keeps the reject aisle on the Reconciliation Floor, which is every sentence Morkinstar was ever unsure of, in order, and nothing else of his at all: her flattening hand is worn to a soft grey shine from three strokes on every fold. Noticed, on her own time and not as part of the job, that rejection density per source entry is a curve, found where it spikes and never comes back down, and named the entry to him before he could ask her anything. Files a note about the loss every year. It is acknowledged every year and nothing changes.",
-            art = "/p/anthology/witnesses/ummi.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/ummi.jpg",
         ),
     ),
     AnthologyEntry(
@@ -1558,14 +1558,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "",
         blurb = "I went down to look up my own accreditation, expecting a lapse date and a code and something to be sad about in an orderly way. It has not lapsed. It was put in the wrong drawer by somebody who is long dead, and a file in that drawer cannot be closed while the survey is open, and nobody ever wrote an end date on mine.",
         words = 2130,
-        plate = "/p/anthology/plates/s4-11-the-file-that-keeps-me.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s4-11-the-file-that-keeps-me.jpg",
         witness = AnthologyWitness(
             id = "danvik",
             name = "Danvik",
             entries = emptyList(),
             of = null,
             did = "Works the counter at the Deep Registry Annexe with a hand lamp clipped at his collar and turned down, so the light lands only on the paper in front of him. Went off without being asked and came back with a chair before starting the search. Found the correspondent's own accreditation, unlapsed by a filing error a very long time old, in six minutes without hesitating, then raised it as unvalidated, telling him first exactly what that would do and waiting until he said he understood.",
-            art = "/p/anthology/witnesses/danvik.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/danvik.jpg",
         ),
     ),
     AnthologyEntry(
@@ -1581,14 +1581,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "",
         blurb = "The record in this city has a weight, and the floors under it are being reinforced on a programme with no end date, and the load figure is published every quarter because it is a safety notice. Osvær took me eleven minutes' walk to show me the mark on the pillar, and put his thumb in this year's cut without being asked, and told me about the thing in the deep aisles, which is a joke they tell new starters so they are careful with the manifests.",
         words = 2106,
-        plate = "/p/anthology/plates/s4-12-the-thing-in-the-stacks.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s4-12-the-thing-in-the-stacks.jpg",
         witness = AnthologyWitness(
             id = "osvaer",
             name = "Osvær",
             entries = emptyList(),
             of = null,
             did = "Counts a shelf on the Holding Tiers by running a thumb worn pale and flat along the box spines without looking, the way you would know a room in the dark. Tells new starters the joke about the thing in the deep aisles that grows by exactly what you file, because a new starter afraid of it writes a careful manifest. Walked a stranger eleven minutes to the pillar where the deep hands cut a measure into the concrete once a year, and put his own thumb in this year's cut without being asked.",
-            art = "/p/anthology/witnesses/osvaer.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/osvaer.jpg",
         ),
     ),
     AnthologyEntry(
@@ -1604,14 +1604,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "",
         blurb = "I had nine ticks on a street this city does not serve, where nobody can perceive anybody and everybody manages anyway, and the whole time I was there not one person had to do anything for me that they do not already do for each other. There is a waiting list. There is also a service charge, and there is no version of me that can pay it.",
         words = 2100,
-        plate = "/p/anthology/plates/s4-13-nine-days-on-the-unrendered-mile.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s4-13-nine-days-on-the-unrendered-mile.jpg",
         witness = AnthologyWitness(
             id = "yrmund",
             name = "Ýrmund",
             entries = emptyList(),
             of = null,
             did = "Chairs the Unrendered Mile residents' association, forty years at number nine, and finds a page in the tribunal folder by running the edge of her thumb down the stack until it catches, a skill she does not know she has. Applied the hardship cap to a stranger on his first morning without being asked and told him she had. Told him, unasked, that her partner left for a served address after two years and that she likes him better now than when he lived there, then asked if that was a terrible thing to say and did not wait for an answer before putting the kettle on.",
-            art = "/p/anthology/witnesses/yrmund.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/yrmund.jpg",
         ),
     ),
     AnthologyEntry(
@@ -1627,14 +1627,14 @@ val anthologyEntries: List<AnthologyEntry> = listOf(
         phenomenon = "",
         blurb = "I went back to the wall I started on, on the one day of its cycle when the primer was already coming down the row toward me. So the thing I posted today had about nine minutes on it. I want to tell you what I worked out while I stood there, because I have not felt this light in a very long time.",
         words = 2098,
-        plate = "/p/anthology/plates/s4-14-the-corner-that-lifts.jpg",
+        plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/s4-14-the-corner-that-lifts.jpg",
         witness = AnthologyWitness(
             id = "hevrit",
             name = "Hevrit",
             entries = emptyList(),
             of = null,
             did = "Resurfaces the Long Concourse notice wall on a forty tick cycle, on a knuckle worn pale and smooth from the bucket she has carried for longer than she is willing to work out. Worked the manual side gate open with a bar for a man the fare gates could not read, handed him the paste brush first, and told him which day she paints, in case that was useful. Reads every notice in the nine minutes the primer takes to flash off, in the order the route gives them to her. Keeps none of them. That is not the job.",
-            art = "/p/anthology/witnesses/hevrit.jpg",
+            art = "https://darkpandawarrior.github.io/cv/p/anthology/witnesses/hevrit.jpg",
         ),
     ),
 )
@@ -1665,7 +1665,7 @@ val siblingSeries: List<SiblingSeries> = listOf(
                 title = "The Word The Form Will Not Take",
                 blurb = "A residency form will not take a word, so the woman it belongs to walks into a reading room and asks to buy the one line it was written on. The line is there, it has always been there, and the list the form checks against was compiled from it.",
                 words = 2065,
-                plate = "/p/anthology/plates/dd-01-the-word-the-form-will-not-take.jpg",
+                plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/dd-01-the-word-the-form-will-not-take.jpg",
             ),
             SiblingEntry(
                 idx = 2,
@@ -1673,7 +1673,7 @@ val siblingSeries: List<SiblingSeries> = listOf(
                 title = "Charged By The Sheet",
                 blurb = "A parcel holder asks when his eastern boundary moved and who moved it. He is given ten sheets, every office named, every hand subscribed, and a fee schedule that was posted at the counter before he walked in.",
                 words = 2001,
-                plate = "/p/anthology/plates/dd-02-charged-by-the-sheet.jpg",
+                plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/dd-02-charged-by-the-sheet.jpg",
             ),
             SiblingEntry(
                 idx = 3,
@@ -1681,7 +1681,7 @@ val siblingSeries: List<SiblingSeries> = listOf(
                 title = "The Column Is Present",
                 blurb = "A tenant whose agreement runs for one Elysheim would like to know how long that is, because a floor costs four hundred and ten and she will only lay it if she is going to be standing on it. The fastest class in the archive, no fee, no wait, and the whole schedule produced inside the tick.",
                 words = 2063,
-                plate = "/p/anthology/plates/dd-03-the-column-is-present.jpg",
+                plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/dd-03-the-column-is-present.jpg",
             ),
             SiblingEntry(
                 idx = 4,
@@ -1689,7 +1689,7 @@ val siblingSeries: List<SiblingSeries> = listOf(
                 title = "No Further Contact Indicated",
                 blurb = "A man who left a world at seven walks into a reading room and asks what a word on a form means. He gets the word, complete, on the tick of receipt, at no charge, with all three notes, and the notes are about a survey.",
                 words = 1916,
-                plate = "/p/anthology/plates/dd-04-no-further-contact-indicated.jpg",
+                plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/dd-04-no-further-contact-indicated.jpg",
             ),
             SiblingEntry(
                 idx = 5,
@@ -1697,7 +1697,7 @@ val siblingSeries: List<SiblingSeries> = listOf(
                 title = "Certified As At",
                 blurb = "A workshop stands twenty thousandths of a Span outside a line. Hesk pays in advance for a certified copy of the figure that puts it there, and the return is complete, and it contains two certificates, and both of them are true.",
                 words = 2003,
-                plate = "/p/anthology/plates/dd-05-certified-as-at.jpg",
+                plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/dd-05-certified-as-at.jpg",
             ),
             SiblingEntry(
                 idx = 6,
@@ -1705,7 +1705,7 @@ val siblingSeries: List<SiblingSeries> = listOf(
                 title = "Not For Reliance",
                 blurb = "A repair shop needs the held copy of a specification fitted in nine thousand doors, because every copy they own is a copy of a copy and none of them agree. The copy is produced complete, and every sheet of it carries a stamp, and the stamp is not a warning.",
                 words = 2167,
-                plate = "/p/anthology/plates/dd-06-not-for-reliance.jpg",
+                plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/dd-06-not-for-reliance.jpg",
             ),
             SiblingEntry(
                 idx = 7,
@@ -1713,7 +1713,7 @@ val siblingSeries: List<SiblingSeries> = listOf(
                 title = "A Withdrawal Is A Record",
                 blurb = "Vunn filed something eleven clicks ago and would like it taken out, and he would like no note kept of the taking out. Both are handled at the counter, in full, inside the standard, at the minimum charge, by an office that has never destroyed anything and holds no procedure that would.",
                 words = 1884,
-                plate = "/p/anthology/plates/dd-07-a-withdrawal-is-a-record.jpg",
+                plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/dd-07-a-withdrawal-is-a-record.jpg",
             ),
             SiblingEntry(
                 idx = 8,
@@ -1721,7 +1721,7 @@ val siblingSeries: List<SiblingSeries> = listOf(
                 title = "Described At Item Level",
                 blurb = "A drainage contractor prices an archive against a trial trench, and asks the only sensible question first, which is how big the thing he is about to search actually is. He is given the answer at item level, with the qualifier that is always printed, and he decides it is close enough for a budget. It is.",
                 words = 1967,
-                plate = "/p/anthology/plates/dd-08-described-at-item-level.jpg",
+                plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/dd-08-described-at-item-level.jpg",
             ),
             SiblingEntry(
                 idx = 9,
@@ -1729,7 +1729,7 @@ val siblingSeries: List<SiblingSeries> = listOf(
                 title = "Arranged By",
                 blurb = "A stone dresser with six days and thirty in her pocket describes a thing the catalogue has no path to, and gets all forty one of them, complete, inside the standard, at a fair fee. She asks one question that is not a request, and it is answered, correctly, out of the field provided.",
                 words = 2393,
-                plate = "/p/anthology/plates/dd-09-arranged-by.jpg",
+                plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/dd-09-arranged-by.jpg",
             ),
             SiblingEntry(
                 idx = 10,
@@ -1737,7 +1737,7 @@ val siblingSeries: List<SiblingSeries> = listOf(
                 title = "If It Is Ever Filled In",
                 blurb = "A woman who was given a complete and correct answer once already comes back to the counter with a single line and no fee to pay. The counter takes the line, describes the sheet it is written on, and enters it in the register under the only class that fits.",
                 words = 1897,
-                plate = "/p/anthology/plates/dd-10-if-it-is-ever-filled-in.jpg",
+                plate = "https://darkpandawarrior.github.io/cv/p/anthology/plates/dd-10-if-it-is-ever-filled-in.jpg",
             ),
         ),
     ),
