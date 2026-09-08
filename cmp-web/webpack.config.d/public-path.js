@@ -1,6 +1,7 @@
 // Serve-path for the built bundle.
 //
-// This build is embedded on the React site at /portfolio-app/, not at an origin root. Compose
+// This build is embedded on the React site from the GitHub Pages asset origin at
+// /cv/portfolio-app/ (heavy assets moved off Vercel on 2026-09-07), not at an origin root. Compose
 // resolves composeResources/ (fonts, images) relative to the document, so without a publicPath the
 // five bundled fonts 404 and the app renders with fallbacks.
 //
@@ -11,4 +12,4 @@
 // Kept overridable so a local `wasmJsBrowserRun` at the origin root still works:
 //   ./gradlew :cmp-web:wasmJsBrowserDistribution -Pcv.publicPath=/
 config.output = config.output || {};
-config.output.publicPath = process.env.CV_PUBLIC_PATH || "/portfolio-app/";
+config.output.publicPath = process.env.CV_PUBLIC_PATH || "/cv/portfolio-app/";
