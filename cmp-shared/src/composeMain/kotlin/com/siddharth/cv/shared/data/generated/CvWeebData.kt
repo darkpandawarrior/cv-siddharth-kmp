@@ -78,7 +78,7 @@ data class WeebDivergenceRow(
 
 /** The anime and manga ledger behind /weeb. Every figure on that page renders from here. */
 val weeb: WeebData = WeebData(
-    generatedAt = "2026-08-31",
+    generatedAt = "2026-09-06",
     anime = WeebAnime(
         total = 479,
         matched = 467,
@@ -108,6 +108,15 @@ val weeb: WeebData = WeebData(
     ),
     manga = WeebManga(total = 26, byRead = mapOf("Completed" to 5, "Reading" to 21), chaptersRead = 1924),
     stale = listOf(
+        WeebStale(
+            name = "The World’s Finest Assassin Gets Reincarnated In Another World As An Aristocrat",
+            title = "The World's Finest Assassin Gets Reincarnated in Another World as an Aristocrat",
+            romaji = "Sekai Saikou no Ansatsusha, Isekai Kizoku ni Tensei suru",
+            english = "The World's Finest Assassin Gets Reincarnated in Another World as an Aristocrat",
+            sequel = "Sekai Saikou no Ansatsusha, Isekai Kizoku ni Tensei suru 2nd Season",
+            year = 2027,
+            status = "NOT_YET_RELEASED",
+        ),
         WeebStale(
             name = "Grand Blue",
             title = "Grand Blue Dreaming",
@@ -512,15 +521,6 @@ val weeb: WeebData = WeebData(
             sequel = "Ranma ½ (1989)",
             year = 1989,
             status = "FINISHED",
-        ),
-        WeebStale(
-            name = "The World’s Finest Assassin Gets Reincarnated In Another World As An Aristocrat",
-            title = "The World's Finest Assassin Gets Reincarnated in Another World as an Aristocrat",
-            romaji = "Sekai Saikou no Ansatsusha, Isekai Kizoku ni Tensei suru",
-            english = "The World's Finest Assassin Gets Reincarnated in Another World as an Aristocrat",
-            sequel = "Sekai Saikou no Ansatsusha, Isekai Kizoku ni Tensei suru 2nd Season",
-            year = null,
-            status = "NOT_YET_RELEASED",
         ),
         WeebStale(
             name = "Loner Life In Another World",

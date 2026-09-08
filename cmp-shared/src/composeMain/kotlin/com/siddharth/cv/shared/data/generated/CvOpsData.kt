@@ -30,15 +30,21 @@ data class DriftEntry(
 val opsPerimeter: List<PerimeterEntry> = listOf(
     PerimeterEntry(
         file = "chess.ts",
-        generatedAt = "2026-08-30",
+        generatedAt = "2026-09-06",
         slaDays = 21,
         generator = "npm run gen:chess",
     ),
     PerimeterEntry(
         file = "chessDeep.ts",
-        generatedAt = "2026-08-31",
+        generatedAt = "2026-09-06",
         slaDays = 21,
         generator = "npm run gen:chess-deep",
+    ),
+    PerimeterEntry(
+        file = "history.ts",
+        generatedAt = "2026-09-07",
+        slaDays = 21,
+        generator = "npm run gen:history",
     ),
     PerimeterEntry(
         file = "store.ts",
@@ -47,14 +53,20 @@ val opsPerimeter: List<PerimeterEntry> = listOf(
         generator = "npm run gen:store",
     ),
     PerimeterEntry(
+        file = "systemGraph.ts",
+        generatedAt = "2026-09-07",
+        slaDays = 45,
+        generator = "npm run gen:system-graph",
+    ),
+    PerimeterEntry(
         file = "timeline.ts",
-        generatedAt = "2026-08-31",
+        generatedAt = "2026-09-06",
         slaDays = 45,
         generator = "npm run gen:timeline",
     ),
     PerimeterEntry(
         file = "weeb.ts",
-        generatedAt = "2026-08-31",
+        generatedAt = "2026-09-06",
         slaDays = 21,
         generator = "npm run gen:weeb",
     ),
@@ -65,26 +77,26 @@ val opsLeverage: List<LeverageEntry> = listOf(
     LeverageEntry(
         id = "shared.cmp.feature",
         modules = 31,
-        repos = listOf("HireSignal", "Mileway", "PaymentsLab"), // claim-audit:allow -- dated ops snapshot (opsGeneratedAt 2026-08-31), pre-rename repo names
+        repos = listOf("HireSignal", "Mileway", "PaymentsLab"),
     ),
-    LeverageEntry(id = "shared.android.library", modules = 24, repos = listOf("Mileway", "kmp-toolkit")), // claim-audit:allow -- dated ops snapshot (opsGeneratedAt 2026-08-31), pre-rename repo names
+    LeverageEntry(id = "shared.android.library", modules = 24, repos = listOf("Mileway", "kmp-toolkit")),
     LeverageEntry(
         id = "shared.kmp.library",
         modules = 18,
-        repos = listOf("HireSignal", "Mileway", "PaymentsLab"), // claim-audit:allow -- dated ops snapshot (opsGeneratedAt 2026-08-31), pre-rename repo names
+        repos = listOf("HireSignal", "Mileway", "PaymentsLab"),
     ),
     LeverageEntry(
         id = "shared.kmp.compose",
         modules = 9,
-        repos = listOf("HireSignal", "Mileway", "PaymentsLab"), // claim-audit:allow -- dated ops snapshot (opsGeneratedAt 2026-08-31), pre-rename repo names
+        repos = listOf("HireSignal", "Mileway", "PaymentsLab"),
     ),
     LeverageEntry(
         id = "shared.android.application",
         modules = 4,
-        repos = listOf("HireSignal", "Mileway", "PaymentsLab"), // claim-audit:allow -- dated ops snapshot (opsGeneratedAt 2026-08-31), pre-rename repo names
+        repos = listOf("HireSignal", "Mileway", "PaymentsLab"),
     ),
-    LeverageEntry(id = "shared.test", modules = 3, repos = listOf("HireSignal", "Mileway")), // claim-audit:allow -- dated ops snapshot (opsGeneratedAt 2026-08-31), pre-rename repo names
-    LeverageEntry(id = "shared.purity", modules = 1, repos = listOf("Kursi")), // claim-audit:allow -- dated ops snapshot (opsGeneratedAt 2026-08-31), pre-rename repo names
+    LeverageEntry(id = "shared.test", modules = 3, repos = listOf("HireSignal", "Mileway")),
+    LeverageEntry(id = "shared.purity", modules = 1, repos = listOf("Kursi")),
     LeverageEntry(id = "shared.android.firebase", modules = 0, repos = emptyList()),
     LeverageEntry(id = "shared.android.lint", modules = 0, repos = emptyList()),
     LeverageEntry(id = "shared.detekt", modules = 0, repos = emptyList()),
@@ -100,61 +112,61 @@ val opsLeverage: List<LeverageEntry> = listOf(
 /** Pinned upstreams and how far behind each pin has fallen. `behind` is null when it could not be measured. */
 val opsDrift: List<DriftEntry> = listOf(
     DriftEntry(
-        repo = "Mileway", // claim-audit:allow -- dated ops snapshot (opsGeneratedAt 2026-08-31), pre-rename repo names
+        repo = "Mileway",
         upstream = "kmp-build-logic",
         pin = "b31574f",
         behind = 2,
         pinnedAt = "2026-08-27",
     ),
     DriftEntry(
-        repo = "Mileway", // claim-audit:allow -- dated ops snapshot (opsGeneratedAt 2026-08-31), pre-rename repo names
+        repo = "Mileway",
         upstream = "kmp-toolkit",
         pin = "774c5c6",
-        behind = 4,
+        behind = 5,
         pinnedAt = "2026-08-27",
     ),
     DriftEntry(
-        repo = "Kursi", // claim-audit:allow -- dated ops snapshot (opsGeneratedAt 2026-08-31), pre-rename repo names
+        repo = "Kursi",
         upstream = "kmp-build-logic",
         pin = "b31574f",
         behind = 2,
         pinnedAt = "2026-08-27",
     ),
     DriftEntry(
-        repo = "Kursi", // claim-audit:allow -- dated ops snapshot (opsGeneratedAt 2026-08-31), pre-rename repo names
+        repo = "Kursi",
         upstream = "kmp-toolkit",
         pin = "774c5c6",
-        behind = 4,
+        behind = 5,
         pinnedAt = "2026-08-27",
     ),
     DriftEntry(
-        repo = "PaymentsLab", // claim-audit:allow -- dated ops snapshot (opsGeneratedAt 2026-08-31), pre-rename repo names
+        repo = "PaymentsLab",
         upstream = "kmp-build-logic",
         pin = "b31574f",
         behind = 2,
         pinnedAt = "2026-08-27",
     ),
     DriftEntry(
-        repo = "PaymentsLab", // claim-audit:allow -- dated ops snapshot (opsGeneratedAt 2026-08-31), pre-rename repo names
+        repo = "PaymentsLab",
         upstream = "kmp-toolkit",
         pin = "774c5c6",
-        behind = 4,
+        behind = 5,
         pinnedAt = "2026-08-27",
     ),
     DriftEntry(
-        repo = "HireSignal", // claim-audit:allow -- dated ops snapshot (opsGeneratedAt 2026-08-31), pre-rename repo names
+        repo = "HireSignal",
         upstream = "kmp-build-logic",
         pin = "b31574f",
         behind = 2,
         pinnedAt = "2026-08-27",
     ),
     DriftEntry(
-        repo = "HireSignal", // claim-audit:allow -- dated ops snapshot (opsGeneratedAt 2026-08-31), pre-rename repo names
+        repo = "HireSignal",
         upstream = "kmp-toolkit",
         pin = "774c5c6",
-        behind = 4,
+        behind = 5,
         pinnedAt = "2026-08-27",
     ),
 )
 
-val opsGeneratedAt: String = "2026-08-31"
+val opsGeneratedAt: String = "2026-09-07"
