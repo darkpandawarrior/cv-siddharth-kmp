@@ -22,6 +22,9 @@ kotlin {
         wasmJsMain.dependencies {
             implementation(project(":cmp-shared"))
             implementation(compose.ui)
+            // configureWebResources() in Main.kt — cmp-shared depends on this as `implementation`,
+            // so it isn't visible here transitively.
+            implementation(compose.components.resources)
         }
     }
 }
