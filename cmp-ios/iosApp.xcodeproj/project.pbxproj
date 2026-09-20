@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		1E620FF269A2E1644AE00CAC /* iOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 909AF486AF06350C217DB968 /* iOSApp.swift */; };
 		745C9D4609E01D7BC9179239 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A589F098711373D0735BFFF /* ContentView.swift */; };
+		4C0B7E1A5D93F26A8B41C0D7 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 9A3E51C7B08D4F2169E7A3B5 /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -16,6 +17,7 @@
 		8BF09CD48865464C4062587F /* iosApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iosApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		909AF486AF06350C217DB968 /* iOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iOSApp.swift; sourceTree = "<group>"; };
 		B1E4D804D295743EB2CE5D2A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		9A3E51C7B08D4F2169E7A3B5 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -51,6 +53,7 @@
 				909AF486AF06350C217DB968 /* iOSApp.swift */,
 				8A589F098711373D0735BFFF /* ContentView.swift */,
 				B1E4D804D295743EB2CE5D2A /* Info.plist */,
+				9A3E51C7B08D4F2169E7A3B5 /* PrivacyInfo.xcprivacy */,
 			);
 			path = iosApp;
 			sourceTree = "<group>";
@@ -114,6 +117,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4C0B7E1A5D93F26A8B41C0D7 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
