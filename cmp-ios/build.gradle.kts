@@ -35,12 +35,18 @@ kotlin {
         }
     }
 
-    sourceSets {
-        iosMain.dependencies {
-            // api(...) is required for export(...) above to surface :cmp-shared's public API.
-            api(project(":cmp-shared"))
-            // compose.ui exposes ComposeUIViewController on iOS targets.
-            implementation(compose.ui)
-        }
+    // gradle.properties sets kotlin.mpp.applyDefaultHierarchyTemplate=false, because :cmp-shared
+    // hand-wires composeMain/skikoMain/composeIosMain around targets Compose Multiplatform does
+    // not publish for. That property is project-wide, so without asking for the template back here
+    // there is no iosMain at all and the two ios*Main source sets would each need their own copy
+    // of these dependencies. This module has only the two Compose-capable iOS targets, so the
+    // stock template fits it exactly.
+    applyDefaultHierarchyTemplate()
+
+    sourceSets.getByName("iosMain").dependencies {
+        // api(...) is required for export(...) above to surface :cmp-shared's public API.
+        api(project(":cmp-shared"))
+        // compose.ui exposes ComposeUIViewController on iOS targets.
+        implementation(compose.ui)
     }
 }
