@@ -42,16 +42,12 @@ kotlin {
     // artifacts (org.jetbrains.compose.{runtime,foundation,ui}), so App() can't run there.
     // ponytail: scaffold-only until Compose ships iosX64, or drop it if Intel sim support
     // isn't actually needed.
-    listOf(
-        iosArm64(),
-        iosSimulatorArm64(),
-        iosX64(),
-    ).forEach { iosTarget ->
-        iosTarget.binaries.framework {
-            baseName = "ComposeApp"
-            isStatic = true
-        }
-    }
+    // No binaries.framework here: :cmp-ios is the umbrella that owns ComposeApp.framework and
+    // export()s this module into it (mirrors Kursi). Declaring a second framework with the same
+    // baseName from this module would build an unused duplicate of the same Swift-facing API.
+    iosArm64()
+    iosSimulatorArm64()
+    iosX64()
 
     // Compile targets only, same reason as iosX64 above — Compose Multiplatform publishes no
     // watchOS artifacts at all. Ready for shared non-UI logic (commonMain); no UI shell.
