@@ -69,7 +69,7 @@ kotlin {
 
         // Compose UI lives here, not in commonMain, so it's only on the classpath of targets
         // Compose Multiplatform actually supports (android, jvm, iosArm64, iosSimulatorArm64).
-        val composeMain by creating {
+        val composeMain = create("composeMain") {
             dependsOn(commonMain.get())
             dependencies {
                 implementation(compose.runtime)
@@ -99,7 +99,7 @@ kotlin {
         // GPU fragment shaders) exists on every Compose target EXCEPT Android, which renders
         // through the platform's own pipeline and would need AGSL instead. Android therefore
         // hangs off composeMain directly and supplies its own actual; everyone else shares one.
-        val skikoMain by creating { dependsOn(composeMain) }
+        val skikoMain = create("skikoMain") { dependsOn(composeMain) }
 
         androidMain.get().dependsOn(composeMain)
         jvmMain.get().dependsOn(skikoMain)
@@ -126,7 +126,7 @@ kotlin {
 
         // iosArm64/iosSimulatorArm64 only: the ComposeUIViewController entry point (UIKit API,
         // not available on watchOS/other Apple targets).
-        val composeIosMain by creating {
+        val composeIosMain = create("composeIosMain") {
             dependsOn(skikoMain)
         }
         getByName("iosArm64Main").dependsOn(composeIosMain)
@@ -153,7 +153,7 @@ kotlin {
 // ponytail: the origin defaults to the Vercel URL baked into Prerender.kt. Pass -Pprerender.origin
 // (or CV_SITE_ORIGIN) when deploying anywhere else — a wrong <link rel="canonical"> is worse than
 // none, so make this a required property the day this is deployed from CI.
-val prerenderSite by tasks.registering(JavaExec::class) {
+tasks.register<JavaExec>("prerenderSite") {
     group = "distribution"
     description = "Generates static per-route HTML + sitemap.xml + robots.txt into the wasm distribution."
     dependsOn(":cmp-web:wasmJsBrowserDistribution")

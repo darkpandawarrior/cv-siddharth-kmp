@@ -1,6 +1,8 @@
 [versions]
 agp = "9.5.0-alpha06"
 detekt = "2.0.0-alpha.6"
+ktlintPlugin = "14.2.0"
+ktlintEngine = "1.7.1"
 kotlin = "2.4.20"
 compose-multiplatform = "1.13.0-alpha01"
 androidx-activity = "1.14.0-alpha02"
@@ -27,6 +29,7 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 
 [plugins]
 detekt = { id = "dev.detekt", version.ref = "detekt" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintPlugin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 androidKmpLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
 androidApplication = { id = "com.android.application", version.ref = "agp" }

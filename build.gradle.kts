@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform) apply false
     alias(libs.plugins.composeCompiler) apply false
     alias(libs.plugins.detekt) apply false
+    alias(libs.plugins.ktlint) apply false
 }
 
 // Static analysis. This repo had none, so nothing checked the code that renders the portfolio site.
@@ -14,8 +15,24 @@ plugins {
 // nativeMain, gms, noGms and main unscanned; PaymentsLab omitted wasmJsMain. Adding a target adds a
 // source set, and nothing fails when the list is not updated to match — coverage shrinks silently
 // while the build stays green. `src` cannot rot that way.
+// Formatting. This repo declared no ktlint plugin at all until now — it carried 203 baselined
+// detekt findings with nothing formatting the code behind them, and detekt's own MaxLineLength was
+// left `active: false` with a comment claiming ".editorconfig / ktlint is the single source of
+// truth for line length" when neither a ktlint plugin nor an .editorconfig existed. The claim is
+// true now. Every rule disabled in .editorconfig is half a pair with an `active: false` in
+// config/detekt/detekt.yml; changing one side alone puts the two tools back into contradiction.
 subprojects {
     apply(plugin = "dev.detekt")
+    apply(plugin = "org.jlleitschuh.gradle.ktlint")
+    extensions.configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
+        version.set(rootProject.libs.versions.ktlintEngine)
+        // Compose Resources writes Res.kt and the per-target resource collectors into build/, and
+        // cmp-shared wires those generated dirs into composeMain as real source dirs. .editorconfig
+        // already sets `ktlint = disabled` under build/, but without this filter the ktlint tasks
+        // still take a build dependency on the codegen — formatting would start forcing a
+        // resource-generation run.
+        filter { exclude("**/build/**") }
+    }
     extensions.configure<dev.detekt.gradle.extensions.DetektExtension> {
         config.setFrom(rootProject.files("config/detekt/detekt.yml"))
         buildUponDefaultConfig = true
