@@ -41,7 +41,15 @@ subprojects {
         baseline = file("detekt-baseline.xml")
         source.setFrom(layout.projectDirectory.dir("src"))
     }
+    // Both task types, not just Detekt. DetektCreateBaselineTask does NOT extend Detekt, so with
+    // the exclusion on Detekt alone `detektBaseline` scanned src/**/data/generated/ that `detekt`
+    // never looks at and wrote 10 MayBeConstant entries for findings the gate can never emit —
+    // including one in CvOpsData.kt, a file this repo regenerates. A baseline entry that no run
+    // can ever match is a dead entry, and dead entries are how a baseline stops meaning anything.
     tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
+        exclude("**/build/**", "**/generated/**")
+    }
+    tasks.withType<dev.detekt.gradle.DetektCreateBaselineTask>().configureEach {
         exclude("**/build/**", "**/generated/**")
     }
 }
