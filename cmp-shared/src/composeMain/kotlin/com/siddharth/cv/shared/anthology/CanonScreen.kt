@@ -345,7 +345,7 @@ private fun LazyListScope.lawsSection(laws: List<CanonLaw>, twoUp: Boolean, uri:
     item("laws-head") {
         Reveal {
             Column(Modifier.pageMeasure()) {
-                SectionHeading("The ${if (laws.size == lawsAtFull) "Seven" else laws.size} Laws")
+                SectionHeading("The ${if (laws.size == LawsAtFull) "Seven" else laws.size} Laws")
                 Spacer(Modifier.height(14.dp))
                 BasicText(
                     modifier = Modifier.widthIn(max = 680.dp),
@@ -377,7 +377,7 @@ private fun LazyListScope.lawsSection(laws: List<CanonLaw>, twoUp: Boolean, uri:
 }
 
 /** Seven is what the corpus holds today; the heading spells it only while that is true. */
-private const val lawsAtFull = 7
+private const val LawsAtFull = 7
 
 private val Roman = listOf("", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X")
 
@@ -570,7 +570,7 @@ private fun RenderingCard(r: Rendering, uri: UriHandler) {
                 // The note IS the evidence for the state the eyebrow names, so it is the
                 // description too: a reader who cannot see the plate gets the same argument.
                 label = "${witness.name}, rendered. ${r.note}",
-                modifier = Modifier.fillMaxWidth().aspectRatio(portraitAspect).clip(PlateShape),
+                modifier = Modifier.fillMaxWidth().aspectRatio(PortraitAspect).clip(PlateShape),
             )
             Spacer(Modifier.height(16.dp))
         }

@@ -99,10 +99,10 @@ private val topShare =
 private val biggestGap = weeb.anime.deepestGaps.firstOrNull()
 
 /** How many stale rows are on screen before the reader has to ask for the rest. */
-private const val staleVisible = 8
+private const val StaleVisible = 8
 
 /** The full width of the score scale. Not `scores.size`: the point is which end is missing. */
-private const val scoreScale = 5
+private const val ScoreScale = 5
 
 /** `1924` to `"1,924"`. Kotlin common has no `toLocaleString`, and this corpus has no negatives. */
 private fun num(n: Int): String = n.toString().reversed().chunked(3).joinToString(",").reversed()
@@ -119,7 +119,7 @@ fun WeebScreen(modifier: Modifier = Modifier) {
     val manga = weeb.manga
     val uri = LocalUriHandler.current
     var showAllStale by remember { mutableStateOf(false) }
-    val shown = if (showAllStale) weeb.stale else weeb.stale.take(staleVisible)
+    val shown = if (showAllStale) weeb.stale else weeb.stale.take(StaleVisible)
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -206,7 +206,7 @@ fun WeebScreen(modifier: Modifier = Modifier) {
             ) {
                 BasicText(
                     text = "${num(anime.scored)} of ${num(anime.total)} titles carry a score, and " +
-                        "every one of them is a $lowestUsed or higher out of $scoreScale. The " +
+                        "every one of them is a $lowestUsed or higher out of $ScoreScale. The " +
                         "lower ${lowestUsed - 1} points of his own scale have never once been " +
                         "spent. The shows that would have earned them are the ones sitting in " +
                         "\"Paused\", unscored.",
@@ -253,10 +253,10 @@ fun WeebScreen(modifier: Modifier = Modifier) {
 
         item {
             Column(Modifier.pageMeasure().padding(top = 18.dp)) {
-                if (weeb.stale.size > staleVisible) {
+                if (weeb.stale.size > StaleVisible) {
                     GhostButton(
                         text = if (showAllStale) {
-                            "Show the first $staleVisible"
+                            "Show the first $StaleVisible"
                         } else {
                             "Show all ${weeb.stale.size}"
                         },
@@ -395,7 +395,7 @@ private fun ScoreLadder() {
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        for (s in 1..scoreScale) {
+        for (s in 1..ScoreScale) {
             val row = scores.firstOrNull { it.key == s }
             val lit = row != null
             Column(
@@ -421,7 +421,7 @@ private fun ScoreLadder() {
     }
 }
 
-private const val starInnerRatio = 0.45f
+private const val StarInnerRatio = 0.45f
 
 /**
  * ponytail: the stars are drawn, not typed. Neither vendored face carries U+2605, and an
@@ -432,7 +432,7 @@ private fun StarRow(count: Int, lit: Boolean) {
     val colors = cvColors
     val tint = if (lit) colors.accent else colors.muted.copy(alpha = 0.45f)
     Row(
-        modifier = Modifier.semantics { contentDescription = "$count out of $scoreScale" },
+        modifier = Modifier.semantics { contentDescription = "$count out of $ScoreScale" },
         horizontalArrangement = Arrangement.spacedBy(3.dp),
     ) {
         repeat(count) {
@@ -446,11 +446,11 @@ private fun starPath(size: Size): Path {
     val cx = size.width / 2f
     val cy = size.height / 2f
     val outer = min(cx, cy)
-    val inner = outer * starInnerRatio
+    val inner = outer * StarInnerRatio
     // Ten vertices, alternating outer and inner, starting at twelve o'clock.
     repeat(10) { i ->
         val radius = if (i % 2 == 0) outer else inner
-        val angle = (-PI / 2 + i * PI / scoreScale).toFloat()
+        val angle = (-PI / 2 + i * PI / ScoreScale).toFloat()
         val x = cx + radius * cos(angle)
         val y = cy + radius * sin(angle)
         if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)

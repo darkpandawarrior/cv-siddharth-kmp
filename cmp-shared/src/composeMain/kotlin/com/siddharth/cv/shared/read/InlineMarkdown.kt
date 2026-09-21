@@ -157,12 +157,12 @@ internal fun unsupportedMarkdown(body: String): String? {
             line.startsWith("|") -> "table row"
             else -> null
         }
-        if (kind != null) return "$kind in: ${line.take(unsupportedExcerpt)}"
+        if (kind != null) return "$kind in: ${line.take(UnsupportedExcerpt)}"
     }
     return null
 }
 
-private const val unsupportedExcerpt = 60
+private const val UnsupportedExcerpt = 60
 private val ListItem = Regex("""^([-+*]|\d+\.)\s""")
 private val ThematicBreak = Regex("""^(-{3,}|\*{3,}|_{3,})$""")
 

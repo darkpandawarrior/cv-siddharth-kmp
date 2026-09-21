@@ -180,7 +180,7 @@ private fun ExcelsiorBody(
             val row = rows.indexOfFirst { target in it }
             if (row >= 0) {
                 // Negative offset, or the sticky bar covers the top of the page it just took you to.
-                list.scrollToItem(row + pageRowsStart, -with(density) { ReaderBarHeight.roundToPx() })
+                list.scrollToItem(row + PageRowsStart, -with(density) { ReaderBarHeight.roundToPx() })
             }
             pending = null
         }
@@ -237,7 +237,7 @@ private val SpreadBreakpoint: Dp = 720.dp
 private val ReaderBarHeight: Dp = 56.dp
 
 /** Chrome item, then the sticky bar. Page rows start after both. */
-private const val pageRowsStart = 2
+private const val PageRowsStart = 2
 
 /**
  * The tallest trim in the archive: every page is 950px wide, and the heights run 1176-1343 (2019 is
@@ -245,7 +245,7 @@ private const val pageRowsStart = 2
  * every page fits by width and fills the column; a shorter one leaves a little vertical slack
  * instead of being pillarboxed, which is the better of the two ways to be wrong.
  */
-private const val pageAspect = 950f / 1343f
+private const val PageAspect = 950f / 1343f
 
 private val PageShape = RoundedCornerShape(4.dp)
 
@@ -455,7 +455,7 @@ private fun Page(year: String, n: Int, modifier: Modifier) {
     ProjectShot(
         url = pageUrl(year, n),
         label = "Excelsior $year, page $n",
-        modifier = modifier.aspectRatio(pageAspect).border(1.dp, cvColors.line, PageShape),
+        modifier = modifier.aspectRatio(PageAspect).border(1.dp, cvColors.line, PageShape),
         // Fit, not Crop: cropping a magazine page cuts the text off the edge of the artefact.
         contentScale = ContentScale.Fit,
     )

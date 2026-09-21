@@ -266,7 +266,7 @@ private fun AnthologyBody(
 // ---------------------------------------------------------------------------------------------
 
 /** 220wpm, the same figure the reading page uses. */
-private const val wordsPerMinute = 220
+private const val WordsPerMinute = 220
 
 /**
  * Every number on the masthead is derived, and that is the repair rather than a flourish: this page
@@ -274,7 +274,7 @@ private const val wordsPerMinute = 220
  * not a better number, it is not having one to keep.
  */
 private val totalWords: Int = anthologyEntries.sumOf { it.words }
-private val readingHours: Int = (totalWords.toFloat() / wordsPerMinute / 60f).roundToInt()
+private val readingHours: Int = (totalWords.toFloat() / WordsPerMinute / 60f).roundToInt()
 
 /** The first piece in publication order, and the shortest way into the season that needs no prior context. */
 private val firstEntry: AnthologyEntry? =
@@ -549,8 +549,8 @@ internal fun TheFourteenFigure() {
 }
 
 /** Canon, not a count: season two is titled The Ninety-One Pages, and thirteen by seven is ninety-one. */
-private const val caseSlots = 91
-private const val caseColumns = 13
+private const val CaseSlots = 91
+private const val CaseColumns = 13
 
 /**
  * The case, and the season's whole plot in one figure. Derived from the entries themselves rather
@@ -589,13 +589,13 @@ private fun TheCase(burned: Boolean) {
             },
     ) {
         Canvas(Modifier.fillMaxWidth().aspectRatio(13f / 7.4f).padding(20.dp)) {
-            val cellW = size.width / caseColumns
-            val cellH = size.height / (caseSlots / caseColumns)
+            val cellW = size.width / CaseColumns
+            val cellH = size.height / (CaseSlots / CaseColumns)
             val r = min(cellW, cellH) * 0.30f
-            for (page in 1..caseSlots) {
+            for (page in 1..CaseSlots) {
                 val i = page - 1
-                val cx = (i % caseColumns) * cellW + cellW / 2f
-                val cy = (i / caseColumns) * cellH + cellH / 2f
+                val cx = (i % CaseColumns) * cellW + cellW / 2f
+                val cy = (i / CaseColumns) * cellH + cellH / 2f
                 when {
                     gone.contains(page) ->
                         drawCircle(
@@ -650,10 +650,10 @@ private fun Figure(caption: String, content: @Composable () -> Unit) {
 // ---------------------------------------------------------------------------------------------
 
 /** Season three's kindling ordinal: 1-13 withdrawn, 14 the one page kept. */
-private const val kindlingFinale = 14
+private const val KindlingFinale = 14
 
 /** Loose warm paper on a desk sits very slightly askew. Season one and the kept page are neither. */
-private const val paperTiltDeg = 0.65f
+private const val PaperTiltDeg = 0.65f
 
 /**
  * Per-entry identity, ported from lib/seasonTheme.ts.
@@ -701,12 +701,12 @@ private fun entryLook(e: AnthologyEntry): EntryLook =
                 "PAGE ${e.page} OF 91",
                 InkColors,
                 true,
-                paperTiltDeg,
+                PaperTiltDeg,
                 true,
                 "a page out of his case, on warm paper",
             )
         // The exception, and the only undamaged object in the season.
-        e.season == 3 && e.kindling == kindlingFinale ->
+        e.season == 3 && e.kindling == KindlingFinale ->
             EntryLook(
                 "THE PAGE HE KEEPS",
                 KeptPaperColors,
@@ -744,7 +744,7 @@ private fun entryLook(e: AnthologyEntry): EntryLook =
                 "№ ${e.idx}",
                 InkColors,
                 true,
-                paperTiltDeg,
+                PaperTiltDeg,
                 true,
                 "a plate on the season's own stock",
             )
@@ -794,7 +794,7 @@ private fun EntryCard(e: AnthologyEntry, index: Int, uri: UriHandler) {
                 ProjectShot(
                     url = plate,
                     label = "Field plate for ${e.title}: ${look.plateIs}.",
-                    modifier = Modifier.fillMaxWidth().aspectRatio(plateAspect).clip(PlateShape),
+                    modifier = Modifier.fillMaxWidth().aspectRatio(PlateAspect).clip(PlateShape),
                 )
                 Spacer(Modifier.height(16.dp))
             }
@@ -912,7 +912,7 @@ private fun TellerCard(w: AnthologyWitness, uri: UriHandler) {
             ProjectShot(
                 url = art,
                 label = "Rendered portrait of ${w.name}. ${w.did}",
-                modifier = Modifier.fillMaxWidth().aspectRatio(portraitAspect).clip(PlateShape),
+                modifier = Modifier.fillMaxWidth().aspectRatio(PortraitAspect).clip(PlateShape),
             )
             Spacer(Modifier.height(16.dp))
         }
@@ -1017,7 +1017,7 @@ private fun LazyListScope.siblingSeriesBlock(
                     // The medium IS the distinction this series exists to make, so the description
                     // says which one it is rather than repeating the word "plate" ten times.
                     label = "Retrieval plate for ${e.title}: a ${series.medium} file from ${series.title}.",
-                    modifier = Modifier.fillMaxWidth().aspectRatio(plateAspect).clip(PlateShape),
+                    modifier = Modifier.fillMaxWidth().aspectRatio(PlateAspect).clip(PlateShape),
                 )
                 Spacer(Modifier.height(16.dp))
             }
@@ -1037,13 +1037,13 @@ private fun LazyListScope.siblingSeriesBlock(
 // ---------------------------------------------------------------------------------------------
 
 /** The Directory's own count of Concluded worlds: 611 on the day of the case's first page, 671 at the end. */
-private const val concludedStart = 611
-private const val concludedEnd = 671
+private const val ConcludedStart = 611
+private const val ConcludedEnd = 671
 
-private const val fieldSeed = 20260815
-private const val fieldRadiusMin = 240f
-private const val fieldRadiusMax = 800f
-private const val fieldYSquash = 0.6f
+private const val FieldSeed = 20260815
+private const val FieldRadiusMin = 240f
+private const val FieldRadiusMax = 800f
+private const val FieldYSquash = 0.6f
 
 /** The states a world can be in, and their colours. Same values as `STATE_COLOR` in Starmap.tsx. */
 private val StateColor: Map<String, Color> =
@@ -1087,7 +1087,7 @@ private val StateLegendRows: List<Pair<String, String>> =
 @Composable
 private fun StarmapLayer() {
     val colors = cvColors
-    var target by remember { mutableStateOf(concludedStart) }
+    var target by remember { mutableStateOf(ConcludedStart) }
     val reduced = LocalReducedMotion.current
     val concluded by
         animateIntAsState(
@@ -1110,15 +1110,15 @@ private fun StarmapLayer() {
             MonoMeta("CONCLUDED COUNT")
             Spacer(Modifier.width(16.dp))
             LayerPill(
-                label = concludedStart.grouped(),
-                selected = target == concludedStart,
-                onSelect = { target = concludedStart },
+                label = ConcludedStart.grouped(),
+                selected = target == ConcludedStart,
+                onSelect = { target = ConcludedStart },
             )
             Spacer(Modifier.width(8.dp))
             LayerPill(
-                label = concludedEnd.grouped(),
-                selected = target == concludedEnd,
-                onSelect = { target = concludedEnd },
+                label = ConcludedEnd.grouped(),
+                selected = target == ConcludedEnd,
+                onSelect = { target = ConcludedEnd },
             )
         }
 
@@ -1138,29 +1138,29 @@ private fun StarmapLayer() {
  * render and on every platform. Kotlin's Int multiply wraps exactly as `Math.imul` does, which is
  * why the two builds produce the same 671 points rather than merely similar ones.
  */
-private const val lcgMultiplier = 1664525
-private const val lcgIncrement = 1013904223
-private const val uint32Mask = 0xFFFFFFFFL
-private const val uint32Span = 4294967296f
+private const val LcgMultiplier = 1664525
+private const val LcgIncrement = 1013904223
+private const val Uint32Mask = 0xFFFFFFFFL
+private const val Uint32Span = 4294967296f
 
 private class Lcg(seed: Int) {
     private var state: Int = seed
 
     fun next(): Float {
-        state = state * lcgMultiplier + lcgIncrement
-        return (state.toLong() and uint32Mask).toFloat() / uint32Span
+        state = state * LcgMultiplier + LcgIncrement
+        return (state.toLong() and Uint32Mask).toFloat() / Uint32Span
     }
 }
 
 /** Uniform points on a sphere shell, flattened on y so the field reads as a wide sky. */
 private val fieldPoints: List<Offset> =
     run {
-        val rand = Lcg(fieldSeed)
-        List(concludedEnd) {
+        val rand = Lcg(FieldSeed)
+        List(ConcludedEnd) {
             val theta = rand.next() * 2f * PI.toFloat()
             val phi = acos(2f * rand.next() - 1f)
-            val radius = fieldRadiusMin + rand.next() * (fieldRadiusMax - fieldRadiusMin)
-            Offset(radius * sin(phi) * cos(theta), radius * cos(phi) * fieldYSquash)
+            val radius = FieldRadiusMin + rand.next() * (FieldRadiusMax - FieldRadiusMin)
+            Offset(radius * sin(phi) * cos(theta), radius * cos(phi) * FieldYSquash)
         }
     }
 
@@ -1182,7 +1182,7 @@ private fun StarWorld.effectiveState(concluded: Int): String {
     return if (concluded < at) "lit" else state
 }
 
-private const val mapScale = 460f
+private const val MapScale = 460f
 
 @Composable
 private fun Starfield(concluded: Int) {
@@ -1203,7 +1203,7 @@ private fun Starfield(concluded: Int) {
             },
     ) {
         val half = min(size.width, size.height) / 2f
-        val k = half / mapScale
+        val k = half / MapScale
         val cx = size.width / 2f
         val cy = size.height / 2f
         fun project(p: Offset) = Offset(cx + p.x * k, cy - p.y * k)
@@ -1387,10 +1387,10 @@ internal fun openRead(slug: String, uri: UriHandler) {
 }
 
 /** `600x780` for a field plate, the size every entry and sibling plate is painted at. */
-internal const val plateAspect = 600f / 780f
+internal const val PlateAspect = 600f / 780f
 
 /** `1100x600` for a teller. Landscape, because a rendering is a scene and not a headshot. */
-internal const val portraitAspect = 1100f / 600f
+internal const val PortraitAspect = 1100f / 600f
 
 /** Inside [CvCard]'s own 24dp padding, so the plate needs its own corner rather than the card's. */
 internal val PlateShape: RoundedCornerShape = RoundedCornerShape(8.dp)
@@ -1475,7 +1475,7 @@ internal fun anthologySelfCheck() {
     }
 
     // The kept page is an exception inside season three's own row, not a season of its own.
-    val kept = anthologyEntries.filter { it.season == 3 && it.kindling == kindlingFinale }
+    val kept = anthologyEntries.filter { it.season == 3 && it.kindling == KindlingFinale }
     check(kept.size == 1) { "season three has ${kept.size} kept pages" }
     check(entryLook(kept.first()).colors == KeptPaperColors) { "the kept page is not on paper" }
     check(
@@ -1490,7 +1490,7 @@ internal fun anthologySelfCheck() {
         check(w.effectiveState(at - 1) == "lit") { "${w.name} went dark before the count reached it" }
         check(w.effectiveState(at) == w.state) { "${w.name} never falls to its own state" }
     }
-    check(fieldPoints.size == concludedEnd) { "the field is not the slider's ceiling" }
+    check(fieldPoints.size == ConcludedEnd) { "the field is not the slider's ceiling" }
 
     // The spoiler partition, which is the one thing on /canon that must never be keyed off a
     // season number: a gated season's laws stay inside its own block.

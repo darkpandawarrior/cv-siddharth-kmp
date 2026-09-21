@@ -276,7 +276,7 @@ private fun RenderingPlate(rendering: Rendering) {
         ProjectShot(
             url = plateUrl(witness.art),
             label = "${witness.name}, rendered. The rig ${rendering.state}. ${rendering.note}",
-            modifier = Modifier.fillMaxWidth().aspectRatio(portraitAspect).clip(PlateShape),
+            modifier = Modifier.fillMaxWidth().aspectRatio(PortraitAspect).clip(PlateShape),
         )
         Spacer(Modifier.height(10.dp))
         SectionEyebrow("the rig ${rendering.state}")

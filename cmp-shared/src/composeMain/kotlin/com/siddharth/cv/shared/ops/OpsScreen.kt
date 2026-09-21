@@ -98,7 +98,7 @@ import kotlin.time.Instant
  * history: public Play listings anyone can re-check. The fleet note says so in its own words.
  */
 
-private const val repo = "https://github.com/darkpandawarrior/cv-siddharth"
+private const val RepoUrl = "https://github.com/darkpandawarrior/cv-siddharth"
 
 /**
  * The two state tints the KMP palette does not have yet.
@@ -144,7 +144,7 @@ private data class OpsBlock(val lane: String, val title: String, val note: Strin
 // algorithm nobody wants to review.
 // ---------------------------------------------------------------------------------------------
 
-private const val secondsPerDay = 86_400L
+private const val SecondsPerDay = 86_400L
 
 @OptIn(ExperimentalTime::class)
 private fun nowSeconds(): Long = Clock.System.now().epochSeconds
@@ -155,7 +155,7 @@ private fun isoSeconds(seconds: Long): String = Instant.fromEpochSeconds(seconds
 /** `"2026-08-29"` to its epoch day, or null when the stamp is not a date this build can read. */
 @OptIn(ExperimentalTime::class)
 private fun epochDay(stamp: String): Long? =
-    runCatching { Instant.parse(stamp + "T00:00:00Z").epochSeconds / secondsPerDay }.getOrNull()
+    runCatching { Instant.parse(stamp + "T00:00:00Z").epochSeconds / SecondsPerDay }.getOrNull()
 
 private val ShortMonths =
     listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
@@ -248,7 +248,7 @@ private fun perimeterRows(today: Long): List<OpsRow> {
     val files = opsPerimeter.map { p ->
         perimeterRow(
             subject = p.file,
-            subjectUrl = "$repo/blob/main/src/data/${p.file}",
+            subjectUrl = "$RepoUrl/blob/main/src/data/${p.file}",
             stamp = p.generatedAt,
             sla = p.slaDays,
             trailer = p.generator.removePrefix("npm run "),
@@ -259,9 +259,9 @@ private fun perimeterRows(today: Long): List<OpsRow> {
     // else and is the one generator on the list nobody has put on a cron.
     val sweep = perimeterRow(
         subject = "Play Store fleet sweep",
-        subjectUrl = "$repo/blob/main/scripts/gen-store.mjs",
+        subjectUrl = "$RepoUrl/blob/main/scripts/gen-store.mjs",
         stamp = storeGeneratedAt,
-        sla = sweepSlaDays,
+        sla = SweepSlaDays,
         trailer = "gen:store · run by hand, not on a cron",
         today = today,
     )
@@ -269,7 +269,7 @@ private fun perimeterRows(today: Long): List<OpsRow> {
 }
 
 /** The blanket SLA from freshnessSla.ts, for anything the per-file table does not name. */
-private const val sweepSlaDays = 45
+private const val SweepSlaDays = 45
 
 private fun perimeterRow(
     subject: String,
@@ -296,7 +296,7 @@ private fun perimeterRow(
             "${budget(age, sla)} · $trailer"
         },
         verified = stamp,
-        verifiedUrl = "$repo/actions/workflows/refresh-media.yml",
+        verifiedUrl = "$RepoUrl/actions/workflows/refresh-media.yml",
         sinceDay = day,
     )
 }
@@ -398,7 +398,7 @@ fun OpsScreen(modifier: Modifier = Modifier) {
     // Stamped once, to the second. It is literally true: it IS the instant every age on this page
     // was computed, and it costs zero motion.
     val loadedAtSeconds = remember { nowSeconds() }
-    val today = remember(loadedAtSeconds) { loadedAtSeconds / secondsPerDay }
+    val today = remember(loadedAtSeconds) { loadedAtSeconds / SecondsPerDay }
     val blocks = remember(today) { opsBlocks(today) }
 
     // Every non-OK row, worst first, carrying the lane it was hoisted out of. The rows stay in
@@ -634,10 +634,10 @@ private fun BrokenClock(sinceDay: Long) {
             now = nowSeconds()
         }
     }
-    val elapsed = (now - sinceDay * secondsPerDay).coerceAtLeast(0)
-    val rest = elapsed % secondsPerDay
+    val elapsed = (now - sinceDay * SecondsPerDay).coerceAtLeast(0)
+    val rest = elapsed % SecondsPerDay
     BasicText(
-        text = "worst unchanged for ${elapsed / secondsPerDay}d " +
+        text = "worst unchanged for ${elapsed / SecondsPerDay}d " +
             "${pad(rest / 3600)}:${pad(rest / 60 % 60)}:${pad(rest % 60)}",
         style = cvType.metaMono.copy(color = BrokenTint),
     )
