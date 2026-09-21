@@ -58,3 +58,6 @@ include(":cmp-shared")
 include(":cmp-android")
 include(":cmp-desktop")
 include(":cmp-web")
+// iOS umbrella framework. cmp-ios/iosApp.xcodeproj links ComposeApp.framework produced
+// here; without this include the xcodeproj referenced a module the build did not know.
+include(":cmp-ios")

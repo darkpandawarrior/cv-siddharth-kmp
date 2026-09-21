@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  Deliberately minimal. This is a portfolio renderer: no accounts, no analytics SDK, no ad
+	  SDK, no tracking of any kind. Every entry below was grepped for in the code that actually
+	  links into ComposeApp.framework before being declared - an over-declared manifest is a
+	  false statement to Apple, an under-declared one fails review.
+	-->
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+	<!--
+	  Nothing is collected. The app reads a public Vercel endpoint for the AI chat and fetches
+	  .webp images from the portfolio origin; neither call carries user data or an identifier.
+	-->
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<dict>
+			<!--
+			  multiplatform-settings reaches the binary through kmp-toolkit :llm-chat ->
+			  :settings (iosMain). That module's own actual is KeychainSettings, which needs
+			  no declaration, but the library's NSUserDefaults-backed Settings implementation
+			  links in alongside it. Either way the only defaults ever touched are this app's
+			  own, which is exactly what CA92.1 covers.
+			-->
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>CA92.1</string>
+			</array>
+		</dict>
+		<dict>
+			<!--
+			  Coil 3 (coil-compose + coil-network-ktor3, installed in ProjectShot.kt) keeps its
+			  default multiplatform disk cache; its okio-backed journal stats cache entries to
+			  trim them. Those files live in this app's own container, which is C617.1.
+			  If the disk cache is ever disabled in cvImageLoader(), delete this entry.
+			-->
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>C617.1</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>
