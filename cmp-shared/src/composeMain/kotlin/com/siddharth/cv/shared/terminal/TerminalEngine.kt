@@ -99,6 +99,25 @@ private fun hi(text: String) = TermLine(text, TermTone.ACCENT)
 
 private fun hi2(text: String) = TermLine(text, TermTone.ACCENT2)
 
+/**
+ * Collects commands while [TerminalEngine.buildTable] declares them in groups. Exists only so the
+ * `cmd(...)` helper — and its `usage`/`hidden` defaults — can be shared across the group functions
+ * without each one re-declaring a local lambda and losing those defaults.
+ */
+private class CmdTable {
+    val cmds = mutableListOf<Cmd>()
+
+    fun cmd(
+        name: String,
+        help: String,
+        usage: String = name,
+        hidden: Boolean = false,
+        run: (List<String>) -> TermResult,
+    ) {
+        cmds += Cmd(name, usage, help, hidden, run)
+    }
+}
+
 object TerminalEngine {
     private val table: List<Cmd> = buildTable()
 
@@ -172,15 +191,28 @@ object TerminalEngine {
     // -----------------------------------------------------------------------------------------
     // The command table. `help` renders from it, so a new command documents itself.
     // -----------------------------------------------------------------------------------------
+    /**
+     * The command table, declared in themed groups.
+     *
+     * One body held all twenty-nine commands at 180 lines. Grouping costs five method names and
+     * makes the table skimmable: `help` renders from this, so a command that is hard to find here
+     * is a command that is hard to find there too.
+     */
     private fun buildTable(): List<Cmd> {
-        val cmds = mutableListOf<Cmd>()
-        fun cmd(name: String, help: String, usage: String = name, hidden: Boolean = false, run: (List<String>) -> TermResult) {
-            cmds += Cmd(name, usage, help, hidden, run)
-        }
+        val t = CmdTable()
+        registerIdentityCommands(t)
+        registerWorkCommands(t)
+        registerReachCommands(t)
+        registerShellCommands(t)
+        registerEasterEggs(t)
+        return t.cmds
+    }
 
-        cmd("help", "list everything you can type") { helpText() }
+    /** Who this is. `help` first, because it is the only one a visitor can guess. */
+    private fun registerIdentityCommands(t: CmdTable) {
+        t.cmd("help", "list everything you can type") { helpText() }
 
-        cmd("whoami", "who is this") {
+        t.cmd("whoami", "who is this") {
             out(
                 head("${profile.name} · ${profile.title}"),
                 dim("${profile.location} · ${education.school}"),
@@ -190,9 +222,12 @@ object TerminalEngine {
             )
         }
 
-        cmd("about", "the longer story") { out(TermLine(profile.summary)) }
+        t.cmd("about", "the longer story") { out(TermLine(profile.summary)) }
+    }
 
-        cmd("projects", "the builds — with slugs for `open`") {
+    /** The work itself: builds, stack, timeline, numbers, degree. */
+    private fun registerWorkCommands(t: CmdTable) {
+        t.cmd("projects", "the builds — with slugs for `open`") {
             val body = projects.flatMap {
                 listOf(
                     hi("${it.name}  (${it.slug})"),
@@ -203,7 +238,7 @@ object TerminalEngine {
             out(body + dim("") + dim("-> open <slug> for the full case study, e.g. `open mileway`")) // claim-audit:allow -- example terminal command uses the stable slug
         }
 
-        cmd("open", "open a project case study", usage = "open <slug>") { args ->
+        t.cmd("open", "open a project case study", usage = "open <slug>") { args ->
             val slug = args.firstOrNull()?.lowercase().orEmpty()
             val valid = projects.joinToString(", ") { it.slug }
             if (slug.isEmpty()) return@cmd out(dim("usage: open <slug> — $valid"))
@@ -218,15 +253,15 @@ object TerminalEngine {
             )
         }
 
-        cmd("skills", "the tech stack, grouped") {
+        t.cmd("skills", "the tech stack, grouped") {
             out(skills.flatMap { listOf(head(it.group), TermLine("  " + it.items.joinToString(" · "))) })
         }
 
-        cmd("stack", "the granular résumé stack") {
+        t.cmd("stack", "the granular résumé stack") {
             out(resumeSkills.flatMap { listOf(head(it.group), TermLine("  " + it.items.joinToString(" · "))) })
         }
 
-        cmd("experience", "career timeline") {
+        t.cmd("experience", "career timeline") {
             val body = experience.flatMap { job ->
                 listOf(head("${job.role} @ ${job.company}"), dim("  ${job.period}")) +
                     job.points.take(3).map {
@@ -236,17 +271,20 @@ object TerminalEngine {
             out(body + dim("") + dim("${education.degree} @ ${education.school} · ${education.period}"))
         }
 
-        cmd("metrics", "the headline numbers") {
+        t.cmd("metrics", "the headline numbers") {
             val body = metrics.flatMap { listOf(hi("${it.value.padEnd(6)}${it.label}"), dim("  ${it.detail}")) }
             val cases = caseStudies.map { dim("${it.metric.padEnd(24)}  ${it.title}") }
             out(body + dim("") + head("case studies") + cases)
         }
 
-        cmd("education", "where the degree came from") {
+        t.cmd("education", "where the degree came from") {
             out(TermLine(education.degree), dim("${education.school} · ${education.period}"))
         }
+    }
 
-        cmd("contact", "how to reach me") {
+    /** Ways to act on it: contact, resume, what shipped recently, the pitch. */
+    private fun registerReachCommands(t: CmdTable) {
+        t.cmd("contact", "how to reach me") {
             out(
                 TermLine("email     ${profile.email}"),
                 TermLine("phone     ${profile.phone}"),
@@ -258,15 +296,15 @@ object TerminalEngine {
             )
         }
 
-        cmd("resume", "open the full résumé") {
+        t.cmd("resume", "open the full résumé") {
             TermResult(lines = listOf(hi("opening résumé …")), navigate = Route.Resume)
         }
 
-        cmd("growth", "recently shipped, newest first") {
+        t.cmd("growth", "recently shipped, newest first") {
             out(recentGrowth.reversed().flatMap { listOf(hi("${it.date}  ${it.title}"), dim("  ${it.detail}")) })
         }
 
-        cmd("oss", "merged open-source contributions") {
+        t.cmd("oss", "merged open-source contributions") {
             out(
                 openSource.flatMap {
                     listOf(hi("[${it.status}] ${it.title}"), dim("  ${it.repo} · ${it.date} · ${it.url}"))
@@ -274,7 +312,7 @@ object TerminalEngine {
             )
         }
 
-        cmd("rooms", "the interactive rooms on this site") {
+        t.cmd("rooms", "the interactive rooms on this site") {
             // Which rooms this build serves is asked of the router, not listed here, so a room that
             // ports later stops being labelled "web only" without anyone editing the terminal.
             val body = siteRooms.flatMap {
@@ -289,7 +327,7 @@ object TerminalEngine {
             out(body + dim("") + dim("$ported of ${siteRooms.size} run in this build; the rest live on the React one"))
         }
 
-        cmd("hire", "the recruiter pitch") {
+        t.cmd("hire", "the recruiter pitch") {
             out(
                 head("Senior Android engineer · platform owner at 50k+ MAU"),
                 TermLine("GPS 50% -> 95% · crashes -80% · ~87% of UI-layer code in Compose across ~964k LOC."),
@@ -299,12 +337,15 @@ object TerminalEngine {
                 dim("or type `resume` for the full thing"),
             )
         }
+    }
 
-        cmd("neofetch", "the system readout") { out(neofetch()) }
+    /** The shell surface a terminal is expected to have. */
+    private fun registerShellCommands(t: CmdTable) {
+        t.cmd("neofetch", "the system readout") { out(neofetch()) }
 
-        cmd("banner", "reprint the banner") { out(banner) }
+        t.cmd("banner", "reprint the banner") { out(banner) }
 
-        cmd("ls", "list files & rooms") {
+        t.cmd("ls", "list files & rooms") {
             out(
                 hi(FILES.joinToString("   ")),
                 dim(ROOMS.joinToString("   ")),
@@ -313,7 +354,7 @@ object TerminalEngine {
             )
         }
 
-        cmd("cat", "read resume.txt / profile.txt / skills.txt", usage = "cat <file>") { args ->
+        t.cmd("cat", "read resume.txt / profile.txt / skills.txt", usage = "cat <file>") { args ->
             when (args.firstOrNull()?.lowercase()?.removeSuffix(".txt")) {
                 "resume" -> out(
                     TermLine(profile.summary),
@@ -333,11 +374,11 @@ object TerminalEngine {
             }
         }
 
-        cmd("ask", "ask the AI console (web build only)", usage = "ask <question>") {
+        t.cmd("ask", "ask the AI console (web build only)", usage = "ask <question>") {
             err("ask: the AI console is only on the web build (cv-siddharth) — it needs a server round trip this offline build deliberately does not ship.")
         }
 
-        cmd("theme", "the palettes this build uses", usage = "theme") {
+        t.cmd("theme", "the palettes this build uses", usage = "theme") {
             out(
                 dim("this shell doesn't recolour — theming here is structural, not a toggle:"),
                 hi("  site      #3ddc84 / #5ee6ff   (the default CvTheme)"),
@@ -348,20 +389,23 @@ object TerminalEngine {
             )
         }
 
-        cmd("echo", "print text", usage = "echo <text>", hidden = true) { args ->
+        t.cmd("echo", "print text", usage = "echo <text>", hidden = true) { args ->
             out(TermLine(args.joinToString(" ")))
         }
 
-        cmd("date", "current date/time") { out(dim(nowText())) }
+        t.cmd("date", "current date/time") { out(dim(nowText())) }
 
-        cmd("clear", "clear the screen") { TermResult(clear = true) }
+        t.cmd("clear", "clear the screen") { TermResult(clear = true) }
 
-        cmd("exit", "back to the portfolio") {
+        t.cmd("exit", "back to the portfolio") {
             TermResult(lines = listOf(dim("logging out…")), navigate = Route.Home)
         }
+    }
 
+    /** Hidden from `help` on purpose — found by typing, not by listing. */
+    private fun registerEasterEggs(t: CmdTable) {
         // ── easter eggs, hidden from `help` ─────────────────────────────────────────────────
-        cmd("sudo", "", hidden = true) { args ->
+        t.cmd("sudo", "", hidden = true) { args ->
             when {
                 args.joinToString(" ").contains("hire") ->
                     TermResult(
@@ -374,25 +418,23 @@ object TerminalEngine {
             }
         }
 
-        cmd("matrix", "", hidden = true) {
+        t.cmd("matrix", "", hidden = true) {
             out(hi("Wake up, Neo… the crashes are down 80%. There is no spoon, only structured concurrency."))
         }
 
-        cmd("coffee", "", hidden = true) {
+        t.cmd("coffee", "", hidden = true) {
             out(TermLine("brewing…"), dim("HTTP 418: I'm a teapot. Ship anyway."))
         }
 
-        cmd("uptime", "", hidden = true) {
+        t.cmd("uptime", "", hidden = true) {
             out(TermLine("up 5+ years, load average: ~964k LOC, 50k MAU, 0 dropped pagers"))
         }
 
-        cmd("vim", "", hidden = true) { out(dim("you're already in the best editor — Android Studio. :q!")) }
+        t.cmd("vim", "", hidden = true) { out(dim("you're already in the best editor — Android Studio. :q!")) }
 
-        cmd("man", "", hidden = true) { args ->
+        t.cmd("man", "", hidden = true) { args ->
             out(dim("man: no manual entry for ${args.firstOrNull() ?: "that"}. This is a portfolio, not GNU. Type `help`."))
         }
-
-        return cmds
     }
 
     private fun helpText(): TermResult {

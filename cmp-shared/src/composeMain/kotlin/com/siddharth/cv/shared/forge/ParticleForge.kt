@@ -367,6 +367,16 @@ private class Forge(
  * reduced-motion still frame and what a resize wants — a resize re-lays-out the same mark, it does
  * not re-run the assembly reveal.
  */
+/**
+ * The floor below which a forge is noise rather than a mark: the first layout pass reports 0 on
+ * wasm, and a 20px-tall swarm reads as a smudge.
+ */
+private const val ForgeMinWidth: Float = 80f
+private const val ForgeMinHeight: Float = 60f
+
+private fun canHoldMark(width: Float, height: Float, spacingPx: Float): Boolean =
+    width >= ForgeMinWidth && height >= ForgeMinHeight && spacingPx > 0f
+
 private fun buildForge(
     width: Float,
     height: Float,
@@ -374,7 +384,7 @@ private fun buildForge(
     settled: Boolean,
 ): Forge? {
     val advance = wordAdvance(ForgeWord)
-    if (advance <= 0f || width < 80f || height < 60f || spacingPx <= 0f) return null
+    if (advance <= 0f || !canHoldMark(width, height, spacingPx)) return null
     // Width-limited on a wide canvas, height-limited on a squat one.
     val em = min(width * 0.92f / advance, height / 1.30f)
     if (em < 24f) return null

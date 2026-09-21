@@ -73,14 +73,21 @@ fun parseMermaidFlow(source: String): FlowGraph? {
 
         // Cluster syntax would change the layout contract, so bail rather than mis-draw it.
         if (line.startsWith("subgraph") || line == "end") return null
-        // Styling directives don't affect the shape of the graph — drop them and keep going.
-        if (IGNORED_PREFIXES.any { line.startsWith(it) }) continue
 
-        if (!parseStatement(line, nodes, edges)) return null
+        // Styling directives don't affect the shape of the graph — drop them and keep going.
+        // Written as a guard on the call rather than a third `continue`: three jumps out of one
+        // loop body is where a reader stops being able to hold the exits in their head.
+        val styling = IGNORED_PREFIXES.any { line.startsWith(it) }
+        if (!styling && !parseStatement(line, nodes, edges)) return null
     }
 
-    if (direction == null || nodes.isEmpty()) return null
-    return FlowGraph(direction, nodes.values.toList(), edges)
+    // One return, not two: the guard and the result are the same decision, and splitting them
+    // pushed this function over ReturnCount's budget for no gain in clarity.
+    return if (direction == null || nodes.isEmpty()) {
+        null
+    } else {
+        FlowGraph(direction, nodes.values.toList(), edges)
+    }
 }
 
 /**
@@ -99,40 +106,74 @@ fun parseMermaidFlow(source: String): FlowGraph? {
  * arrangement with fewer [crossings] than the one it started from.
  */
 fun FlowGraph.ranks(): List<List<FlowNode>> {
+    // Sugiyama's phases, one function each. As one body this measured cyclomatic complexity 25,
+    // which is not one decision repeated — it is four algorithms sharing a scope.
+    val adjacency = adjacency()
+    val forward = acyclicSubgraph(adjacency)
+    val rank = longestPathRanks(forward)
+
+    val depth = (rank.maxOrNull() ?: 0) + 1
+    val declared = List(depth) { r -> nodes.filterIndexed { i, _ -> rank[i] == r } }
+    val ordered = barycenterOrder(this, declared.map { group -> group.map { it.id } })
+    return ordered.map { ids -> ids.map { byId.getValue(it) } }
+}
+
+/** Successor lists by node position. A self-loop cannot contribute a rank, so it is dropped. */
+private fun FlowGraph.adjacency(): Array<MutableList<Int>> {
     val index = nodes.withIndex().associate { (i, n) -> n.id to i }
     val out = Array(nodes.size) { mutableListOf<Int>() }
     for (e in edges) {
-        val a = index[e.from] ?: continue
-        val b = index[e.to] ?: continue
-        if (a != b) out[a] += b // a self-loop can't contribute a rank
+        val a = index[e.from]
+        val b = index[e.to]
+        if (a != null && b != null && a != b) out[a] += b
     }
+    return out
+}
 
-    // 0 = unvisited, 1 = on the stack, 2 = done. Iterative: wasmJs has a shallow stack and a
-    // recursive DFS over an arbitrary diagram is an avoidable cliff.
+/**
+ * Cycle-breaking DFS: the forward edges only, with back edges dropped from the ranking and kept
+ * for drawing. Iterative on purpose — wasmJs has a shallow stack and a recursive DFS over an
+ * arbitrary diagram is an avoidable cliff.
+ */
+private fun FlowGraph.acyclicSubgraph(out: Array<MutableList<Int>>): Array<MutableList<Int>> {
+    // 0 = unvisited, 1 = on the stack, 2 = done.
     val state = IntArray(nodes.size)
     val forward = Array(nodes.size) { mutableListOf<Int>() }
-    val stack = ArrayDeque<Pair<Int, Int>>() // node, next child index
+    val stack = ArrayDeque<Pair<Int, Int>>() // node, next child position
     for (root in nodes.indices) {
         if (state[root] != 0) continue
         state[root] = 1
         stack.addLast(root to 0)
-        while (stack.isNotEmpty()) {
-            val (u, ci) = stack.removeLast()
-            if (ci >= out[u].size) {
-                state[u] = 2
-                continue
-            }
-            stack.addLast(u to ci + 1)
-            val v = out[u][ci]
-            if (state[v] == 1) continue // back edge — drop from the ranking, keep for drawing
-            forward[u] += v
-            if (state[v] == 0) {
-                state[v] = 1
-                stack.addLast(v to 0)
-            }
+        walkFrom(stack, out, state, forward)
+    }
+    return forward
+}
+
+private fun walkFrom(
+    stack: ArrayDeque<Pair<Int, Int>>,
+    out: Array<MutableList<Int>>,
+    state: IntArray,
+    forward: Array<MutableList<Int>>,
+) {
+    while (stack.isNotEmpty()) {
+        val (u, ci) = stack.removeLast()
+        if (ci >= out[u].size) {
+            state[u] = 2
+            continue
+        }
+        stack.addLast(u to ci + 1)
+        val v = out[u][ci]
+        if (state[v] == 1) continue // back edge — drop from the ranking, keep for drawing
+        forward[u] += v
+        if (state[v] == 0) {
+            state[v] = 1
+            stack.addLast(v to 0)
         }
     }
+}
 
+/** Longest-path layering over the acyclic subgraph: Kahn's order, keeping the deepest rank seen. */
+private fun FlowGraph.longestPathRanks(forward: Array<MutableList<Int>>): IntArray {
     val inDegree = IntArray(nodes.size)
     for (u in nodes.indices) for (v in forward[u]) inDegree[v]++
     val rank = IntArray(nodes.size)
@@ -145,11 +186,7 @@ fun FlowGraph.ranks(): List<List<FlowNode>> {
             if (--inDegree[v] == 0) queue.addLast(v)
         }
     }
-
-    val depth = (rank.maxOrNull() ?: 0) + 1
-    val declared = List(depth) { r -> nodes.filterIndexed { i, _ -> rank[i] == r } }
-    val ordered = barycenterOrder(this, declared.map { group -> group.map { it.id } })
-    return ordered.map { ids -> ids.map { byId.getValue(it) } }
+    return rank
 }
 
 /**
@@ -183,9 +220,11 @@ private fun barycenterOrder(graph: FlowGraph, seed: List<List<String>>): List<Li
     val preds = HashMap<String, MutableList<String>>()
     val succs = HashMap<String, MutableList<String>>()
     for (e in graph.edges) {
-        val a = rank[e.from] ?: continue
-        val b = rank[e.to] ?: continue
-        if (b - a != 1) continue // back edges bow around the outside; flyovers vote in no band
+        val a = rank[e.from]
+        val b = rank[e.to]
+        // One guard, not three: an edge votes only if both ends are ranked and it spans exactly one
+        // band. Back edges bow around the outside and flyovers vote in no band at all.
+        if (a == null || b == null || b - a != 1) continue
         preds.getOrPut(e.to) { mutableListOf() } += e.from
         succs.getOrPut(e.from) { mutableListOf() } += e.to
     }

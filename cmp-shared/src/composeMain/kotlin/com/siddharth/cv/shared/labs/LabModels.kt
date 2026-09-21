@@ -287,8 +287,11 @@ internal const val RecomposeFlashSeconds: Float = 0.55f
  * rather than in the draw code because hit-testing is the one place that experiment can be wrong
  * in a way nobody notices — an off-by-one column reads as "the tap didn't register".
  */
+private fun isInsideGrid(x: Float, y: Float, w: Float, h: Float): Boolean =
+    w > 0f && h > 0f && x >= 0f && y >= 0f && x < w && y < h
+
 internal fun recomposeCellAt(x: Float, y: Float, w: Float, h: Float): Int {
-    if (w <= 0f || h <= 0f || x < 0f || y < 0f || x >= w || y >= h) return -1
+    if (!isInsideGrid(x, y, w, h)) return -1
     val col = (x / (w / RecomposeGridW)).toInt().coerceIn(0, RecomposeGridW - 1)
     val row = (y / (h / RecomposeGridH)).toInt().coerceIn(0, RecomposeGridH - 1)
     return row * RecomposeGridW + col

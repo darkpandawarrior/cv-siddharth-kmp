@@ -350,6 +350,31 @@ private fun page(
     val desc = clamp(description)
 
     return buildString {
+        appendHead(title, desc, canonical, ogType, image, jsonLd)
+        append(siteNav(route))
+        append(body)
+        appendTail()
+    }
+}
+
+/**
+ * Everything from `<!DOCTYPE html>` down to the opening `<div id="seo">`.
+ *
+ * Split out of [page], which was 86 lines of which 80 were this. The shape is head, then nav, then
+ * the caller's body, then the boot script — and the only part a reader ever checks against a
+ * particular route is the middle.
+ */
+// Every parameter is a distinct <meta> value read once; a holder type with six fields used at one
+// call site would be indirection rather than structure.
+@Suppress("LongParameterList")
+private fun StringBuilder.appendHead(
+    title: String,
+    desc: String,
+    canonical: String,
+    ogType: String,
+    image: String?,
+    jsonLd: String,
+) {
         append(
             """
             <!DOCTYPE html>
@@ -416,8 +441,10 @@ private fun page(
             """.trimIndent(),
         )
         append('\n')
-        append(siteNav(route))
-        append(body)
+}
+
+/** The closing `</div>`, and the module script that boots the wasm app over this page. */
+private fun StringBuilder.appendTail() {
         append(
             """
                 </div>
@@ -432,7 +459,6 @@ private fun page(
             """.trimIndent(),
         )
         append('\n')
-    }
 }
 
 /**

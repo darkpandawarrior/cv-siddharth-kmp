@@ -123,17 +123,30 @@ val themeLabSeeds: List<ThemeSeed> =
  * hue-preserving, which is all the ladder needs. Move to Oklch if a seed ever needs a perceptually
  * even ramp rather than a proportional one.
  */
+// The tone ladder, as multipliers on the hue direction. These are the whole derivation: they are
+// what makes ink/surface/card/line a strictly brightening ramp rather than four similar darks, and
+// [themeLabSelfCheck] asserts that ordering, so moving one of them is a deliberate design change.
+private const val AccentDimScale = 0.74f
+private const val InkScale = 0.055f
+private const val SurfaceScale = 0.10f
+private const val CardScale = 0.145f
+private const val LineScale = 0.29f
+private const val DeepVoidScale = 0.03f
+
+/** How far body text is pulled off white toward the seed — enough to tint, not enough to dim. */
+private const val OnBackgroundTint = 0.12f
+
 fun paletteFromSeed(seed: Color): CvColors {
     val base = seed.hueDirection()
     return CvDarkColors.copy(
         accent = seed,
-        accentDim = seed.scaled(0.74f),
-        ink = base.scaled(0.055f),
-        surface = base.scaled(0.10f),
-        card = base.scaled(0.145f),
-        line = base.scaled(0.29f),
-        onBackground = mixRgb(Color.White, base, 0.12f),
-        deepVoid = base.scaled(0.03f),
+        accentDim = seed.scaled(AccentDimScale),
+        ink = base.scaled(InkScale),
+        surface = base.scaled(SurfaceScale),
+        card = base.scaled(CardScale),
+        line = base.scaled(LineScale),
+        onBackground = mixRgb(Color.White, base, OnBackgroundTint),
+        deepVoid = base.scaled(DeepVoidScale),
     )
 }
 
@@ -142,9 +155,15 @@ fun paletteFromSeed(seed: Color): CvColors {
  * brightness. A fully black seed has no direction to recover, so it falls back to a neutral slate;
  * without that guard the whole palette would collapse to black and the ladder would flatten.
  */
+/** Below this the seed is black to within 8-bit rounding and carries no recoverable hue. */
+private const val BlackSeedEpsilon = 0.004f
+
+/** The neutral slate a black seed falls back to. Slightly blue, so the ladder still reads cool. */
+private val NeutralHueDirection = Color(0.55f, 0.58f, 0.62f, 1f)
+
 private fun Color.hueDirection(): Color {
     val peak = max(red, max(green, blue))
-    if (peak <= 0.004f) return Color(0.55f, 0.58f, 0.62f, 1f)
+    if (peak <= BlackSeedEpsilon) return NeutralHueDirection
     return Color(red / peak, green / peak, blue / peak, 1f)
 }
 
@@ -170,17 +189,39 @@ private fun mixRgb(a: Color, b: Color, t: Float): Color =
         1f,
     )
 
+// The sRGB electro-optical transfer function, verbatim from WCAG 2.1 / IEC 61966-2-1. Every one of
+// these six numbers is fixed by the specification — they are quoted, not chosen, and a bare 0.2126
+// in a luminance sum is precisely the literal that should never sit unnamed in a contrast audit.
+private const val SrgbLinearCutoff = 0.04045f
+private const val SrgbLinearSlope = 12.92f
+private const val SrgbGammaOffset = 0.055f
+private const val SrgbGammaScale = 1.055f
+private const val SrgbGammaExponent = 2.4f
+
+/** Rec. 709 luminance weights, the Y row of the sRGB-to-XYZ matrix. */
+private const val LumaRed = 0.2126f
+private const val LumaGreen = 0.7152f
+private const val LumaBlue = 0.0722f
+
 /** WCAG 2.1 relative luminance. The sRGB transfer curve, then the 709 weights. */
 internal fun relativeLuminance(color: Color): Float {
-    fun linear(c: Float): Float = if (c <= 0.04045f) c / 12.92f else ((c + 0.055f) / 1.055f).pow(2.4f)
-    return 0.2126f * linear(color.red) + 0.7152f * linear(color.green) + 0.0722f * linear(color.blue)
+    fun linear(c: Float): Float =
+        if (c <= SrgbLinearCutoff) {
+            c / SrgbLinearSlope
+        } else {
+            ((c + SrgbGammaOffset) / SrgbGammaScale).pow(SrgbGammaExponent)
+        }
+    return LumaRed * linear(color.red) + LumaGreen * linear(color.green) + LumaBlue * linear(color.blue)
 }
 
 /** WCAG contrast ratio, 1.0 (identical) … 21.0 (black on white). Order-independent. */
+/** WCAG's flare term: what stops a pair of near-blacks reporting an infinite ratio. */
+private const val ContrastFlare = 0.05f
+
 internal fun contrastRatio(a: Color, b: Color): Float {
     val la = relativeLuminance(a)
     val lb = relativeLuminance(b)
-    return (max(la, lb) + 0.05f) / (min(la, lb) + 0.05f)
+    return (max(la, lb) + ContrastFlare) / (min(la, lb) + ContrastFlare)
 }
 
 /**
@@ -188,9 +229,13 @@ internal fun contrastRatio(a: Color, b: Color): Float {
  * `+ 0.5f` matches how `Color(r, g, b)` itself rounds into its 8-bit sRGB packing: truncating here
  * instead would print #3CDC84 for a channel that came back as 60.9999.
  */
+private const val ByteMax = 255
+private const val HexRadix = 16
+private const val HexDigits = 2
+
 private fun hexOf(color: Color): String {
     fun byte(c: Float): String =
-        ((c * 255f + 0.5f).toInt().coerceIn(0, 255)).toString(16).padStart(2, '0')
+        ((c * ByteMax + 0.5f).toInt().coerceIn(0, ByteMax)).toString(HexRadix).padStart(HexDigits, '0')
     return "#${byte(color.red)}${byte(color.green)}${byte(color.blue)}".uppercase()
 }
 

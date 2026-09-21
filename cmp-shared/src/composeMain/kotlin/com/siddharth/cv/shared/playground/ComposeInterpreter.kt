@@ -64,93 +64,128 @@ private fun isIdPart(c: Char): Boolean = isIdStart(c) || c in '0'..'9'
 
 private fun isDigit(c: Char): Boolean = c in '0'..'9'
 
+private fun isHexDigit(c: Char): Boolean = isDigit(c) || c in 'a'..'f' || c in 'A'..'F'
+
+/** The `x` of `0x`. */
+private fun isHexMarker(c: Char): Boolean = c == 'x' || c == 'X'
+
+/** `*` followed by `/`, i.e. the end of a block comment starting at [i]. */
+private fun closesBlockComment(src: String, i: Int, n: Int): Boolean =
+    src[i] == '*' && i + 1 < n && src[i + 1] == '/'
+
 private val twoCharPunc = setOf("++", "--", "+=", "-=", "==", "!=", "->", "||", "&&")
 
 private const val SINGLE_PUNC = "{}()[].,=!+-*/:<>"
 
-private fun tokenize(src: String): List<Tok> {
-    val toks = ArrayList<Tok>()
-    var i = 0
-    val n = src.length
-    while (i < n) {
-        val c = src[i]
-        // whitespace
-        if (c.isWhitespace()) {
-            i++
-            continue
+/**
+ * One `Lexer` per snippet, because every reader below advances the same cursor.
+ *
+ * Previously one 65-line `while` with nine `continue`s, at cyclomatic complexity 50. The shape was
+ * never nine decisions about one thing — it was "skip what is not a token" followed by "read the
+ * token that starts here", and splitting on that seam is what makes each reader a named,
+ * separately-readable rule instead of a branch in a chain.
+ */
+private class Lexer(private val src: String) {
+    private val n = src.length
+    private var i = 0
+
+    fun tokenize(): List<Tok> {
+        val toks = ArrayList<Tok>()
+        while (true) {
+            skipTrivia()
+            if (i >= n) break
+            readToken()?.let { toks.add(it) }
         }
-        // line comment
-        if (c == '/' && i + 1 < n && src[i + 1] == '/') {
-            while (i < n && src[i] != '\n') i++
-            continue
-        }
-        // block comment — unterminated is fine, the index just runs off the end
-        if (c == '/' && i + 1 < n && src[i + 1] == '*') {
-            i += 2
-            while (i < n && !(src[i] == '*' && i + 1 < n && src[i + 1] == '/')) i++
-            i += 2
-            continue
-        }
-        // string, double-quoted, backslash escapes kept raw so interpolation can be split later
-        if (c == '"') {
-            i++
-            val s = StringBuilder()
-            while (i < n && src[i] != '"') {
-                if (src[i] == '\\' && i + 1 < n) {
-                    s.append(src[i]).append(src[i + 1])
-                    i += 2
-                    continue
-                }
-                s.append(src[i++])
-            }
-            i++ // closing quote
-            toks.add(Tok.Str(s.toString()))
-            continue
-        }
-        // hex literal 0xAARRGGBB, for Color(0x…)
-        if (c == '0' && i + 1 < n && (src[i + 1] == 'x' || src[i + 1] == 'X')) {
-            val s = StringBuilder("0x")
-            i += 2
-            while (i < n && (isDigit(src[i]) || src[i] in 'a'..'f' || src[i] in 'A'..'F')) s.append(src[i++])
-            toks.add(Tok.Num(s.toString()))
-            continue
-        }
-        // number, integer or decimal; the .dp / .sp unit is the parser's problem
-        if (isDigit(c)) {
-            val s = StringBuilder()
-            while (i < n && isDigit(src[i])) s.append(src[i++])
-            if (i + 1 < n && src[i] == '.' && isDigit(src[i + 1])) {
-                s.append(src[i++])
-                while (i < n && isDigit(src[i])) s.append(src[i++])
-            }
-            if (i < n && (src[i] == 'f' || src[i] == 'F')) i++ // 12f float literal
-            toks.add(Tok.Num(s.toString()))
-            continue
-        }
-        // identifier / keyword
-        if (isIdStart(c)) {
-            val s = StringBuilder()
-            while (i < n && isIdPart(src[i])) s.append(src[i++])
-            toks.add(Tok.Id(s.toString()))
-            continue
-        }
-        // multi-char punctuation
-        if (i + 2 <= n && src.substring(i, i + 2) in twoCharPunc) {
-            toks.add(Tok.Punc(src.substring(i, i + 2)))
-            i += 2
-            continue
-        }
-        // single-char punctuation
-        if (c in SINGLE_PUNC) {
-            toks.add(Tok.Punc(c.toString()))
-            i++
-            continue
-        }
-        // anything else — skipped, so a stray character never wedges the parser
-        i++
+        return toks
     }
-    return toks
+
+    /** Whitespace and both comment forms. An unterminated block comment just runs off the end. */
+    private fun skipTrivia() {
+        while (i < n) {
+            val c = src[i]
+            when {
+                c.isWhitespace() -> i++
+                c == '/' && i + 1 < n && src[i + 1] == '/' -> {
+                    while (i < n && src[i] != '\n') i++
+                }
+
+                c == '/' && i + 1 < n && src[i + 1] == '*' -> {
+                    i += 2
+                    while (i < n && !closesBlockComment(src, i, n)) i++
+                    i += 2
+                }
+
+                else -> return
+            }
+        }
+    }
+
+    /** Null for a character no token can start with — skipped, so a stray never wedges the parser. */
+    private fun readToken(): Tok? {
+        val c = src[i]
+        return when {
+            c == '"' -> readString()
+            c == '0' && i + 1 < n && isHexMarker(src[i + 1]) -> readHex()
+            isDigit(c) -> readNumber()
+            isIdStart(c) -> readIdentifier()
+            else -> readPunctuation()
+        }
+    }
+
+    /** Backslash escapes are kept raw so interpolation can be split later. */
+    private fun readString(): Tok {
+        i++ // opening quote
+        val s = StringBuilder()
+        while (i < n && src[i] != '"') {
+            if (src[i] == '\\' && i + 1 < n) {
+                s.append(src[i]).append(src[i + 1])
+                i += 2
+            } else {
+                s.append(src[i++])
+            }
+        }
+        i++ // closing quote
+        return Tok.Str(s.toString())
+    }
+
+    /** `0xAARRGGBB`, for `Color(0x…)`. */
+    private fun readHex(): Tok {
+        val s = StringBuilder("0x")
+        i += 2
+        while (i < n && isHexDigit(src[i])) s.append(src[i++])
+        return Tok.Num(s.toString())
+    }
+
+    /** Integer or decimal. The trailing `.dp` / `.sp` unit is the parser's problem, not the lexer's. */
+    private fun readNumber(): Tok {
+        val s = StringBuilder()
+        while (i < n && isDigit(src[i])) s.append(src[i++])
+        if (i + 1 < n && src[i] == '.' && isDigit(src[i + 1])) {
+            s.append(src[i++])
+            while (i < n && isDigit(src[i])) s.append(src[i++])
+        }
+        if (i < n && (src[i] == 'f' || src[i] == 'F')) i++ // 12f float literal
+        return Tok.Num(s.toString())
+    }
+
+    private fun readIdentifier(): Tok {
+        val s = StringBuilder()
+        while (i < n && isIdPart(src[i])) s.append(src[i++])
+        return Tok.Id(s.toString())
+    }
+
+    private fun readPunctuation(): Tok? {
+        if (i + 2 <= n && src.substring(i, i + 2) in twoCharPunc) {
+            val two = src.substring(i, i + 2)
+            i += 2
+            return Tok.Punc(two)
+        }
+        val c = src[i++]
+        return if (c in SINGLE_PUNC) Tok.Punc(c.toString()) else null
+    }
 }
+
+private fun tokenize(src: String): List<Tok> = Lexer(src).tokenize()
 
 // -------------------------------------------------------------------------------------------------
 // Parser
@@ -174,6 +209,13 @@ private class Args {
     var onValueChange: String? = null
 }
 
+// A recursive-descent parser is one small method per grammar production, and that is the shape
+// the metric is measuring the wrong thing on — the same argument detekt's own Compose guide makes
+// for a file of thirty composables. Splitting `parseText`/`parseButton`/`parseSpacer` across two
+// classes to get under twenty would put half the grammar behind a second indirection and make the
+// productions harder, not easier, to follow. Narrow and named, not a config-level surrender: an
+// ordinary class past twenty methods in this repo still fires.
+@Suppress("TooManyFunctions")
 private class Parser(private val toks: List<Tok>) {
     private var p = 0
 
@@ -198,6 +240,11 @@ private class Parser(private val toks: List<Tok>) {
 
     private fun describe(): String = peek()?.let { "\"${it.v}\"" } ?: "end of code"
 
+    /** The parser's `require`. One throw site instead of one per precondition. */
+    private fun expect(condition: Boolean, message: () -> String) {
+        if (!condition) throw ParseError(message())
+    }
+
     fun parseProgram(): Program {
         val state = ArrayList<StateDecl>()
         val tree = ArrayList<Node>()
@@ -211,8 +258,11 @@ private class Parser(private val toks: List<Tok>) {
                     val node = parseNode()
                     if (node == null) false else { tree.add(node); true }
                 }
-            } catch (e: RuntimeException) {
-                // Divergence #3: keep what parsed instead of losing the whole tree.
+            } catch (ignored: ParseError) {
+                // Divergence #3: keep what parsed instead of losing the whole tree. Narrowed from
+                // `RuntimeException` — ParseError is the only thing the productions throw, and
+                // catching the supertype meant an IndexOutOfBounds or a StackOverflow inside the
+                // parser would also have been silently turned into "stop here, tree is fine".
                 false
             }
             if (!progressed || p == before) break
@@ -224,17 +274,14 @@ private class Parser(private val toks: List<Tok>) {
     private fun parseStateDecl(): StateDecl {
         next() // var / val
         val nameTok = next()
-        if (nameTok !is Tok.Id) throw ParseError("Expected a name after var")
-        val name = nameTok.v
-        when {
-            atId("by") -> next()
-            atPunc("=") -> next()
-            else -> throw ParseError("Expected \"by\" or \"=\" in the declaration of $name")
-        }
-        if (!atId("remember")) throw ParseError("$name needs remember { mutableStateOf(...) }")
+        expect(nameTok is Tok.Id) { "Expected a name after var" }
+        val name = (nameTok as Tok.Id).v
+        expect(atId("by") || atPunc("=")) { "Expected \"by\" or \"=\" in the declaration of $name" }
+        next()
+        expect(atId("remember")) { "$name needs remember { mutableStateOf(...) }" }
         next()
         eatPunc("{")
-        if (!atId("mutableStateOf")) throw ParseError("$name needs mutableStateOf(...)")
+        expect(atId("mutableStateOf")) { "$name needs mutableStateOf(...)" }
         next()
         eatPunc("(")
         val init = parseExpr()
@@ -256,18 +303,19 @@ private class Parser(private val toks: List<Tok>) {
     }
 
     private fun parseNode(): Node? {
-        val t = peek()
-        if (t !is Tok.Id) return null
-        val name = t.v
-        when (name) {
-            "Text" -> return parseText()
-            "Button" -> return parseButton()
-            "Spacer" -> return parseSpacer()
-            "AnimatedVisibility" -> return parseAnimated()
-            "TextField", "OutlinedTextField", "BasicTextField" -> return parseTextField()
+        val name = (peek() as? Tok.Id)?.v ?: return null
+        return when (name) {
+            "Text" -> parseText()
+            "Button" -> parseButton()
+            "Spacer" -> parseSpacer()
+            "AnimatedVisibility" -> parseAnimated()
+            "TextField", "OutlinedTextField", "BasicTextField" -> parseTextField()
+            else -> containerNames[name]?.let { parseContainer(it) } ?: parseUnknown(name)
         }
-        containerNames[name]?.let { return parseContainer(it) }
-        // Unknown composable: consume its call + trailing lambda so parsing can keep going.
+    }
+
+    /** An unsupported composable: consume its call and trailing lambda so parsing can keep going. */
+    private fun parseUnknown(name: String): Node {
         next()
         skipParens()
         skipBraces()
@@ -480,71 +528,86 @@ private class Parser(private val toks: List<Tok>) {
         return left
     }
 
-    private fun parseAtom(): Expr {
-        val t = peek() ?: return emptyStr
-        if (t is Tok.Str) {
-            next()
-            return Expr.Str(parseInterpolation(t.v))
+    private fun parseAtom(): Expr =
+        when (val t = peek()) {
+            null -> emptyStr
+            is Tok.Str -> {
+                next()
+                Expr.Str(parseInterpolation(t.v))
+            }
+
+            is Tok.Num -> parseNumAtom(t)
+            is Tok.Id -> parseIdAtom(t)
+            // Unrecognised — consume one token and yield an empty string.
+            else -> {
+                next()
+                emptyStr
+            }
         }
-        if (t is Tok.Num) {
-            next()
-            var unit: NumUnit? = null
+
+    /** A number, with the `.dp` / `.sp` unit that may follow it. */
+    private fun parseNumAtom(t: Tok.Num): Expr {
+        next()
+        val unit =
             if (atPunc(".") && (atId("dp", 1) || atId("sp", 1))) {
                 next() // .
-                unit = if (next()?.v == "dp") NumUnit.Dp else NumUnit.Sp
+                if (next()?.v == "dp") NumUnit.Dp else NumUnit.Sp
+            } else {
+                null
             }
-            return Expr.Num(parseNumber(t.v), unit)
-        }
-        if (t is Tok.Id) {
-            if (t.v == "true" || t.v == "false") {
+        return Expr.Num(parseNumber(t.v), unit)
+    }
+
+    private fun parseIdAtom(t: Tok.Id): Expr =
+        when {
+            t.v == "true" || t.v == "false" -> {
                 next()
-                return Expr.Bool(t.v == "true")
+                Expr.Bool(t.v == "true")
             }
             // Color(0xAARRGGBB) — a custom colour literal, carried on the path like the TS does.
-            if (t.v == "Color" && atPunc("(", 1)) {
-                next() // Color
-                next() // (
-                var hex = ""
-                val arg = peek()
-                if (arg is Tok.Num) {
-                    hex = arg.v
-                    next()
-                }
-                while (peek() != null && !atPunc(")")) next()
-                if (atPunc(")")) next()
-                return Expr.Member("ColorHex:$hex")
-            }
+            t.v == "Color" && atPunc("(", 1) -> parseColorLiteral()
             // state-driven dimension: `size.dp` / `padding.sp` reads the number out of state
-            if (atPunc(".", 1) && (atId("dp", 2) || atId("sp", 2))) {
-                val ref = t.v
-                next() // ref
-                next() // .
-                val unit = if (next()?.v == "dp") NumUnit.Dp else NumUnit.Sp
-                return Expr.Num(0.0, unit, ref)
-            }
-            // member path: Color.Green, Arrangement.spacedBy(8.dp), Alignment.CenterHorizontally
+            atPunc(".", 1) && (atId("dp", 2) || atId("sp", 2)) -> parseStateDimension(t.v)
+            else -> parseMemberPath(t.v)
+        }
+
+    private fun parseColorLiteral(): Expr {
+        next() // Color
+        next() // (
+        val arg = peek()
+        val hex = if (arg is Tok.Num) arg.v.also { next() } else ""
+        while (peek() != null && !atPunc(")")) next()
+        if (atPunc(")")) next()
+        return Expr.Member("ColorHex:$hex")
+    }
+
+    private fun parseStateDimension(ref: String): Expr {
+        next() // ref
+        next() // .
+        val unit = if (next()?.v == "dp") NumUnit.Dp else NumUnit.Sp
+        return Expr.Num(0.0, unit, ref)
+    }
+
+    /** Color.Green, Arrangement.spacedBy(8.dp), Alignment.CenterHorizontally. */
+    private fun parseMemberPath(head: String): Expr {
+        next()
+        var path = head
+        // A call form we don't model: keep the name, and — divergence #1 — the first numeric
+        // argument, which is the whole information content of spacedBy / RoundedCornerShape.
+        if (atPunc("(")) {
+            val arg = skipParens()
+            return Expr.Member(if (arg == null) path else "$path:$arg")
+        }
+        val isMember = atPunc(".")
+        while (atPunc(".") && peek(1) is Tok.Id) {
             next()
-            var path = t.v
-            // A call form we don't model: keep the name, and — divergence #1 — the first numeric
-            // argument, which is the whole information content of spacedBy / RoundedCornerShape.
+            path += "." + (next()?.v ?: "")
             if (atPunc("(")) {
                 val arg = skipParens()
-                return Expr.Member(if (arg == null) path else "$path:$arg")
+                if (arg != null) path += ":$arg"
             }
-            val isMember = atPunc(".")
-            while (atPunc(".") && peek(1) is Tok.Id) {
-                next()
-                path += "." + (next()?.v ?: "")
-                if (atPunc("(")) {
-                    val arg = skipParens()
-                    if (arg != null) path += ":$arg"
-                }
-            }
-            return if (isMember) Expr.Member(path) else Expr.Ident(path)
         }
-        // Unrecognised — consume one token and yield an empty string.
-        next()
-        return emptyStr
+        return if (isMember) Expr.Member(path) else Expr.Ident(path)
     }
 
     /** Skips a balanced `(…)`, returning the raw text of the first number inside it, if any. */
@@ -615,7 +678,6 @@ private fun parseInterpolation(raw: String): List<StrPart> {
             }
         }
         buf.append(s[i++])
-        continue
     }
     flush()
     return parts
@@ -1054,8 +1116,19 @@ private fun flattenNodes(nodes: List<Node>): List<Node> = nodes.flatMap { n ->
  * implementation throws away, forgiveness of garbage, and all seven presets end to end.
  */
 internal fun composeInterpreterSelfCheck() {
-    val noState = ComposeState()
+    checkCounterPreset()
+    checkInterpolationSplitting()
+    val live = checkActionShapes()
+    checkStateDrivenDimensions()
+    checkFormBinding()
+    checkForgiveness()
+    checkEveryPreset()
+    checkDynamicEval(live)
+}
 
+/** The Counter preset: exact state, exact tree shape, and divergence #1 (spacedBy keeps its arg). */
+private fun checkCounterPreset() {
+    val noState = ComposeState()
     // ── the Counter preset: exact state + exact tree shape ──────────────────────────────────────
     val counter = parseCompose(composePresets[0].code)
     check(counter.state == listOf(StateDecl("count", StateValue.IntValue(0)))) {
@@ -1107,7 +1180,10 @@ internal fun composeInterpreterSelfCheck() {
     check(buttons[0].onClick == listOf(Action.Dec("count")))
     check(buttons[1].onClick == listOf(Action.Inc("count")))
     check(resolveText((buttons[1].children[0] as Node.Text).value, noState) == "add one")
+}
 
+/** Interpolation splitting, including `${'$'}{…}` and escapes. */
+private fun checkInterpolationSplitting() {
     // ── interpolation splitting, including ${…} and escapes ─────────────────────────────────────
     val interp = parseCompose("""Text("Count: ${'$'}count times ${'$'}{ n }!\nbye")""")
     val parts = ((interp.tree[0] as Node.Text).value as Expr.Str).parts
@@ -1123,7 +1199,10 @@ internal fun composeInterpreterSelfCheck() {
     // a lone $ is a literal, not a ref
     val lone = parseCompose("""Text("cost: ${'$'} 5")""")
     check(((lone.tree[0] as Node.Text).value as Expr.Str).parts == listOf(StrPart.Literal("cost: ${'$'} 5")))
+}
 
+/** Every [Action] shape, parsed and then applied to live state. Returns that state for [checkDynamicEval]. */
+private fun checkActionShapes(): ComposeState {
     // ── every Action shape, parsed and then applied to live state ────────────────────────────────
     val actions = parseCompose(
         """
@@ -1169,7 +1248,11 @@ internal fun composeInterpreterSelfCheck() {
     // an action on an undeclared var starts from 0 rather than throwing
     applyAction(Action.Inc("ghost"), live)
     check(live.number("ghost") == 1.0)
+    return live
+}
 
+/** State-driven dimensions and interpolation read through live state. */
+private fun checkStateDrivenDimensions() {
     // ── state-driven dimensions and interpolation read through live state ───────────────────────
     val anim = parseCompose(composePresets[5].code)
     val animState = ComposeState(anim.state)
@@ -1207,7 +1290,10 @@ internal fun composeInterpreterSelfCheck() {
     check(resolveText(stateText.value, toggleState) == "state is false")
     applyActions(flattenNodes(toggle.tree).filterIsInstance<Node.Button>().first().onClick, toggleState)
     check(resolveText(stateText.value, toggleState) == "state is true") { "toggling must change the Text" }
+}
 
+/** TextField binding, AnimatedVisibility, logic and `.isEmpty`. */
+private fun checkFormBinding() {
     // ── TextField binding, AnimatedVisibility, logic and .isEmpty ────────────────────────────────
     val form = parseCompose(
         """
@@ -1248,7 +1334,11 @@ internal fun composeInterpreterSelfCheck() {
     // unmodellable conditions stay visible rather than vanishing
     check(resolveBool(Expr.Member("Something.weird"), formState))
     check(resolveBool(null, formState))
+}
 
+/** Forgiveness: unknown modifiers, unknown composables, garbage, and every mid-keystroke prefix. */
+private fun checkForgiveness() {
+    val noState = ComposeState()
     // ── forgiveness: unknown modifiers, unknown composables, garbage ─────────────────────────────
     val unknownMod = parseCompose("""Text("hi", modifier = Modifier.shimmer(4.dp).padding(2.dp).glow())""")
     val modNames = (unknownMod.tree[0] as Node.Text).modifiers.map { it.name }
@@ -1291,7 +1381,10 @@ internal fun composeInterpreterSelfCheck() {
         val program = parseCompose(src) // must not throw
         program.tree.forEach { resolveBool((it as? Node.Animated)?.visible, noState) }
     }
+}
 
+/** All seven presets, end to end. */
+private fun checkEveryPreset() {
     // ── all seven presets, end to end ───────────────────────────────────────────────────────────
     check(composePresets.size == 7) { "the React site ships 7 presets" }
     composePresets.forEach { preset ->
@@ -1304,20 +1397,27 @@ internal fun composeInterpreterSelfCheck() {
         check(nodes.filterIsInstance<Node.Text>().isNotEmpty()) { "${preset.label}: no Text survived" }
         // every preset renders under a fresh state without an evaluator blowing up
         val state = ComposeState(program.state)
-        nodes.forEach { node ->
-            when (node) {
-                is Node.Text -> resolveText(node.value, state)
-                is Node.Animated -> resolveBool(node.visible, state)
-                is Node.Container -> node.modifiers.forEach { m -> m.args.forEach { resolveNum(it, state) } }
-                else -> Unit
-            }
-        }
+        nodes.forEach { node -> evaluateEverything(node, state) }
     }
     // the declaration signature is what gates a state reset, so it must key on the decls only
     check(stateSignature(parseCompose(composePresets[0].code)) == "count:int:0")
     check(stateSignature(parseCompose(composePresets[5].code)) == "size:int:84|shown:bool:true")
     check(stateSignature(parseCompose(composePresets[1].code)) == "") { "a stateless preset has an empty signature" }
+}
 
+/** Walks whatever a node carries through the evaluators, asserting only that none of them throws. */
+private fun evaluateEverything(node: Node, state: ComposeState) {
+    when (node) {
+        is Node.Text -> resolveText(node.value, state)
+        is Node.Animated -> resolveBool(node.visible, state)
+        is Node.Container -> node.modifiers.forEach { m -> m.args.forEach { resolveNum(it, state) } }
+        else -> Unit
+    }
+}
+
+/** `evalExpr`'s dynamic form, for the renderer paths that do not know the kind up front. */
+private fun checkDynamicEval(live: ComposeState) {
+    val noState = ComposeState()
     // evalExpr's dynamic form, for the renderer paths that don't know the kind up front
     check(evalExpr(Expr.Num(4.0, NumUnit.Dp), noState) == 4.0)
     check(evalExpr(Expr.Bool(true), noState) == true)

@@ -255,8 +255,6 @@ private fun ChatPanel(onClose: () -> Unit) {
                 }.collect { delta ->
                     messages.appendDelta(placeholder, delta)
                 }
-            } catch (cancel: CancellationException) {
-                throw cancel
             } finally {
                 messages.settle(placeholder)
                 inFlight = null

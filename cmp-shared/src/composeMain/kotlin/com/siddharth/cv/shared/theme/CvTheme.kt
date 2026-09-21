@@ -135,7 +135,12 @@ val cvType: CvTypography
     @Composable @ReadOnlyComposable get() = LocalCvType.current
 
 /** `"#3ddc84"` -> opaque [Color]. Accepts a leading `#` or not. */
-fun cvColor(hex: String): Color = Color(hex.removePrefix("#").toLong(16) or 0xFF000000)
+/** `#RRGGBB` carries no alpha channel, so every parsed colour is forced fully opaque. */
+private const val OpaqueAlpha = 0xFF000000
+
+private const val HexRadix = 16
+
+fun cvColor(hex: String): Color = Color(hex.removePrefix("#").toLong(HexRadix) or OpaqueAlpha)
 
 /**
  * The CSS-cascade analogue of ProjectDetail.tsx:270-284 — a project's optional `theme` becomes an
@@ -204,15 +209,13 @@ private fun rememberCvTypography(
     monoFamily: FontFamily,
 ): CvTypography =
     remember(colors, widthDp, displayFamily, monoFamily) {
-        val DisplayFamily = displayFamily
-        val MonoFamily = monoFamily
         val hero = fluidSp(36f, 60f, widthDp)
         val h2 = fluidSp(28f, 36f, widthDp)
         val metric = fluidSp(30f, 40f, widthDp)
         CvTypography(
             hero =
                 TextStyle(
-                    fontFamily = DisplayFamily,
+                    fontFamily = displayFamily,
                     fontWeight = FontWeight.Bold,
                     fontSize = hero,
                     lineHeight = hero * 1.05f,
@@ -221,7 +224,7 @@ private fun rememberCvTypography(
                 ),
             h2 =
                 TextStyle(
-                    fontFamily = DisplayFamily,
+                    fontFamily = displayFamily,
                     fontWeight = FontWeight.Bold,
                     fontSize = h2,
                     lineHeight = h2 * 1.15f,
@@ -230,7 +233,7 @@ private fun rememberCvTypography(
                 ),
             metric =
                 TextStyle(
-                    fontFamily = DisplayFamily,
+                    fontFamily = displayFamily,
                     fontWeight = FontWeight.Bold,
                     fontSize = metric,
                     lineHeight = metric * 1.1f,
@@ -239,7 +242,7 @@ private fun rememberCvTypography(
                 ),
             cardTitle =
                 TextStyle(
-                    fontFamily = DisplayFamily,
+                    fontFamily = displayFamily,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
                     lineHeight = 26.sp,
@@ -248,7 +251,7 @@ private fun rememberCvTypography(
                 ),
             body =
                 TextStyle(
-                    fontFamily = DisplayFamily,
+                    fontFamily = displayFamily,
                     fontWeight = FontWeight.Normal,
                     fontSize = 16.sp,
                     lineHeight = 25.sp,
@@ -256,7 +259,7 @@ private fun rememberCvTypography(
                 ),
             bodySmall =
                 TextStyle(
-                    fontFamily = DisplayFamily,
+                    fontFamily = displayFamily,
                     fontWeight = FontWeight.Normal,
                     fontSize = 14.sp,
                     lineHeight = 22.sp,
@@ -264,7 +267,7 @@ private fun rememberCvTypography(
                 ),
             mono =
                 TextStyle(
-                    fontFamily = MonoFamily,
+                    fontFamily = monoFamily,
                     fontWeight = FontWeight.Normal,
                     fontSize = 13.sp,
                     lineHeight = 20.sp,
@@ -272,7 +275,7 @@ private fun rememberCvTypography(
                 ),
             metaMono =
                 TextStyle(
-                    fontFamily = MonoFamily,
+                    fontFamily = monoFamily,
                     fontWeight = FontWeight.Medium,
                     fontSize = 11.sp,
                     lineHeight = 16.sp,
@@ -281,7 +284,7 @@ private fun rememberCvTypography(
                 ),
             eyebrow =
                 TextStyle(
-                    fontFamily = DisplayFamily,
+                    fontFamily = displayFamily,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 12.sp,
                     lineHeight = 16.sp,
@@ -290,7 +293,7 @@ private fun rememberCvTypography(
                 ),
             ghostNumeral =
                 TextStyle(
-                    fontFamily = DisplayFamily,
+                    fontFamily = displayFamily,
                     fontWeight = FontWeight.Black,
                     fontSize = 36.sp,
                     lineHeight = 36.sp,
