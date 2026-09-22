@@ -8,11 +8,11 @@
 rendering the same portfolio to web (Kotlin/Wasm), desktop, Android and iOS.
 
 [![CI](https://github.com/darkpandawarrior/cv-siddharth-kmp/actions/workflows/ci.yml/badge.svg)](https://github.com/darkpandawarrior/cv-siddharth-kmp/actions/workflows/ci.yml)
-![Kotlin](https://img.shields.io/badge/Kotlin-2.4.20--RC-7F52FF?logo=kotlin&logoColor=white)
-![Compose Multiplatform](https://img.shields.io/badge/Compose%20Multiplatform-1.12.0--rc01-4285F4?logo=jetpackcompose&logoColor=white)
-![AGP](https://img.shields.io/badge/AGP-9.5.0--alpha02-3DDC84?logo=android&logoColor=white)
+![Kotlin](https://img.shields.io/badge/Kotlin-2.4.20-7F52FF?logo=kotlin&logoColor=white)
+![Compose Multiplatform](https://img.shields.io/badge/Compose%20Multiplatform-1.13.0--alpha01-4285F4?logo=jetpackcompose&logoColor=white)
+![AGP](https://img.shields.io/badge/AGP-9.5.0--alpha06-3DDC84?logo=android&logoColor=white)
 ![Platforms](https://img.shields.io/badge/platforms-Web%20%7C%20Desktop%20%7C%20Android%20%7C%20iOS-3DDC84)
-![Gradle](https://img.shields.io/badge/Gradle-9.7.0-02303A?logo=gradle&logoColor=white)
+![Gradle](https://img.shields.io/badge/Gradle-9.8.0--rc--2-02303A?logo=gradle&logoColor=white)
 
 **[Toolchain](#toolchain)** · **[Run it](#run-it)** · **[What ported](#what-ported)** · **[The honest cost](#the-honest-cost)**
 
@@ -31,15 +31,23 @@ from the React repo rather than written here.
 
 ## Toolchain
 
-Deliberately bleeding edge, every version is the newest published, pre-release included. The
-badges above are the versions: they are read off `gradle/libs.versions.toml` and
-`gradle-wrapper.properties`, and a second copy in a table here is what drifted last time.
+Deliberately bleeding edge, every version is the newest published, pre-release included.
 `compileSdk` / `minSdk` are `37` / `26`.
+
+The badges above are hand-maintained, not generated — this file previously claimed they were "read
+off `gradle/libs.versions.toml`" and every one of them was stale (Kotlin 2.4.20-RC, CMP 1.12.0-rc01,
+AGP 9.5.0-alpha02, Gradle 9.7.0). A hand-typed badge is the least checkable claim a repo makes, so
+check it rather than trust it:
+
+```bash
+grep -E '^(kotlin|compose-multiplatform|agp|ktor|coil) =' gradle/libs.versions.toml
+grep -o 'gradle-[0-9.a-z-]*-bin' gradle/wrapper/gradle-wrapper.properties
+```
 
 The whole dependency list, and nothing else: `compose.{runtime,foundation,material3,ui}`,
 `compose.components.resources` (the vendored fonts), `kotlinx-coroutines-core`,
-`kotlinx-serialization-json`, Ktor 3.5.1 client (`core` + `content-negotiation` + the wasm `js`
-engine), and Coil 3.5.0 (`coil-compose` + `coil-network-ktor3`). `kotlinx-browser` arrives
+`kotlinx-serialization-json`, Ktor 3.6.0 client (`core` + `content-negotiation` + the wasm `js`
+engine), and Coil 3.6.3 (`coil-compose` + `coil-network-ktor3`). `kotlinx-browser` arrives
 transitively with `compose.ui` on wasm. **No nav library, no DI, no diagram renderer, no markdown
 parser, no SSE library, no icon pack, no shader library.** Routing, the Mermaid layout engine, the
 SkSL ambient wash, the SSE frame parser, every icon and glyph, and the chat's markdown are all
@@ -62,6 +70,24 @@ open cmp-ios/iosApp.xcodeproj                    # iOS (arm64 + simulator-arm64 
 Compose UI cannot drift without someone editing `data/` and getting both. Pass
 `-Pprerender.origin=https://…` (or `CV_SITE_ORIGIN`) when deploying anywhere other than the default
 origin; `<link rel="canonical">` and the sitemap depend on it.
+
+### The design system
+
+`cmp-shared/src/composeMain/.../theme/CvComponents.kt` is the whole component set — sixteen
+public, data-free parts (`CvCard`, `TagChip`, `PrimaryButton`, `MetricGauge`, `Sparkline`,
+`HeroShimmerText`, `MediaPanel`, `ExpanderSection` …) that every one of the 33 routes is assembled
+from. `CvComponentPreviews.kt` next to it previews all of them, including the edge cases worth
+seeing (a gauge at 0/0.5/1, a flat sparkline, the second `CvResumeColors` palette).
+
+Those previews use `androidx.compose.ui.tooling.preview.Preview` in `composeMain`, not the
+`org.jetbrains.compose.ui.tooling.preview` one. Since Compose Multiplatform 1.10 the AndroidX
+annotation **is** the multiplatform annotation — `org.jetbrains.compose.ui:ui-tooling-preview`
+publishes it into `commonMain` — and the JetBrains-namespaced one is deprecated. Almost every
+answer written before 2026 has this backwards.
+
+The rest of the module's ~348 composables have no previews on purpose: they are private rows and
+sections that need a loaded `CvProfile`/`CvProject` and only mean anything in place. A preview of
+one of those is maintenance with no reader.
 
 ## What ported
 

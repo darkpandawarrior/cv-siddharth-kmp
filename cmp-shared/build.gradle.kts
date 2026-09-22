@@ -83,6 +83,13 @@ kotlin {
                     implementation(compose.foundation)
                     implementation(compose.material3)
                     implementation(compose.ui)
+                    // @Preview for the CvComponents design system (CvComponentPreviews.kt).
+                    // The RENDERER (org.jetbrains.compose.ui:ui-tooling) is deliberately NOT
+                    // declared: it is androidRuntimeClasspath-only under AGP's KMP library plugin,
+                    // and the IDE preview panel needs an Android Studio that understands AGP
+                    // 9.5.0-alpha06 anyway. Previews here compile on every composeMain target and
+                    // are the input a preview scanner would read; IDE rendering is a bonus.
+                    implementation(libs.ui.tooling.preview.mp)
                     // Res.font/Res.drawable — Compose draws through Skia and can't see CSS fonts.
                     implementation(compose.components.resources)
                     implementation(libs.coil.compose)

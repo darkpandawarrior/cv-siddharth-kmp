@@ -16,6 +16,16 @@ android-targetSdk = "37"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
+# The Compose Multiplatform @Preview annotation, usable directly in composeMain.
+# Since CMP 1.10 the annotation this artifact publishes IS androidx.compose.ui.tooling.preview.Preview
+# -- the AndroidX one, made multiplatform. org.jetbrains.compose.ui.tooling.preview.Preview and the
+# old org.jetbrains.compose.components:components-ui-tooling-preview artifact are the DEPRECATED
+# path; every pre-2026 blog post says the opposite. Verified against the published sources jar:
+# ui-tooling-preview-1.13.0-alpha01-sources.jar carries commonMain/androidx/compose/ui/tooling/
+# preview/{Preview,MultiPreviews,PreviewParameter,PreviewWrapper}.kt.
+# Publishes android/desktop/iosArm64/iosSimulatorArm64/js/macosArm64/wasmJs -- exactly composeMain's
+# target set, which is why it goes there and not in commonMain (no iosX64, no watchOS artifacts).
+ui-tooling-preview-mp = { module = "org.jetbrains.compose.ui:ui-tooling-preview", version.ref = "compose-multiplatform" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
