@@ -76,7 +76,11 @@ fun PlaygroundScreen(modifier: Modifier = Modifier) {
     val signature = parsed?.let { stateSignature(it) } ?: ""
     val state = remember(signature) { ComposeState(parsed?.state ?: emptyList()) }
 
-    val widthDp = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() }
+    val widthDp =
+        with(LocalDensity.current) {
+            LocalWindowInfo.current.containerSize.width
+                .toDp()
+        }
     val stacked = widthDp < 900.dp
 
     Column(
@@ -132,7 +136,10 @@ fun PlaygroundScreen(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun PresetRow(active: String, onPick: (ComposePreset) -> Unit) {
+private fun PresetRow(
+    active: String,
+    onPick: (ComposePreset) -> Unit,
+) {
     val colors = cvColors
     Row(
         Modifier.fillMaxWidth().horizontalScrollIfNarrow(),
@@ -143,14 +150,14 @@ private fun PresetRow(active: String, onPick: (ComposePreset) -> Unit) {
             BasicText(
                 text = preset.label,
                 modifier =
-                    Modifier.clip(RoundedCornerShape(999.dp))
+                    Modifier
+                        .clip(RoundedCornerShape(999.dp))
                         .background(if (on) colors.accent.copy(alpha = 0.14f) else colors.card)
                         .border(
                             1.dp,
                             if (on) colors.accent else colors.line,
                             RoundedCornerShape(999.dp),
-                        )
-                        .clickable(role = Role.Tab) { onPick(preset) }
+                        ).clickable(role = Role.Tab) { onPick(preset) }
                         .padding(horizontal = 12.dp, vertical = 7.dp),
                 style = cvType.metaMono.copy(color = if (on) colors.accent else colors.muted),
             )
@@ -159,10 +166,15 @@ private fun PresetRow(active: String, onPick: (ComposePreset) -> Unit) {
 }
 
 @Composable
-private fun EditorPane(code: String, onCodeChange: (String) -> Unit, error: String?) {
+private fun EditorPane(
+    code: String,
+    onCodeChange: (String) -> Unit,
+    error: String?,
+) {
     val colors = cvColors
     Column(
-        Modifier.fillMaxWidth()
+        Modifier
+            .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
             .background(colors.card)
             .border(1.dp, colors.line, RoundedCornerShape(12.dp)),
@@ -211,7 +223,8 @@ private fun EditorPane(code: String, onCodeChange: (String) -> Unit, error: Stri
             BasicText(
                 text = "parse: $error",
                 modifier =
-                    Modifier.fillMaxWidth()
+                    Modifier
+                        .fillMaxWidth()
                         .background(Color(0xFFFF5C5C).copy(alpha = 0.10f))
                         .padding(horizontal = 14.dp, vertical = 10.dp),
                 style = cvType.metaMono.copy(color = Color(0xFFFF8A8A)),
@@ -221,11 +234,18 @@ private fun EditorPane(code: String, onCodeChange: (String) -> Unit, error: Stri
 }
 
 @Composable
-private fun PreviewPane(parsed: Program?, state: ComposeState, stacked: Boolean) {
+private fun PreviewPane(
+    parsed: Program?,
+    state: ComposeState,
+    stacked: Boolean,
+) {
     val colors = cvColors
     val frame =
-        if (stacked) Modifier.fillMaxWidth().height(420.dp)
-        else Modifier.width(300.dp).height(560.dp)
+        if (stacked) {
+            Modifier.fillMaxWidth().height(420.dp)
+        } else {
+            Modifier.width(300.dp).height(560.dp)
+        }
 
     Column(
         frame
@@ -236,10 +256,17 @@ private fun PreviewPane(parsed: Program?, state: ComposeState, stacked: Boolean)
     ) {
         // The speaker notch, so the pane reads as a device rather than a panel.
         Box(Modifier.fillMaxWidth().padding(bottom = 8.dp), contentAlignment = Alignment.Center) {
-            Box(Modifier.width(56.dp).height(5.dp).clip(RoundedCornerShape(999.dp)).background(colors.line))
+            Box(
+                Modifier
+                    .width(56.dp)
+                    .height(5.dp)
+                    .clip(RoundedCornerShape(999.dp))
+                    .background(colors.line),
+            )
         }
         Box(
-            Modifier.fillMaxSize()
+            Modifier
+                .fillMaxSize()
                 .clip(RoundedCornerShape(20.dp))
                 .background(colors.ink)
                 .semantics {
@@ -269,6 +296,10 @@ private fun PreviewPane(parsed: Program?, state: ComposeState, stacked: Boolean)
 private fun Modifier.horizontalScrollIfNarrow(): Modifier = horizontalScroll(rememberScrollState())
 
 /** The preset table is data the screen depends on; a duplicate label would break the active-tab read. */
+// MagicNumber: assertion fixtures. detekt excludes every test source set from this rule by
+// default; these are tests that live in main source only because composeMain is `internal`
+// and this project has no commonTest. SelfCheckTest.kt now runs them from `check`.
+@Suppress("MagicNumber")
 internal fun playgroundScreenSelfCheck() {
     check(composePresets.isNotEmpty()) { "there must be at least one preset" }
     check(composePresets.size == 7) { "all seven React presets are expected, got ${composePresets.size}" }

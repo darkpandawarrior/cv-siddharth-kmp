@@ -33,7 +33,11 @@ enum class FlowDirection { TopDown, LeftRight }
 /** Only [Box] appears in the real data; the rest exist so a new diagram doesn't hit the fallback. */
 enum class NodeShape { Box, Round, Stadium, Diamond, Subroutine }
 
-data class FlowNode(val id: String, val label: String, val shape: NodeShape)
+data class FlowNode(
+    val id: String,
+    val label: String,
+    val shape: NodeShape,
+)
 
 data class FlowEdge(
     val from: String,
@@ -54,6 +58,9 @@ data class FlowGraph(
     val byId: Map<String, FlowNode> = nodes.associateBy { it.id }
 }
 
+/** The shortest arrow Mermaid has is `-->`; anything shorter is not an edge token. */
+private const val MinArrowChars = 3
+
 /**
  * Parse [source] or return `null`. `null` means "render the raw source" — never "render nothing".
  */
@@ -63,7 +70,12 @@ fun parseMermaidFlow(source: String): FlowGraph? {
     val edges = mutableListOf<FlowEdge>()
 
     for (rawLine in source.lineSequence()) {
-        val line = rawLine.substringBefore("%%").trim().trimEnd(';').trim()
+        val line =
+            rawLine
+                .substringBefore("%%")
+                .trim()
+                .trimEnd(';')
+                .trim()
         if (line.isEmpty()) continue
 
         if (direction == null) {
@@ -73,14 +85,21 @@ fun parseMermaidFlow(source: String): FlowGraph? {
 
         // Cluster syntax would change the layout contract, so bail rather than mis-draw it.
         if (line.startsWith("subgraph") || line == "end") return null
-        // Styling directives don't affect the shape of the graph — drop them and keep going.
-        if (IGNORED_PREFIXES.any { line.startsWith(it) }) continue
 
-        if (!parseStatement(line, nodes, edges)) return null
+        // Styling directives don't affect the shape of the graph — drop them and keep going.
+        // Written as a guard on the call rather than a third `continue`: three jumps out of one
+        // loop body is where a reader stops being able to hold the exits in their head.
+        val styling = IGNORED_PREFIXES.any { line.startsWith(it) }
+        if (!styling && !parseStatement(line, nodes, edges)) return null
     }
 
-    if (direction == null || nodes.isEmpty()) return null
-    return FlowGraph(direction, nodes.values.toList(), edges)
+    // One return, not two: the guard and the result are the same decision, and splitting them
+    // pushed this function over ReturnCount's budget for no gain in clarity.
+    return if (direction == null || nodes.isEmpty()) {
+        null
+    } else {
+        FlowGraph(direction, nodes.values.toList(), edges)
+    }
 }
 
 /**
@@ -99,40 +118,74 @@ fun parseMermaidFlow(source: String): FlowGraph? {
  * arrangement with fewer [crossings] than the one it started from.
  */
 fun FlowGraph.ranks(): List<List<FlowNode>> {
+    // Sugiyama's phases, one function each. As one body this measured cyclomatic complexity 25,
+    // which is not one decision repeated — it is four algorithms sharing a scope.
+    val adjacency = adjacency()
+    val forward = acyclicSubgraph(adjacency)
+    val rank = longestPathRanks(forward)
+
+    val depth = (rank.maxOrNull() ?: 0) + 1
+    val declared = List(depth) { r -> nodes.filterIndexed { i, _ -> rank[i] == r } }
+    val ordered = barycenterOrder(this, declared.map { group -> group.map { it.id } })
+    return ordered.map { ids -> ids.map { byId.getValue(it) } }
+}
+
+/** Successor lists by node position. A self-loop cannot contribute a rank, so it is dropped. */
+private fun FlowGraph.adjacency(): Array<MutableList<Int>> {
     val index = nodes.withIndex().associate { (i, n) -> n.id to i }
     val out = Array(nodes.size) { mutableListOf<Int>() }
     for (e in edges) {
-        val a = index[e.from] ?: continue
-        val b = index[e.to] ?: continue
-        if (a != b) out[a] += b // a self-loop can't contribute a rank
+        val a = index[e.from]
+        val b = index[e.to]
+        if (a != null && b != null && a != b) out[a] += b
     }
+    return out
+}
 
-    // 0 = unvisited, 1 = on the stack, 2 = done. Iterative: wasmJs has a shallow stack and a
-    // recursive DFS over an arbitrary diagram is an avoidable cliff.
+/**
+ * Cycle-breaking DFS: the forward edges only, with back edges dropped from the ranking and kept
+ * for drawing. Iterative on purpose — wasmJs has a shallow stack and a recursive DFS over an
+ * arbitrary diagram is an avoidable cliff.
+ */
+private fun FlowGraph.acyclicSubgraph(out: Array<MutableList<Int>>): Array<MutableList<Int>> {
+    // 0 = unvisited, 1 = on the stack, 2 = done.
     val state = IntArray(nodes.size)
     val forward = Array(nodes.size) { mutableListOf<Int>() }
-    val stack = ArrayDeque<Pair<Int, Int>>() // node, next child index
+    val stack = ArrayDeque<Pair<Int, Int>>() // node, next child position
     for (root in nodes.indices) {
         if (state[root] != 0) continue
         state[root] = 1
         stack.addLast(root to 0)
-        while (stack.isNotEmpty()) {
-            val (u, ci) = stack.removeLast()
-            if (ci >= out[u].size) {
-                state[u] = 2
-                continue
-            }
-            stack.addLast(u to ci + 1)
-            val v = out[u][ci]
-            if (state[v] == 1) continue // back edge — drop from the ranking, keep for drawing
-            forward[u] += v
-            if (state[v] == 0) {
-                state[v] = 1
-                stack.addLast(v to 0)
-            }
+        walkFrom(stack, out, state, forward)
+    }
+    return forward
+}
+
+private fun walkFrom(
+    stack: ArrayDeque<Pair<Int, Int>>,
+    out: Array<MutableList<Int>>,
+    state: IntArray,
+    forward: Array<MutableList<Int>>,
+) {
+    while (stack.isNotEmpty()) {
+        val (u, ci) = stack.removeLast()
+        if (ci >= out[u].size) {
+            state[u] = 2
+            continue
+        }
+        stack.addLast(u to ci + 1)
+        val v = out[u][ci]
+        if (state[v] == 1) continue // back edge — drop from the ranking, keep for drawing
+        forward[u] += v
+        if (state[v] == 0) {
+            state[v] = 1
+            stack.addLast(v to 0)
         }
     }
+}
 
+/** Longest-path layering over the acyclic subgraph: Kahn's order, keeping the deepest rank seen. */
+private fun FlowGraph.longestPathRanks(forward: Array<MutableList<Int>>): IntArray {
     val inDegree = IntArray(nodes.size)
     for (u in nodes.indices) for (v in forward[u]) inDegree[v]++
     val rank = IntArray(nodes.size)
@@ -145,11 +198,7 @@ fun FlowGraph.ranks(): List<List<FlowNode>> {
             if (--inDegree[v] == 0) queue.addLast(v)
         }
     }
-
-    val depth = (rank.maxOrNull() ?: 0) + 1
-    val declared = List(depth) { r -> nodes.filterIndexed { i, _ -> rank[i] == r } }
-    val ordered = barycenterOrder(this, declared.map { group -> group.map { it.id } })
-    return ordered.map { ids -> ids.map { byId.getValue(it) } }
+    return rank
 }
 
 /**
@@ -175,7 +224,10 @@ fun FlowGraph.ranks(): List<List<FlowNode>> {
  * band and doesn't count as crossing the rank-1 band it flies over. Real diagrams are 3-7 nodes
  * wide; add the dummy chain if one ever grows enough for that flyover to read as a crossing.
  */
-private fun barycenterOrder(graph: FlowGraph, seed: List<List<String>>): List<List<String>> {
+private fun barycenterOrder(
+    graph: FlowGraph,
+    seed: List<List<String>>,
+): List<List<String>> {
     if (seed.size < 2 || seed.all { it.size < 2 }) return seed
 
     val rank = HashMap<String, Int>()
@@ -183,9 +235,11 @@ private fun barycenterOrder(graph: FlowGraph, seed: List<List<String>>): List<Li
     val preds = HashMap<String, MutableList<String>>()
     val succs = HashMap<String, MutableList<String>>()
     for (e in graph.edges) {
-        val a = rank[e.from] ?: continue
-        val b = rank[e.to] ?: continue
-        if (b - a != 1) continue // back edges bow around the outside; flyovers vote in no band
+        val a = rank[e.from]
+        val b = rank[e.to]
+        // One guard, not three: an edge votes only if both ends are ranked and it spans exactly one
+        // band. Back edges bow around the outside and flyovers vote in no band at all.
+        if (a == null || b == null || b - a != 1) continue
         preds.getOrPut(e.to) { mutableListOf() } += e.from
         succs.getOrPut(e.from) { mutableListOf() } += e.to
     }
@@ -230,11 +284,15 @@ private fun barycenterPass(
         out[r].forEachIndexed { i, id -> here[id] = i }
         // sortedBy is stable, so equal barycenters keep the previous order — the tie-break that
         // makes this reproducible.
-        out[r] = out[r].sortedBy { id ->
-            val positions = neighbours[id]?.mapNotNull { refPos[it] } ?: emptyList()
-            if (positions.isEmpty()) here.getValue(id).toFloat()
-            else positions.sum().toFloat() / positions.size
-        }
+        out[r] =
+            out[r].sortedBy { id ->
+                val positions = neighbours[id]?.mapNotNull { refPos[it] } ?: emptyList()
+                if (positions.isEmpty()) {
+                    here.getValue(id).toFloat()
+                } else {
+                    positions.sum().toFloat() / positions.size
+                }
+            }
     }
     return out
 }
@@ -246,7 +304,10 @@ private fun barycenterPass(
  * Only edges between adjacent ranks are counted, matching what [barycenterOrder] can actually
  * influence — back edges are drawn as bows outside the content and can't cross a rank boundary.
  */
-fun crossings(graph: FlowGraph, ordering: List<List<String>>): Int {
+fun crossings(
+    graph: FlowGraph,
+    ordering: List<List<String>>,
+): Int {
     val rank = HashMap<String, Int>()
     val pos = HashMap<String, Int>()
     ordering.forEachIndexed { r, group ->
@@ -278,12 +339,13 @@ fun crossings(graph: FlowGraph, ordering: List<List<String>>): Int {
 /** One flat line of prose for the screen-reader description of a canvas that has no text nodes. */
 fun FlowGraph.describe(): String {
     val flat = { s: String -> s.replace('\n', ' ') }
-    val links = edges.joinToString("; ") { e ->
-        val from = flat(byId[e.from]?.label ?: e.from)
-        val to = flat(byId[e.to]?.label ?: e.to)
-        val via = e.label?.let { " (${flat(it)})" }.orEmpty()
-        if (e.arrow) "$from to $to$via" else "$from and $to$via"
-    }
+    val links =
+        edges.joinToString("; ") { e ->
+            val from = flat(byId[e.from]?.label ?: e.from)
+            val to = flat(byId[e.to]?.label ?: e.to)
+            val via = e.label?.let { " (${flat(it)})" }.orEmpty()
+            if (e.arrow) "$from to $to$via" else "$from and $to$via"
+        }
     return if (links.isEmpty()) {
         "Diagram of ${nodes.size} steps: " + nodes.joinToString(", ") { flat(it.label) }
     } else {
@@ -298,22 +360,24 @@ fun FlowGraph.describe(): String {
 private val IGNORED_PREFIXES = listOf("classDef", "class ", "style ", "linkStyle", "click ")
 
 /** Longest opener first — `[[` must beat `[`, `((` must beat `(`. */
-private val SHAPES: List<Triple<String, String, NodeShape>> = listOf(
-    Triple("[[", "]]", NodeShape.Subroutine),
-    Triple("([", "])", NodeShape.Stadium),
-    Triple("((", "))", NodeShape.Round),
-    Triple("{{", "}}", NodeShape.Diamond),
-    Triple("[", "]", NodeShape.Box),
-    Triple("(", ")", NodeShape.Round),
-    Triple("{", "}", NodeShape.Diamond),
-)
+private val SHAPES: List<Triple<String, String, NodeShape>> =
+    listOf(
+        Triple("[[", "]]", NodeShape.Subroutine),
+        Triple("([", "])", NodeShape.Stadium),
+        Triple("((", "))", NodeShape.Round),
+        Triple("{{", "}}", NodeShape.Diamond),
+        Triple("[", "]", NodeShape.Box),
+        Triple("(", ")", NodeShape.Round),
+        Triple("{", "}", NodeShape.Diamond),
+    )
 
 private fun parseHeader(line: String): FlowDirection? {
-    val rest = when {
-        line.startsWith("graph") -> line.removePrefix("graph")
-        line.startsWith("flowchart") -> line.removePrefix("flowchart")
-        else -> return null
-    }.trim()
+    val rest =
+        when {
+            line.startsWith("graph") -> line.removePrefix("graph")
+            line.startsWith("flowchart") -> line.removePrefix("flowchart")
+            else -> return null
+        }.trim()
     return when (rest.uppercase()) {
         "TD", "TB", "BT", "" -> FlowDirection.TopDown
         "LR", "RL" -> FlowDirection.LeftRight
@@ -347,9 +411,15 @@ private fun parseStatement(
     return true
 }
 
-private class Conn(val dashed: Boolean, val thick: Boolean, val arrow: Boolean)
+private class Conn(
+    val dashed: Boolean,
+    val thick: Boolean,
+    val arrow: Boolean,
+)
 
-private class Scan(private val s: String) {
+private class Scan(
+    private val s: String,
+) {
     private var i = 0
 
     fun atEnd(): Boolean {
@@ -386,8 +456,11 @@ private class Scan(private val s: String) {
             }
             // A bare reference never overwrites an earlier declaration; the label can appear on any
             // one mention, and in Doori's module graph it appears on a line of its own.
-            if (declared != null) nodes[id] = declared
-            else if (id !in nodes) nodes[id] = FlowNode(id, id, NodeShape.Box)
+            if (declared != null) {
+                nodes[id] = declared
+            } else if (id !in nodes) {
+                nodes[id] = FlowNode(id, id, NodeShape.Box)
+            }
 
             ids += id
             ws()
@@ -426,7 +499,7 @@ private class Scan(private val s: String) {
         val start = i
         while (i < s.length && s[i] in "-.=>") i++
         val tok = s.substring(start, i)
-        if (tok.length < 3 || tok.trimEnd('>').isEmpty()) {
+        if (tok.length < MinArrowChars || tok.trimEnd('>').isEmpty()) {
             i = start
             return null
         }
@@ -446,7 +519,8 @@ private class Scan(private val s: String) {
 
 /** `<br/>` is the only markup the real labels carry. Everything else is literal text. */
 private fun normalizeLabel(raw: String): String =
-    raw.replace("<br />", "\n")
+    raw
+        .replace("<br />", "\n")
         .replace("<br/>", "\n")
         .replace("<br>", "\n")
         .lines()
@@ -462,13 +536,18 @@ private fun normalizeLabel(raw: String): String =
  * The inputs are copied verbatim from CvProjectData.kt, because the only thing this parser has to
  * be right about is the strings the site actually ships.
  */
+// MagicNumber: assertion fixtures. detekt excludes every test source set from this rule by
+// default; these are tests that live in main source only because composeMain is `internal`
+// and this project has no commonTest. SelfCheckTest.kt now runs them from `check`.
+@Suppress("MagicNumber")
 internal fun mermaidParseSelfCheck() {
     // Gaddi — chained edge, edge labels, parens inside a quoted label, and a genuine cycle.
-    val gaddi = parseMermaidFlow(
-        """graph LR
+    val gaddi =
+        parseMermaidFlow(
+            """graph LR
   s["GameState"] -->|"+ Intent"| r["reduce()<br/>pure · RNG in state"] --> s2["GameState'"]
   s2 -.->|"byte-for-byte replay"| s""",
-    )
+        )
     checkNotNull(gaddi) { "the Gaddi replay diagram must parse" }
     check(gaddi.direction == FlowDirection.LeftRight) { "graph LR" }
     check(gaddi.nodes.map { it.id } == listOf("s", "r", "s2")) { "declaration order preserved" }
@@ -483,15 +562,16 @@ internal fun mermaidParseSelfCheck() {
     }
 
     // Doori — standalone declarations, then `&` groups on both sides of a link.
-    val doori = parseMermaidFlow(
-        """graph TD
+    val doori =
+        parseMermaidFlow(
+            """graph TD
   app[":app composition root"]
   t["feature: tracking"]
   s["feature: logging"]
   core["core: common · data · ui<br/>design system · Room(KMP)"]
   app --> t & s
   t & s --> core""",
-    )
+        )
     checkNotNull(doori) { "the Doori module diagram must parse" }
     check(doori.direction == FlowDirection.TopDown) { "graph TD" }
     check(doori.byId["app"]!!.label == ":app composition root") { "a colon-leading label is not a shape" }
@@ -521,15 +601,15 @@ internal fun mermaidParseSelfCheck() {
 }
 
 /**
- * Phase three's contract. Kept separate from [mermaidParseSelfCheck] because it checks the layout,
- * not the scanner — but called from it, so it needs no extra wiring in `Prerender.kt`.
- */
-/**
  * How many diagrams `projects` ships. Hardcoded on purpose: the per-diagram checks below prove each
  * one is well-formed, and only a count catches a diagram that quietly disappeared.
  */
 private const val SHIPPED_DIAGRAMS = 13
 
+/**
+ * Phase three's contract. Kept separate from [mermaidParseSelfCheck] because it checks the layout,
+ * not the scanner — but called from it, so it needs no extra wiring in `Prerender.kt`.
+ */
 internal fun mermaidLayoutSelfCheck() {
     // Hand-built so declaration order is the point rather than an accident of the parser: rank 1 is
     // declared in the reverse of the order its edges want, which is exactly one crossing.
@@ -619,7 +699,11 @@ internal fun mermaidLayoutSelfCheck() {
  * The widest shipped rank is 6, so the worst diagram here costs 720 arrangements; [cap] is the guard
  * for the day someone adds a 9-wide rank and would otherwise turn the build into a factorial.
  */
-private fun optimalCrossings(graph: FlowGraph, ranks: List<List<String>>, cap: Int = 50_000): Int? {
+private fun optimalCrossings(
+    graph: FlowGraph,
+    ranks: List<List<String>>,
+    cap: Int = 50_000,
+): Int? {
     var arrangements = 1L
     for (group in ranks) {
         for (i in 2..group.size) arrangements *= i

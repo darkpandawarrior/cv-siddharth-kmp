@@ -28,7 +28,9 @@ sealed interface Route {
     data object Home : Route
 
     /** The only route carrying free text. An unknown slug resolves to ProjectDetailScreen's 404. */
-    data class ProjectDetail(val slug: String) : Route
+    data class ProjectDetail(
+        val slug: String,
+    ) : Route
 
     data object Resume : Route
 
@@ -69,7 +71,9 @@ sealed interface Route {
      * default normalised away. A parameterless entry would have made every one of those links land
      * on the first layer and quietly lose the destination.
      */
-    data class Anthology(val layer: AnthologyLayer = AnthologyLayer.Form) : Route
+    data class Anthology(
+        val layer: AnthologyLayer = AnthologyLayer.Form,
+    ) : Route
 
     /** The canon: the count, the laws, the doctrine, and the line the spoilers sit below. */
     data object Canon : Route
@@ -87,7 +91,9 @@ sealed interface Route {
      * to an anthology slug is ReadScreen's own 404 naming what it has and offering the live site,
      * not a silent bounce to the front page.
      */
-    data class Read(val slug: String) : Route
+    data class Read(
+        val slug: String,
+    ) : Route
 
     /**
      * The magazine reader, carrying which edition and which page it opens on.
@@ -98,7 +104,10 @@ sealed interface Route {
      * validated here: the screen normalises an unknown year to the newest edition and clamps the
      * page into range, so a stale pasted link still round-trips through this router unchanged.
      */
-    data class Excelsior(val year: String? = null, val page: Int? = null) : Route
+    data class Excelsior(
+        val year: String? = null,
+        val page: Int? = null,
+    ) : Route
 
     /** The board: seven years of games across two platforms, mined. */
     data object Chess : Route
@@ -255,37 +264,38 @@ class CvNavState {
 // pass removed from FloatingChat.kt. Suppressed at the four route tables rather than raised in
 // config/detekt/detekt.yml, so the exemption stays attached to its reason.
 @Suppress("CyclomaticComplexMethod")
-fun Route.toPath(): String = when (this) {
-    Route.Home -> "/"
-    Route.Resume -> "/resume"
-    Route.Terminal -> "/terminal"
-    Route.Lab -> "/lab"
-    Route.Forge -> "/forge"
-    Route.Playground -> "/compose"
-    Route.Hire -> "/hire"
-    Route.Shipped -> "/shipped"
-    Route.Weeb -> "/weeb"
-    Route.Ops -> "/ops"
-    Route.Loopdown -> "/loopdown"
-    Route.Ink -> "/ink"
-    Route.Canon -> "/canon"
-    Route.Making -> "/making"
-    Route.Chess -> "/chess"
-    Route.Map -> "/map"
-    // The default layer is dropped from the URL, exactly as anthology.tsx drops it: one page,
-    // one canonical address, and `?layer=form` normalising to `/anthology` on both builds.
-    is Route.Anthology ->
-        if (layer == AnthologyLayer.Form) "/anthology" else "/anthology?layer=${layer.key}"
-    is Route.ProjectDetail -> "/project/$slug"
-    is Route.Read -> "/read/$slug"
-    // Same normalisation the anthology gets, one field wider: an absent field is absent from the
-    // address, so `/excelsior` stays the one canonical page and `?year=&page=` is only ever the
-    // deep link into a spread. Written in a fixed order so the URL is stable to compare.
-    is Route.Excelsior ->
-        listOfNotNull(year?.let { "year=$it" }, page?.let { "page=$it" })
-            .joinToString("&")
-            .let { if (it.isEmpty()) "/excelsior" else "/excelsior?$it" }
-}
+fun Route.toPath(): String =
+    when (this) {
+        Route.Home -> "/"
+        Route.Resume -> "/resume"
+        Route.Terminal -> "/terminal"
+        Route.Lab -> "/lab"
+        Route.Forge -> "/forge"
+        Route.Playground -> "/compose"
+        Route.Hire -> "/hire"
+        Route.Shipped -> "/shipped"
+        Route.Weeb -> "/weeb"
+        Route.Ops -> "/ops"
+        Route.Loopdown -> "/loopdown"
+        Route.Ink -> "/ink"
+        Route.Canon -> "/canon"
+        Route.Making -> "/making"
+        Route.Chess -> "/chess"
+        Route.Map -> "/map"
+        // The default layer is dropped from the URL, exactly as anthology.tsx drops it: one page,
+        // one canonical address, and `?layer=form` normalising to `/anthology` on both builds.
+        is Route.Anthology ->
+            if (layer == AnthologyLayer.Form) "/anthology" else "/anthology?layer=${layer.key}"
+        is Route.ProjectDetail -> "/project/$slug"
+        is Route.Read -> "/read/$slug"
+        // Same normalisation the anthology gets, one field wider: an absent field is absent from the
+        // address, so `/excelsior` stays the one canonical page and `?year=&page=` is only ever the
+        // deep link into a spread. Written in a fixed order so the URL is stable to compare.
+        is Route.Excelsior ->
+            listOfNotNull(year?.let { "year=$it" }, page?.let { "page=$it" })
+                .joinToString("&")
+                .let { if (it.isEmpty()) "/excelsior" else "/excelsior?$it" }
+    }
 
 /**
  * The honest answer: null means "this build does not serve that path".
@@ -350,7 +360,10 @@ fun routeOrNull(path: String): Route? {
  * links this router has always parsed, so the fix is one line there and it turns on all of it at
  * once. Written here because this is where the answer belongs, and it is self-checked below.
  */
-private fun legacyInbound(fragment: String, query: String): Route? {
+private fun legacyInbound(
+    fragment: String,
+    query: String,
+): Route? {
     if (fragment.startsWith("project/")) {
         return fragment.removePrefix("project/").ifEmpty { null }?.let { Route.ProjectDetail(it) }
     }
@@ -370,8 +383,7 @@ private fun legacyInbound(fragment: String, query: String): Route? {
  * for input that cannot occur. An empty value counts as absent, so `?year=` opens the default
  * edition rather than looking for an edition named "".
  */
-private fun String.param(key: String): String? =
-    split('&').firstOrNull { it.startsWith("$key=") }?.removePrefix("$key=")?.ifEmpty { null }
+private fun String.param(key: String): String? = split('&').firstOrNull { it.startsWith("$key=") }?.removePrefix("$key=")?.ifEmpty { null }
 
 /**
  * `?layer=tellers` -> [AnthologyLayer.Tellers].
@@ -426,7 +438,7 @@ internal fun navSelfCheck() {
 
     // reset() is popstate's path: it must land on the route without growing the stack past it.
     nav.reset(Route.ProjectDetail("kursi")) // claim-audit:allow -- stable route slug, not display copy
-    check(nav.current == Route.ProjectDetail("kursi")) { "reset lands on the route" } // claim-audit:allow -- stable route slug, not display copy
+    check(nav.current == Route.ProjectDetail("kursi")) { "reset lands on the route" } // claim-audit:allow -- route slug
     check(nav.canGoBack) { "reset keeps home underneath so back still means home" }
     nav.reset(Route.Home)
     check(nav.current == Route.Home && !nav.canGoBack) { "reset home collapses to the floor" }
@@ -465,13 +477,31 @@ internal fun navSelfCheck() {
 
     // Path mapping must round-trip, or the URL bar and the router disagree after a refresh.
     listOf(
-        Route.Home, Route.Resume, Route.Terminal, Route.Lab, Route.Forge, Route.Playground,
-        Route.Hire, Route.Shipped, Route.Weeb, Route.Ops, Route.Loopdown, Route.Ink,
-        Route.Anthology(), Route.Anthology(AnthologyLayer.Tellers), Route.Canon, Route.Making,
-        Route.Chess, Route.Map, Route.ProjectDetail("mileway"), Route.Read("deadline"), // claim-audit:allow -- stable route slug, not display copy
+        Route.Home,
+        Route.Resume,
+        Route.Terminal,
+        Route.Lab,
+        Route.Forge,
+        Route.Playground,
+        Route.Hire,
+        Route.Shipped,
+        Route.Weeb,
+        Route.Ops,
+        Route.Loopdown,
+        Route.Ink,
+        Route.Anthology(),
+        Route.Anthology(AnthologyLayer.Tellers),
+        Route.Canon,
+        Route.Making,
+        Route.Chess,
+        Route.Map,
+        Route.ProjectDetail("mileway"), // claim-audit:allow -- stable route slug, not display copy
+        Route.Read("deadline"),
         // Every combination of the two optional fields, because each one is written into the URL
         // independently and a joiner that drops the wrong half round-trips as a different spread.
-        Route.Excelsior(), Route.Excelsior("2021"), Route.Excelsior(page = 5),
+        Route.Excelsior(),
+        Route.Excelsior("2021"),
+        Route.Excelsior(page = 5),
         Route.Excelsior("2021", 5),
     ).forEach {
         check(routeFromPath(it.toPath()) == it) { "round-trip ${it.toPath()}" }
@@ -489,8 +519,8 @@ internal fun navSelfCheck() {
     check(routeOrNull("/anthology?layer=map#worlds") == Route.Anthology(AnthologyLayer.Map)) {
         "a fragment is not part of the query"
     }
-    check(routeFromPath("/project/mileway/") == Route.ProjectDetail("mileway")) { "trailing slash" } // claim-audit:allow -- stable route slug, not display copy
-    check(routeFromPath("/project/mileway?utm=x") == Route.ProjectDetail("mileway")) { "query stripped" } // claim-audit:allow -- stable route slug, not display copy
+    check(routeFromPath("/project/mileway/") == Route.ProjectDetail("mileway")) { "trailing slash" } // claim-audit:allow -- route slug
+    check(routeFromPath("/project/mileway?utm=x") == Route.ProjectDetail("mileway")) { "query stripped" } // claim-audit:allow -- route slug
     check(routeFromPath("/nonsense") == Route.Home) { "unknown path falls back home" }
 
     // The second free-text route. Same trailing-slash and query handling as /project, and one
@@ -534,8 +564,9 @@ internal fun navSelfCheck() {
 
     // The legacy inbound addresses. Every one of these is a link that already exists somewhere he
     // does not control — a LinkedIn Featured card, an old share, a pasted hash URL.
-    check(routeOrNull("/#project/mileway") == Route.ProjectDetail("mileway")) { "the old hash project link" } // claim-audit:allow -- stable route slug, not display copy
-    check(routeOrNull("/?project=kursi") == Route.ProjectDetail("kursi")) { "LinkedIn Featured keeps the query" } // claim-audit:allow -- stable route slug, not display copy
+    check(routeOrNull("/#project/mileway") == Route.ProjectDetail("mileway")) { "the old hash project link" } // claim-audit:allow -- slug
+    val gaddiSlug = "kursi" // claim-audit:allow -- stable route slug, not display copy
+    check(routeOrNull("/?project=$gaddiSlug") == Route.ProjectDetail(gaddiSlug)) { "LinkedIn Featured keeps the query" }
     check(routeOrNull("/#terminal") == Route.Terminal) { "an old hash route resolves to its page" }
     check(routeOrNull("/#compose") == Route.Playground) { "including one whose slug is not its name" }
     check(routeOrNull("/#projects") == Route.Home) { "a homepage section anchor is the homepage, not a route" }

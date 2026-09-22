@@ -41,8 +41,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.siddharth.cv.shared.LocalNav
 import com.siddharth.cv.shared.CvNavState
+import com.siddharth.cv.shared.LocalNav
 import com.siddharth.cv.shared.Route
 import com.siddharth.cv.shared.data.generated.LiveClient
 import com.siddharth.cv.shared.data.generated.PastClient
@@ -52,6 +52,8 @@ import com.siddharth.cv.shared.data.generated.liveClients
 import com.siddharth.cv.shared.data.generated.pastClients
 import com.siddharth.cv.shared.data.generated.storeApps
 import com.siddharth.cv.shared.data.generated.storeGeneratedAt
+import com.siddharth.cv.shared.format.TenthsPerUnit
+import com.siddharth.cv.shared.format.tenthsToString
 import com.siddharth.cv.shared.theme.CvCard
 import com.siddharth.cv.shared.theme.CvContentMaxWidth
 import com.siddharth.cv.shared.theme.CvGutter
@@ -98,11 +100,12 @@ fun ShippedScreen(modifier: Modifier = Modifier) {
         // corpus into rows. Chunking rather than a LazyVerticalGrid keeps ONE scroll container for
         // a page a hundred-odd client cards long: the grid would have to nest inside this column
         // and either lose its laziness to an infinite height constraint or fight it for the scroll.
-        val columns = when {
-            maxWidth >= WideBreakpoint -> 3
-            maxWidth >= MediumBreakpoint -> 2
-            else -> 1
-        }
+        val columns =
+            when {
+                maxWidth >= WideBreakpoint -> 3
+                maxWidth >= MediumBreakpoint -> 2
+                else -> 1
+            }
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -165,11 +168,14 @@ private val MediumBreakpoint: Dp = 620.dp
  * The web page is `max-w-6xl`; this port holds every surface to [CvContentMaxWidth] so a reader
  * moving between screens never sees the measure jump.
  */
-private fun Modifier.pageMeasure(): Modifier =
-    this.widthIn(max = CvContentMaxWidth).fillMaxWidth().padding(horizontal = CvGutter)
+private fun Modifier.pageMeasure(): Modifier = this.widthIn(max = CvContentMaxWidth).fillMaxWidth().padding(horizontal = CvGutter)
 
 @Composable
-private fun Section(eyebrow: String, title: String, content: @Composable () -> Unit) {
+private fun Section(
+    eyebrow: String,
+    title: String,
+    content: @Composable () -> Unit,
+) {
     Reveal {
         Column(Modifier.pageMeasure().padding(top = CvSectionGap)) {
             SectionEyebrow(eyebrow)
@@ -494,7 +500,12 @@ private fun PastClient.toShelf(): ShelfClient =
     )
 
 @Composable
-private fun ClientRow(row: List<ShelfClient>, columns: Int, past: Boolean, uri: UriHandler) {
+private fun ClientRow(
+    row: List<ShelfClient>,
+    columns: Int,
+    past: Boolean,
+    uri: UriHandler,
+) {
     Row(
         modifier = Modifier.pageMeasure().padding(top = 12.dp).height(IntrinsicSize.Min),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -514,12 +525,13 @@ private fun ClientRow(row: List<ShelfClient>, columns: Int, past: Boolean, uri: 
 }
 
 /** "rider" -> "Rider". The label a person would use for it; anything else is just "App". */
-private fun sideLabel(side: String): String = when (side) {
-    "rider" -> "Rider"
-    "driver" -> "Driver"
-    "merchant" -> "Merchant"
-    else -> "App"
-}
+private fun sideLabel(side: String): String =
+    when (side) {
+        "rider" -> "Rider"
+        "driver" -> "Driver"
+        "merchant" -> "Merchant"
+        else -> "App"
+    }
 
 @Composable
 private fun ClientCard(
@@ -631,7 +643,11 @@ private fun SetUpDot() {
  * "SmartBike" is noise, not information.
  */
 @Composable
-private fun Monogram(name: String, colorHex: String?, size: Dp) {
+private fun Monogram(
+    name: String,
+    colorHex: String?,
+    size: Dp,
+) {
     val colors = cvColors
     val brand = colorHex?.let { cvColor(it) } ?: colors.card
     Box(
@@ -674,25 +690,25 @@ private fun HowIKnow() {
         listOf(
             "Every client shipped separately" to
                 "That is what made it a platform rather than a product: one app, rebuilt and " +
-                    "rebranded for each client, each with its own name and its own listing. So the " +
-                    "work is not one entry on a CV, it is spread across a lot of store pages, " +
-                    "under a lot of company names, and none of them are mine.",
+                "rebranded for each client, each with its own name and its own listing. So the " +
+                "work is not one entry on a CV, it is spread across a lot of store pages, " +
+                "under a lot of company names, and none of them are mine.",
             "Then Google told me which survived" to
                 "Most never made it out of pilot. ${fleetStats.live} are still on the Play Store, " +
-                    "and each one hands over its real name, icon, rating, install count and the " +
-                    "company that publishes it. Anything that no longer answers is taken off this " +
-                    "page rather than left as a broken link.",
+                "and each one hands over its real name, icon, rating, install count and the " +
+                "company that publishes it. Anything that no longer answers is taken off this " +
+                "page rather than left as a broken link.",
             "And the Archive remembered the rest" to
                 "An app that was taken down and an app that never existed look identical on Play: " +
-                    "both are a dead link. The Internet Archive can tell them apart, because it " +
-                    "kept a copy of the listing while it was up. That is the only reason " +
-                    "${fleetStats.delisted} of these can be named at all.",
+                "both are a dead link. The Internet Archive can tell them apart, because it " +
+                "kept a copy of the listing while it was up. That is the only reason " +
+                "${fleetStats.delisted} of these can be named at all.",
             "What I left out" to
                 "${fleetStats.predatingHim} apps that were genuinely published, but whose last " +
-                    "build went out before I joined, so I cannot have written a line in them. One " +
-                    "with a million installs that came off the same platform two years before I " +
-                    "arrived. Anything that was a demo or a template rather than a real client. " +
-                    "And anything a former employer would reasonably consider theirs.",
+                "build went out before I joined, so I cannot have written a line in them. One " +
+                "with a million installs that came off the same platform two years before I " +
+                "arrived. Anything that was a demo or a template rather than a real client. " +
+                "And anything a former employer would reasonably consider theirs.",
         )
     Section(eyebrow = "// method", title = "How I know") {
         Column {
@@ -759,17 +775,21 @@ private val Months =
     listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
 /** 2920170 -> "2.9M". Install counts are Play's buckets, so any total is a floor, never a count. */
-private fun compact(n: Int): String = when {
-    n >= MILLION -> "${oneDecimal(n.toDouble() / MILLION).removeSuffix(".0")}M"
-    n >= THOUSAND -> "${(n + THOUSAND / 2) / THOUSAND}K"
-    else -> n.toString()
-}
+private fun compact(n: Int): String =
+    when {
+        n >= MILLION -> "${oneDecimal(n.toDouble() / MILLION).removeSuffix(".0")}M"
+        n >= THOUSAND -> "${(n + THOUSAND / 2) / THOUSAND}K"
+        else -> n.toString()
+    }
+
+/** `YYYYMMDD`: the year is the first four characters. */
+private const val IsoYearChars = 4
 
 /** "20211215" -> "Dec 2021". Archive timestamps, trimmed to what is meaningful. */
 private fun archiveMonth(ts: String): String {
     val month = ts.drop(4).take(2).toIntOrNull() ?: return ts
     val name = Months.getOrNull(month - 1) ?: return ts
-    return "$name ${ts.take(4)}"
+    return "$name ${ts.take(IsoYearChars)}"
 }
 
 /** "Jul 22, 2025" -> "Jul 2025". Play's own update date, without the day. */
@@ -786,10 +806,7 @@ private fun shortDate(d: String): String? {
  * 3.14 -> "3.1", locale-free. `toString()` would print "3.0999999" for some doubles and there is no
  * KMP-common printf; ratings are 0.0-5.0 so no sign or overflow handling is needed.
  */
-private fun oneDecimal(v: Double): String {
-    val scaled = round(v * 10.0).toInt()
-    return "${scaled / 10}.${scaled % 10}"
-}
+private fun oneDecimal(v: Double): String = tenthsToString(round(v * TenthsPerUnit).toInt())
 
 // ponytail: one runnable check instead of a test module. Every one of these formatters has a branch
 // or a parse in it, and all three are the kind of thing that looks right and prints wrong.

@@ -33,7 +33,8 @@ fun InstallCvImageLoader() {
 }
 
 private fun cvImageLoader(context: PlatformContext): ImageLoader =
-    ImageLoader.Builder(context)
+    ImageLoader
+        .Builder(context)
         .components { add(KtorNetworkFetcherFactory()) }
         .crossfade(true)
         .build()

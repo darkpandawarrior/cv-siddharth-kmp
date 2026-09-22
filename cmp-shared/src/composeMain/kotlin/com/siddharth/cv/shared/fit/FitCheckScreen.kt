@@ -133,40 +133,42 @@ private fun FitCheckForm() {
         report = if (offline.asked > 0) toFitReport(offline, final = false) else null
         final = false
 
-        job = scope.launch {
-            val provider = HttpChatProvider(HttpChatConfig(endpoint = CHAT_ENDPOINT, mode = "jd"))
-            val reply = StringBuilder()
-            try {
-                provider.completeStream(listOf(AiMessage(AiMessage.Role.USER, text))).collect { chunk ->
-                    if (chunk is AiChunk.Token) reply.append(chunk.text)
-                    // AiChunk.Failed falls through to the offline-final card below, same as a
-                    // stream that produced no directive at all — the reason doesn't change what
-                    // a recruiter needs to see.
+        job =
+            scope.launch {
+                val provider = HttpChatProvider(HttpChatConfig(endpoint = CHAT_ENDPOINT, mode = "jd"))
+                val reply = StringBuilder()
+                try {
+                    provider.completeStream(listOf(AiMessage(AiMessage.Role.USER, text))).collect { chunk ->
+                        if (chunk is AiChunk.Token) reply.append(chunk.text)
+                        // AiChunk.Failed falls through to the offline-final card below, same as a
+                        // stream that produced no directive at all — the reason doesn't change what
+                        // a recruiter needs to see.
+                    }
+                } catch (cancel: CancellationException) {
+                    throw cancel
+                } catch (_: Throwable) {
+                    // Transport-level failure never reaches AiChunk.Failed — same fallback either way.
                 }
-            } catch (cancel: CancellationException) {
-                throw cancel
-            } catch (_: Throwable) {
-                // Transport-level failure never reaches AiChunk.Failed — same fallback either way.
+                // The model's answer SUPERSEDES the offline card rather than appending to it.
+                val modelReport = parseJdFitDirective(reply.toString())
+                if (modelReport != null) {
+                    report = modelReport
+                } else if (offline.asked > 0) {
+                    report = toFitReport(offline, final = true)
+                    final = true
+                }
+                job = null
             }
-            // The model's answer SUPERSEDES the offline card rather than appending to it.
-            val modelReport = parseJdFitDirective(reply.toString())
-            if (modelReport != null) {
-                report = modelReport
-            } else if (offline.asked > 0) {
-                report = toFitReport(offline, final = true)
-                final = true
-            }
-            job = null
-        }
     }
 
     Column(
-        modifier = Modifier
-            .widthIn(max = 720.dp)
-            .fillMaxWidth()
-            .background(colors.surface, RoundedCornerShape(16.dp))
-            .border(1.dp, colors.line, RoundedCornerShape(16.dp))
-            .padding(16.dp),
+        modifier =
+            Modifier
+                .widthIn(max = 720.dp)
+                .fillMaxWidth()
+                .background(colors.surface, RoundedCornerShape(16.dp))
+                .border(1.dp, colors.line, RoundedCornerShape(16.dp))
+                .padding(16.dp),
     ) {
         Box(
             Modifier
@@ -214,7 +216,10 @@ private fun FitCheckForm() {
 }
 
 @Composable
-private fun FitReportCard(report: JdFitReport, final: Boolean) {
+private fun FitReportCard(
+    report: JdFitReport,
+    final: Boolean,
+) {
     val colors = cvColors
     CvCard(modifier = Modifier.fillMaxWidth(), glowOnHover = false) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -259,7 +264,11 @@ private fun FitReportCard(report: JdFitReport, final: Boolean) {
 }
 
 @Composable
-private fun FitRow(need: String, note: String, tint: Color) {
+private fun FitRow(
+    need: String,
+    note: String,
+    tint: Color,
+) {
     val colors = cvColors
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         BasicText(
@@ -277,8 +286,12 @@ private val FIT_COLOR_STRONG = Color(0xFF3DD68C)
 private val FIT_COLOR_WEAK = Color(0xFFFF5C7A)
 
 /** Green above a strong match, amber in the middle, red below — same bands hire.tsx's copy uses. */
-private fun fitColor(score: Int, accent: Color): Color = when {
-    score >= FIT_SCORE_STRONG -> FIT_COLOR_STRONG
-    score >= FIT_SCORE_MODERATE -> accent
-    else -> FIT_COLOR_WEAK
-}
+private fun fitColor(
+    score: Int,
+    accent: Color,
+): Color =
+    when {
+        score >= FIT_SCORE_STRONG -> FIT_COLOR_STRONG
+        score >= FIT_SCORE_MODERATE -> accent
+        else -> FIT_COLOR_WEAK
+    }

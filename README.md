@@ -12,7 +12,7 @@ rendering the same portfolio to web (Kotlin/Wasm), desktop, Android and iOS.
 ![Compose Multiplatform](https://img.shields.io/badge/Compose%20Multiplatform-1.13.0--alpha01-4285F4?logo=jetpackcompose&logoColor=white)
 ![AGP](https://img.shields.io/badge/AGP-9.5.0--alpha06-3DDC84?logo=android&logoColor=white)
 ![Platforms](https://img.shields.io/badge/platforms-Web%20%7C%20Desktop%20%7C%20Android%20%7C%20iOS-3DDC84)
-![Gradle](https://img.shields.io/badge/Gradle-9.7.0-02303A?logo=gradle&logoColor=white)
+![Gradle](https://img.shields.io/badge/Gradle-9.8.0--rc--2-02303A?logo=gradle&logoColor=white)
 
 **[Toolchain](#toolchain)** · **[Run it](#run-it)** · **[What ported](#what-ported)** · **[The honest cost](#the-honest-cost)**
 
@@ -31,15 +31,23 @@ from the React repo rather than written here.
 
 ## Toolchain
 
-Deliberately bleeding edge, every version is the newest published, pre-release included. The
-badges above are the versions: they are read off `gradle/libs.versions.toml` and
-`gradle-wrapper.properties`, and a second copy in a table here is what drifted last time.
+Deliberately bleeding edge, every version is the newest published, pre-release included.
 `compileSdk` / `minSdk` are `37` / `26`.
+
+The badges above are hand-maintained, not generated. This file previously claimed they were "read
+off `gradle/libs.versions.toml`" and every one of them was stale (Kotlin 2.4.20-RC, CMP 1.12.0-rc01,
+AGP 9.5.0-alpha02, Gradle 9.7.0). A hand-typed badge is the least checkable claim a repo makes, so
+check it rather than trust it:
+
+```bash
+grep -E '^(kotlin|compose-multiplatform|agp|ktor|coil) =' gradle/libs.versions.toml
+grep -o 'gradle-[0-9.a-z-]*-bin' gradle/wrapper/gradle-wrapper.properties
+```
 
 The whole dependency list, and nothing else: `compose.{runtime,foundation,material3,ui}`,
 `compose.components.resources` (the vendored fonts), `kotlinx-coroutines-core`,
-`kotlinx-serialization-json`, Ktor 3.5.1 client (`core` + `content-negotiation` + the wasm `js`
-engine), and Coil 3.5.0 (`coil-compose` + `coil-network-ktor3`). `kotlinx-browser` arrives
+`kotlinx-serialization-json`, Ktor 3.6.0 client (`core` + `content-negotiation` + the wasm `js`
+engine), and Coil 3.6.3 (`coil-compose` + `coil-network-ktor3`). `kotlinx-browser` arrives
 transitively with `compose.ui` on wasm. **No nav library, no DI, no diagram renderer, no markdown
 parser, no SSE library, no icon pack, no shader library.** Routing, the Mermaid layout engine, the
 SkSL ambient wash, the SSE frame parser, every icon and glyph, and the chat's markdown are all
@@ -62,6 +70,24 @@ open cmp-ios/iosApp.xcodeproj                    # iOS (arm64 + simulator-arm64 
 Compose UI cannot drift without someone editing `data/` and getting both. Pass
 `-Pprerender.origin=https://…` (or `CV_SITE_ORIGIN`) when deploying anywhere other than the default
 origin; `<link rel="canonical">` and the sitemap depend on it.
+
+### The design system
+
+`cmp-shared/src/composeMain/.../theme/CvComponents.kt` is the whole component set, sixteen
+public, data-free parts (`CvCard`, `TagChip`, `PrimaryButton`, `MetricGauge`, `Sparkline`,
+`HeroShimmerText`, `MediaPanel`, `ExpanderSection` …) that every one of the 33 routes is assembled
+from. `CvComponentPreviews.kt` next to it previews all of them, including the edge cases worth
+seeing (a gauge at 0/0.5/1, a flat sparkline, the second `CvResumeColors` palette).
+
+Those previews use `androidx.compose.ui.tooling.preview.Preview` in `composeMain`, not the
+`org.jetbrains.compose.ui.tooling.preview` one. Since Compose Multiplatform 1.10 the AndroidX
+annotation **is** the multiplatform annotation, `org.jetbrains.compose.ui:ui-tooling-preview`
+publishes it into `commonMain`, and the JetBrains-namespaced one is deprecated. Almost every
+answer written before 2026 has this backwards.
+
+The rest of the module's ~348 composables have no previews on purpose: they are private rows and
+sections that need a loaded `CvProfile`/`CvProject` and only mean anything in place. A preview of
+one of those is maintenance with no reader.
 
 ## What ported
 
@@ -107,7 +133,7 @@ thirteen has been looked at in a browser yet.
 | **GPU ambient wash** | The background is one SkSL fragment program through Skiko `RuntimeEffect`: 4-octave value-noise fbm put through a two-tap domain warp, so the blooms wander instead of being the perfect ellipses a CSS radial gradient is limited to. Starfield is a hash threshold over 4px cells rather than ~120 `drawCircle` calls, so it is also the *cheaper* path. Verified live in-browser by the shader's per-pixel dither showing up in a screenshot (≈70% of adjacent background pixels differ by 1 to 4/255; a CPU gradient is smooth). |
 | **Mermaid diagrams, rendered** | Sugiyama phases 1 to 3 on the Compose canvas, longest-path ranking, barycenter crossing reduction over four down-then-up sweeps, curved edge routing with arrowheads, shrink-to-fit then scroll. Crossings are counted before and after and the worse arrangement is discarded, so the sweep can never make a diagram worse. All 13 diagrams in `data/` parse and lay out (`SHIPPED_DIAGRAMS` in `MermaidParse.kt` fails the self-check if that count moves without this line moving); anything outside `graph`/`flowchart` `TD`/`LR` degrades to its own source card rather than drawing a lie. The canvas has no text nodes, so each graph also emits a prose `contentDescription`. |
 | **Fit check** (home page) | Port of `FitCheck.tsx` + `skillMatch.ts`: paste a job description, get an instant offline scorecard from a Kotlin port of the alias table (`fit/SkillMatch.kt`), superseded by the model's own read when it arrives. Self-contained rather than routed through the floating chat's transcript (see that row's note), so it sends its own `mode:"jd"` request through kmp-toolkit's `HttpChatProvider` (the one caller in this app that provider is safe for; `ChatClient.kt`'s own comment explains why ordinary chat can't use it) and parses just the one `[[jdfit:{…}]]` directive back out, rather than porting the React build's general generative-UI parser for a feature that only ever emits one directive kind. |
-| **Floating AI chat** | Streams from the same live Vercel endpoint as the React site. The SSE frames are parsed by hand off `bodyAsChannel()` rather than through Ktor's `SSE` plugin, deliberately: the plugin collapses a non-2xx into an `SSEClientException` whose status and body are awkward to recover, and this endpoint says useful things in its error bodies. The `HttpClient` itself is built on `kmp-toolkit`'s `:network` (`external/kmp-toolkit`, composite-built), so every target gets a real per-platform HTTP engine now, not just wasmJs — android/iOS/desktop still can't complete a chat turn (the endpoint's origin allowlist rejects a non-browser caller by design), but that now surfaces as an honest 403 instead of an engine-resolution exception. Failures classify through `:result`'s shared `AiFailure` enum. Route-aware greeting and quick prompts, live token append, cancel mid-stream, every endpoint failure surfaced as text in the transcript rather than a silent stop. |
+| **Floating AI chat** | Streams from the same live Vercel endpoint as the React site. The SSE frames are parsed by hand off `bodyAsChannel()` rather than through Ktor's `SSE` plugin, deliberately: the plugin collapses a non-2xx into an `SSEClientException` whose status and body are awkward to recover, and this endpoint says useful things in its error bodies. The `HttpClient` itself is built on `kmp-toolkit`'s `:network` (`external/kmp-toolkit`, composite-built), so every target gets a real per-platform HTTP engine now, not just wasmJs. Android, iOS and desktop still cannot complete a chat turn (the endpoint's origin allowlist rejects a non-browser caller by design), but that now surfaces as an honest 403 instead of an engine-resolution exception. Failures classify through `:result`'s shared `AiFailure` enum. Route-aware greeting and quick prompts, live token append, cancel mid-stream, every endpoint failure surfaced as text in the transcript rather than a silent stop. |
 | **Résumé → PDF** | A real Save-as-PDF, not a canvas dump: `buildResumeHtml()` rebuilds the résumé as an HTML document from the same `data/` values and the web actual writes it into a hidden `<iframe>`, which the browser lays out and prints. Verified: 7 KB of laid-out text, seven `<h2>` sections, an `@page` rule, selectable text. Desktop opens the same HTML in the browser (Cmd-P from there), Android goes through `PrintManager`, iOS through `UIPrintInteractionController`, and the button is gated on `resumePrintSupported`, so no platform shows a control that does nothing. |
 | **Lab bench** (`/lab`) | Five instruments, recomposition cost, crash triage, module-graph isolation, search traversal, provider fan-out. Every simulation is a *pure function of elapsed seconds*, which is what makes the reduced-motion still frame free (freeze the clock and you have it, no warm-up path, no second code path) and the arithmetic checkable on the JVM. One shared ticker for the whole screen, not one per experiment. |
 | **⌘K command palette** | 45 commands generated from `homeSections` + `staticRoutes` + `projects` + `printedPieces` + profile data (10 sections + 17 routes + 6 case studies + 9 pieces + 3 actions), so the list cannot drift from the site. The nine piece rows exist because `/read` is parameterised: no route row can reach any of them, and a reader who knows a story's name would otherwise have to know its slug. Subsequence matching ranked prefix-first, full keyboard navigation. The chord is caught by `onPreviewKeyEvent` on a focusable root, *before* any focused child, which is what stops the terminal and the chat composer from swallowing it as text input. |

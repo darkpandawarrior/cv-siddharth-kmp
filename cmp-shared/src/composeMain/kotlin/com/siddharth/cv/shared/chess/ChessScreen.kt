@@ -62,13 +62,15 @@ import androidx.compose.ui.unit.dp
 import com.siddharth.cv.shared.CvNavState
 import com.siddharth.cv.shared.LocalNav
 import com.siddharth.cv.shared.Route
-import com.siddharth.cv.shared.anthology.grouped
 import com.siddharth.cv.shared.data.generated.ChessActivityYear
 import com.siddharth.cv.shared.data.generated.ChessOpeningShare
 import com.siddharth.cv.shared.data.generated.ChessPlatform
 import com.siddharth.cv.shared.data.generated.chess
 import com.siddharth.cv.shared.data.generated.chessDeep
 import com.siddharth.cv.shared.data.generated.chessHours
+import com.siddharth.cv.shared.format.TenthsPerUnit
+import com.siddharth.cv.shared.format.grouped
+import com.siddharth.cv.shared.format.tenthsToString
 import com.siddharth.cv.shared.theme.CircuitDivider
 import com.siddharth.cv.shared.theme.CvCard
 import com.siddharth.cv.shared.theme.CvContentMaxWidth
@@ -167,11 +169,14 @@ private val WideBreakpoint: Dp = 900.dp
 private val MediumBreakpoint: Dp = 620.dp
 
 /** The web page is `max-w-6xl`; every surface in this port holds to [CvContentMaxWidth]. */
-internal fun Modifier.pageMeasure(): Modifier =
-    this.widthIn(max = CvContentMaxWidth).fillMaxWidth().padding(horizontal = CvGutter)
+internal fun Modifier.pageMeasure(): Modifier = this.widthIn(max = CvContentMaxWidth).fillMaxWidth().padding(horizontal = CvGutter)
 
 @Composable
-internal fun Section(eyebrow: String, title: String, content: @Composable ColumnScope.() -> Unit) {
+internal fun Section(
+    eyebrow: String,
+    title: String,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     Reveal {
         Column(Modifier.pageMeasure().padding(top = CvSectionGap)) {
             SectionEyebrow(eyebrow)
@@ -189,7 +194,11 @@ internal fun Section(eyebrow: String, title: String, content: @Composable Column
  * constraint. Same shape as `HomeSections.GridRows`, which is private to its own file.
  */
 @Composable
-private fun <T> GridRows(items: List<T>, columns: Int, cell: @Composable (T) -> Unit) {
+private fun <T> GridRows(
+    items: List<T>,
+    columns: Int,
+    cell: @Composable (T) -> Unit,
+) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         items.chunked(columns).forEach { row ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -249,7 +258,9 @@ private val latest: RepertoireRow? = repertoire.lastOrNull()
 private val lichessLastFlicker: ChessActivityYear? = chess.activityByYear.lastOrNull { it.lichess > 0 }
 
 private val daysPlayed: Double =
-    if (chess.discipline.spanDays == 0) 0.0 else {
+    if (chess.discipline.spanDays == 0) {
+        0.0
+    } else {
         chess.discipline.distinctDays.toDouble() / chess.discipline.spanDays
     }
 
@@ -274,10 +285,7 @@ private val maxGap: Double = chess.thesis.deciles.maxOf { it.gap }
 // -------------------------------------------------------------------------------------------
 
 /** `3.14` to `"3.1"`. `toString()` prints "3.0999999" for some doubles. No negatives in this corpus. */
-internal fun oneDecimal(v: Double): String {
-    val scaled = round(v * 10.0).toInt()
-    return "${scaled / 10}.${scaled % 10}"
-}
+internal fun oneDecimal(v: Double): String = tenthsToString(round(v * TenthsPerUnit).toInt())
 
 /** A fraction to a percentage: `0.416` to `"41.6%"`. What `chess.*` stores. */
 internal fun pctOf(fraction: Double): String = "${oneDecimal(fraction * 100)}%"
@@ -285,7 +293,10 @@ internal fun pctOf(fraction: Double): String = "${oneDecimal(fraction * 100)}%"
 /** An already-scaled percentage: `49.2` to `"49.2%"`. What `chessDeep.*` stores. */
 private fun pct(percent: Double): String = "${oneDecimal(percent)}%"
 
-private fun plural(n: Int, word: String): String = "${n.grouped()} $word${if (n == 1) "" else "s"}"
+private fun plural(
+    n: Int,
+    word: String,
+): String = "${n.grouped()} $word${if (n == 1) "" else "s"}"
 
 // -------------------------------------------------------------------------------------------
 // 1. Header
@@ -433,8 +444,8 @@ private fun StatCard(index: Int) {
             tint = colors.accent
             note =
                 "games, ${chess.span.from} to ${chess.span.to}. ${totals.wins.grouped()}W / " +
-                    "${totals.losses.grouped()}L / ${totals.draws.grouped()}D, a losing record by " +
-                    "${(totals.losses - totals.wins).grouped()}."
+                "${totals.losses.grouped()}L / ${totals.draws.grouped()}D, a losing record by " +
+                "${(totals.losses - totals.wins).grouped()}."
         }
         1 -> {
             eyebrow = "// time at the board"
@@ -442,9 +453,9 @@ private fun StatCard(index: Int) {
             tint = colors.accent2
             note =
                 "${boardTime.lichessHours.grouped()} h self-reported by lichess, plus " +
-                    "${boardTime.chesscomHours.grouped()} h derived from the wall clock in " +
-                    "${boardTime.chesscomGames.grouped()} chess.com PGNs. chess.com publishes no " +
-                    "play-time figure, so this is two measurements added together, not one metric."
+                "${boardTime.chesscomHours.grouped()} h derived from the wall clock in " +
+                "${boardTime.chesscomGames.grouped()} chess.com PGNs. chess.com publishes no " +
+                "play-time figure, so this is two measurements added together, not one metric."
         }
         else -> {
             eyebrow = "// showing up"
@@ -452,9 +463,9 @@ private fun StatCard(index: Int) {
             tint = colors.accent
             note =
                 "of days played: ${discipline.distinctDays.grouped()} of " +
-                    "${discipline.spanDays.grouped()} days in the span, longest unbroken run " +
-                    "${discipline.longestDayStreak} days. Longest loss streak " +
-                    "${discipline.longestLoss} beats the longest win streak ${discipline.longestWin}."
+                "${discipline.spanDays.grouped()} days in the span, longest unbroken run " +
+                "${discipline.longestDayStreak} days. Longest loss streak " +
+                "${discipline.longestLoss} beats the longest win streak ${discipline.longestWin}."
         }
     }
     CvCard(Modifier.fillMaxWidth(), glowOnHover = false) {
@@ -540,7 +551,7 @@ private fun repertoireArcSentence(): String {
     if (opened != null) {
         parts +=
             "I opened ${opened.year} with the Scandinavian: at least " +
-                "${pctOf(opened.scandinavian)} of my games as Black that year."
+            "${pctOf(opened.scandinavian)} of my games as Black that year."
     }
     if (displaced != null) {
         val dropped =
@@ -579,7 +590,10 @@ private fun handoffCaveatSentence(): String {
 // -------------------------------------------------------------------------------------------
 
 @Composable
-private fun ProfilesSection(columns: Int, uri: UriHandler) {
+private fun ProfilesSection(
+    columns: Int,
+    uri: UriHandler,
+) {
     Section(eyebrow = "// the accounts", title = "Both profiles") {
         BasicText(
             text =
@@ -595,7 +609,10 @@ private fun ProfilesSection(columns: Int, uri: UriHandler) {
 }
 
 @Composable
-private fun PlatformCard(platform: ChessPlatform, uri: UriHandler) {
+private fun PlatformCard(
+    platform: ChessPlatform,
+    uri: UriHandler,
+) {
     val colors = cvColors
     CvCard(Modifier.fillMaxWidth(), onClick = { uri.openUri(platform.url) }) {
         BasicText(text = platform.id, style = cvType.cardTitle)
@@ -639,7 +656,10 @@ private fun PlatformCard(platform: ChessPlatform, uri: UriHandler) {
 // -------------------------------------------------------------------------------------------
 
 @Composable
-private fun CastSection(nav: CvNavState, columns: Int) {
+private fun CastSection(
+    nav: CvNavState,
+    columns: Int,
+) {
     val ninth = chess.sessionDecay.firstOrNull { it.position == CAST_NINTH_GAME }
     val first = chess.sessionDecay.firstOrNull { it.position == 1 }
     val latestLine = chess.repertoire.lastOrNull()
@@ -835,7 +855,11 @@ private fun poolArenaGapSentence(): String {
 }
 
 @Composable
-private fun DefinitionCard(title: String, rows: List<Pair<String, String>>, note: String) {
+private fun DefinitionCard(
+    title: String,
+    rows: List<Pair<String, String>>,
+    note: String,
+) {
     val colors = cvColors
     CvCard(Modifier.fillMaxWidth(), glowOnHover = false) {
         BasicText(text = title, style = cvType.cardTitle)
@@ -898,7 +922,12 @@ private val WinRateTint: Color = cvColor("#E8C874")
 private fun hh(hour: Int): String = "${hour.toString().padStart(2, '0')}:00"
 
 /** Inverse of the chart's x mapping. Pointer x in pixels to the hour band under it. */
-private fun rhythmHourAt(x: Float, width: Float, padLeft: Float, padRight: Float): Int {
+private fun rhythmHourAt(
+    x: Float,
+    width: Float,
+    padLeft: Float,
+    padRight: Float,
+): Int {
     val plot = width - padLeft - padRight
     if (plot <= 0f) return 0
     return (((x - padLeft) / plot) * HOURS).toInt().coerceIn(0, HOURS - 1)
@@ -971,7 +1000,10 @@ private fun RhythmSection() {
 }
 
 @Composable
-private fun RhythmChart(hour: Int, onHour: (Int) -> Unit) {
+private fun RhythmChart(
+    hour: Int,
+    onHour: (Int) -> Unit,
+) {
     val colors = cvColors
     val measurer = rememberTextMeasurer(cacheSize = 32)
     val axisStyle = cvType.metaMono
@@ -1006,8 +1038,7 @@ private fun RhythmChart(hour: Int, onHour: (Int) -> Unit) {
                         }
                         else -> false
                     }
-                }
-                .focusable(),
+                }.focusable(),
     ) {
         Canvas(
             Modifier
@@ -1023,8 +1054,7 @@ private fun RhythmChart(hour: Int, onHour: (Int) -> Unit) {
                             ),
                         )
                     }
-                }
-                .pointerInput(Unit) {
+                }.pointerInput(Unit) {
                     // Scrubbing, the interaction the web's range input gave. Horizontal only, so a
                     // vertical drag still scrolls the page under it.
                     detectHorizontalDragGestures { change, _ ->
@@ -1050,7 +1080,9 @@ private fun RhythmChart(hour: Int, onHour: (Int) -> Unit) {
             // Each hour is plotted at the centre of its band, so 0 and 23 are not stuck to the
             // frame and the two series line up over the same tick.
             fun xAt(h: Int): Float = padL + ((h + 0.5f) / HOURS) * plotW
+
             fun yAt(fraction: Float): Float = padT + (1f - fraction) * plotH
+
             fun yWin(rate: Double): Float = yAt(((rate - winLo) / (winHi - winLo)).toFloat())
 
             listOf(0f, 0.25f, 0.5f, 0.75f, 1f).forEach { g ->
@@ -1071,12 +1103,13 @@ private fun RhythmChart(hour: Int, onHour: (Int) -> Unit) {
                 val y = yAt(h.n.toFloat() / gameMax)
                 if (i == 0) gamePath.moveTo(x, y) else gamePath.lineTo(x, y)
             }
-            val filled = Path().apply {
-                addPath(gamePath)
-                lineTo(xAt(HOURS - 1), yAt(0f))
-                lineTo(xAt(0), yAt(0f))
-                close()
-            }
+            val filled =
+                Path().apply {
+                    addPath(gamePath)
+                    lineTo(xAt(HOURS - 1), yAt(0f))
+                    lineTo(xAt(0), yAt(0f))
+                    close()
+                }
             drawPath(filled, colors.accent.copy(alpha = 0.12f))
             drawPath(gamePath, colors.accent, style = Stroke(2.dp.toPx()))
 
@@ -1154,14 +1187,16 @@ private fun RhythmLegend(hour: Int) {
 }
 
 @Composable
-private fun LegendItem(tint: Color, label: String) {
+private fun LegendItem(
+    tint: Color,
+    label: String,
+) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(8.dp).background(tint, CircleShape))
         Spacer(Modifier.width(8.dp))
         BasicText(text = label, style = cvType.metaMono.copy(color = tint))
     }
 }
-
 
 // -------------------------------------------------------------------------------------------
 // Tables
@@ -1197,8 +1232,7 @@ internal fun ScrollingTable(
                         topLeft = Offset(0f, size.height - 1.dp.toPx()),
                         size = Size(size.width, 1.dp.toPx()),
                     )
-                }
-                .padding(bottom = 8.dp),
+                }.padding(bottom = 8.dp),
         ) {
             columns.forEach { (title, width) ->
                 BasicText(
@@ -1224,15 +1258,19 @@ internal fun TableRow(cells: @Composable RowScope.() -> Unit) {
                         topLeft = Offset(0f, size.height - 1.dp.toPx()),
                         size = Size(size.width, 1.dp.toPx()),
                     )
-                }
-                .padding(vertical = 10.dp),
+                }.padding(vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         content = cells,
     )
 }
 
 @Composable
-internal fun Cell(text: String, width: Dp, strong: Boolean = false, tint: Color? = null) {
+internal fun Cell(
+    text: String,
+    width: Dp,
+    strong: Boolean = false,
+    tint: Color? = null,
+) {
     val colors = cvColors
     BasicText(
         text = text,
@@ -1256,6 +1294,9 @@ internal fun Cell(text: String, width: Dp, strong: Boolean = false, tint: Color?
  * in it, and the chart's pointer mapping drifting away from the chart's own x mapping so that a tap
  * selects a different hour from the one under the cursor.
  */
+// MagicNumber: assertion fixtures. detekt excludes every test source set from this rule by
+// default; these are tests that live in main source only because composeMain is `internal`
+// and this project has no commonTest. SelfCheckTest.kt now runs them from `check`.
 @Suppress("MagicNumber")
 internal fun chessScreenSelfCheck() {
     check(oneDecimal(48.94) == "48.9") { "oneDecimal: ${oneDecimal(48.94)}" }

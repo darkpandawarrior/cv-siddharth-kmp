@@ -82,7 +82,10 @@ private const val CUTOFF_DETAIL_PREFIX = "Stream closed before the completion si
  * // 400's detail renders as-is here — still better than the old code's generic fallback, but not
  * // that specific translation. Upgrade needs HttpChatProvider to expose the status too.
  */
-private fun statusMessageFor(reason: AiFailure, detail: String?): String =
+private fun statusMessageFor(
+    reason: AiFailure,
+    detail: String?,
+): String =
     when (reason) {
         AiFailure.Unauthorized ->
             detail ?: (
@@ -127,35 +130,37 @@ fun streamReply(
     history: List<ChatMessage>,
     route: String? = null,
     engine: HttpClientEngine = httpClientEngine(),
-): Flow<String> = channelFlow {
-    val provider = HttpChatProvider(
-        HttpChatConfig(endpoint = CHAT_ENDPOINT, route = route, requireDoneSentinel = true),
-        engine,
-    )
+): Flow<String> =
+    channelFlow {
+        val provider =
+            HttpChatProvider(
+                HttpChatConfig(endpoint = CHAT_ENDPOINT, route = route, requireDoneSentinel = true),
+                engine,
+            )
 
-    try {
-        provider.completeStream(history.toWire()).collect { chunk ->
-            when (chunk) {
-                is AiChunk.Token -> send(chunk.text)
-                is AiChunk.Failed -> throw ChatUnavailable(
-                    statusMessageFor(chunk.reason, chunk.detail),
-                    chunk.reason,
-                    retryAfterSeconds = chunk.retryAfterSeconds,
-                )
+        try {
+            provider.completeStream(history.toWire()).collect { chunk ->
+                when (chunk) {
+                    is AiChunk.Token -> send(chunk.text)
+                    is AiChunk.Failed -> throw ChatUnavailable(
+                        statusMessageFor(chunk.reason, chunk.detail),
+                        chunk.reason,
+                        retryAfterSeconds = chunk.retryAfterSeconds,
+                    )
+                }
             }
+        } catch (cancel: CancellationException) {
+            // The visitor closed the panel or asked something else. Not a failure — let it propagate
+            // untouched so the collector is cancelled rather than shown an error.
+            throw cancel
+        } catch (chat: ChatUnavailable) {
+            throw chat
+        } catch (_: Throwable) {
+            throw ChatUnavailable(transportMessage(), reason = AiFailure.Network)
         }
-    } catch (cancel: CancellationException) {
-        // The visitor closed the panel or asked something else. Not a failure — let it propagate
-        // untouched so the collector is cancelled rather than shown an error.
-        throw cancel
-    } catch (chat: ChatUnavailable) {
-        throw chat
-    } catch (_: Throwable) {
-        throw ChatUnavailable(transportMessage(), reason = AiFailure.Network)
+        // No `awaitClose` here on purpose: this producer is not callback-based. The block returning IS
+        // what closes the channel, so awaiting that close from inside the block would deadlock. // claim-audit:allow -- ordinary concurrency term, not the game
     }
-    // No `awaitClose` here on purpose: this producer is not callback-based. The block returning IS
-    // what closes the channel, so awaiting that close from inside the block would deadlock. // claim-audit:allow -- ordinary concurrency term, not the game
-}
 
 /**
  * A throw before any status arrived, or a bucket [HttpChatProvider] mapped to [AiFailure.Network].

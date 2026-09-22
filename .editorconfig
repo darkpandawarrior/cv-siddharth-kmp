@@ -1,0 +1,126 @@
+# =============================================================================
+# .editorconfig — repo root. ktlint owns formatting AND line length.
+#
+# Every `disabled` here is HALF A PAIR. detekt turns the same rule off in
+# config/detekt/detekt.yml. Change one side without the other and the two tools start
+# contradicting each other — which is how the family ended up with 49 MatchingDeclarationName
+# findings (detekt enforcing it, ktlint not) and a WildcardImport split where only one repo
+# paired the two.
+#
+# Plugin: org.jlleitschuh.gradle.ktlint 14.2.0, applied to every subproject from the root
+# build.gradle.kts. This repo declared NO ktlint plugin until now — it carried 203 baselined
+# detekt findings with no formatting gate behind them at all.
+# =============================================================================
+
+root = true
+
+# Machine-written output: KSP/Room/Compose-resources. Rewritten on every build, unformattable.
+# Same exclusion as detekt's `**/build/generated/**`; the broader `[**/build/**]` form is
+# deliberate so a generator that writes somewhere else under build/ is covered too.
+[**/build/**]
+ktlint = disabled
+
+# Vendored submodules. external/kmp-toolkit and external/kmp-build-logic are separate repos with
+# their own gates; this repo must not reformat source it does not own.
+[external/**]
+ktlint = disabled
+
+# Machine-written, but NOT under build/: scripts/ regenerates these from the live corpora into the
+# source tree so the wasm bundle can read them without a network call. detekt already excludes
+# `**/generated/**` on both its task types; ktlint has to be told separately or the next generator
+# run lands a diff nobody wrote.
+[**/data/generated/**]
+ktlint = disabled
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_size = 4
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{kt,kts}]
+# ONE number for the family. It was 160 in three repos, 120 in a fourth, and detekt was
+# separately enforcing its own 120 default — three numbers for one rule, with the baseline
+# absorbing the disagreement. 140 is wide enough for a Compose modifier chain with a trailing
+# lambda, narrow enough that a side-by-side diff still works.
+# detekt's style.MaxLineLength stays `active: false` so this line is the only place the
+# number lives.
+max_line_length = 140
+
+# @Composable functions are PascalCase by Compose convention. This exempts exactly the
+# composables; `ktlint_standard_function-naming = disabled` would also stop ktlint checking
+# every ordinary function in the repo.
+ktlint_function_naming_ignore_when_annotated_with = Composable
+
+# PAIRED WITH detekt naming.MatchingDeclarationName: active: false.
+# Deliberate idiom: small related declarations are grouped per file (a composable plus its UI
+# enum, a catalog plus its item type, a mapper plus its DTO).
+ktlint_standard_filename = disabled
+
+# PAIRED WITH detekt style.WildcardImport: active: false.
+# Compose and the design-system modules pull dozens of symbols per file and the IDE collapses
+# the imports automatically.
+ktlint_standard_no-wildcard-imports = disabled
+
+# PAIRED WITH detekt naming.TopLevelPropertyNaming: constantPattern: '[A-Z][A-Za-z0-9]*'.
+# Compose's API guidelines specify PascalCase for top-level constants — `private const val
+# BonusCap = 150`, ForgeDamping, TierWordStart. ktlint's property-naming rule demands
+# SCREAMING_SNAKE for `const val` and has no ignore-when-annotated escape, so it has to come
+# off wholesale.
+ktlint_standard_property-naming = disabled
+
+# NOT half a pair — detekt has no equivalent rule. Two deliberate comment shapes this codebase uses
+# everywhere, which ktlint_official's `no-consecutive-comments` forbids and which carry real
+# information:
+#   1. A KDoc, then a `//` line, then the declaration. The KDoc says what the thing is; the `//`
+#      says why the `@Suppress` or the odd construct immediately below it exists. Folding the second
+#      into the first turns a note about one annotation into documentation of the function's
+#      behaviour, which is where suppression rationales go to be forgotten.
+#   2. A file-header KDoc — the design note at the top of the file — followed by the first
+#      declaration's own KDoc. Kotlin has no file-doc syntax, so `/** */` at the top of the file is
+#      the convention, and the rule cannot tell one from a stray comment.
+# 55 occurrences across 24 files, none of them a mistake. The orphaned KDocs this pass DID create
+# (a doc separated from its declaration by an inserted constant) were fixed in code first, so this
+# is not hiding them.
+ktlint_standard_no-consecutive-comments = disabled
+
+# The prose corpora. Every rule but one still applies to these two files; ONLY the line limit is
+# lifted, and only here.
+#
+# Their payload is `description`/`overview`/`body` written as one `"""..."""` literal per field —
+# 118 of them, the longest 939 characters. ProjectDetailScreen renders `overview` and `section.body`
+# straight into BasicText (ProjectDetailScreen.kt:183, :202), NOT through InlineMarkdown.parsePiece,
+# which is the one path that folds a soft break back into a space. So a wrap inside one of these
+# literals is not a formatting change: it puts a hard line break into published portfolio copy at
+# whatever column 140 happens to land on. There is no edit that satisfies the rule and leaves the
+# rendered page alone.
+#
+# This is deliberately NOT `ktlint = disabled`: indentation, trailing commas, import order and the
+# rest are still enforced here, and the three long lines in CvProjectData.kt that were ordinary
+# code — two NamedLink calls and `projectOrder`, each pushed over by a trailing claim-audit marker —
+# were wrapped in code rather than covered by this.
+[**/data/{CvProjectData,CvProfileData}.kt]
+max_line_length = off
+
+[*.{yml,yaml}]
+indent_size = 2
+
+[*.{xml,svg}]
+indent_size = 4
+
+[*.toml]
+indent_size = 4
+
+# -----------------------------------------------------------------------------
+# NOT ADOPTED, and why.
+#
+# io.nlopez.compose.rules (ktlint and detekt flavours), https://github.com/mrmans0n/compose-rules
+# It adds NEW rules (ModifierParameterPosition, ReusedModifierInstance, MissingModifierDefaultValue,
+# ComposeFunctionName, PublicComposablePreview). It removes NONE of the existing findings and would
+# only add. Its docs state no position on Compose Multiplatform source sets, and its detekt flavour
+# pins to a detekt 2.0 alpha — two alphas deep on a toolchain already at Gradle 9.8-rc-2 /
+# AGP 9.5.0-alpha06 / CMP 1.13.0-alpha01. Revisit as a standalone opt-in pass after this standard
+# lands and the baselines are honest.
+# -----------------------------------------------------------------------------

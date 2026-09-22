@@ -65,6 +65,7 @@ import com.siddharth.cv.shared.data.generated.seasonCanon
 import com.siddharth.cv.shared.data.generated.siblingSeries
 import com.siddharth.cv.shared.data.generated.unfiledPieces
 import com.siddharth.cv.shared.data.profile
+import com.siddharth.cv.shared.format.grouped
 import com.siddharth.cv.shared.media.ProjectShot
 import com.siddharth.cv.shared.theme.CvCard
 import com.siddharth.cv.shared.theme.CvColors
@@ -160,7 +161,11 @@ private val KeptPaperColors: CvColors =
  * opens, and the `?layer=` key the React route's `validateSearch` accepts, so when the spine wires
  * a `Route.Anthology(layer)` it has the vocabulary already and cannot invent a second one.
  */
-enum class AnthologyLayer(val key: String, val label: String, val season: Int?) {
+enum class AnthologyLayer(
+    val key: String,
+    val label: String,
+    val season: Int?,
+) {
     Form("form", "The Form", 1),
     Case("case", "The Case", 2),
     Fire("fire", "The Fire", 3),
@@ -212,8 +217,7 @@ fun AnthologyScreen(
 }
 
 /** `max-w-5xl mx-auto px-6`: the measure every block on this page shares. */
-private fun Modifier.pageMeasure(): Modifier =
-    this.widthIn(max = CvContentMaxWidth).fillMaxWidth().padding(horizontal = CvGutter)
+private fun Modifier.pageMeasure(): Modifier = this.widthIn(max = CvContentMaxWidth).fillMaxWidth().padding(horizontal = CvGutter)
 
 @Composable
 private fun AnthologyBody(
@@ -266,7 +270,7 @@ private fun AnthologyBody(
 // ---------------------------------------------------------------------------------------------
 
 /** 220wpm, the same figure the reading page uses. */
-private const val wordsPerMinute = 220
+private const val WordsPerMinute = 220
 
 /**
  * Every number on the masthead is derived, and that is the repair rather than a flourish: this page
@@ -274,7 +278,7 @@ private const val wordsPerMinute = 220
  * not a better number, it is not having one to keep.
  */
 private val totalWords: Int = anthologyEntries.sumOf { it.words }
-private val readingHours: Int = (totalWords.toFloat() / wordsPerMinute / 60f).roundToInt()
+private val readingHours: Int = (totalWords.toFloat() / WordsPerMinute / 60f).roundToInt()
 
 /** The first piece in publication order, and the shortest way into the season that needs no prior context. */
 private val firstEntry: AnthologyEntry? =
@@ -408,7 +412,11 @@ private fun LayerSwitch(
  * that matters, the same call [com.siddharth.cv.shared.labs.LabScreen]'s tabs make.
  */
 @Composable
-private fun LayerPill(label: String, selected: Boolean, onSelect: () -> Unit) {
+private fun LayerPill(
+    label: String,
+    selected: Boolean,
+    onSelect: () -> Unit,
+) {
     val colors = cvColors
     val interaction = remember { MutableInteractionSource() }
     val shape = RoundedCornerShape(999.dp)
@@ -424,8 +432,7 @@ private fun LayerPill(label: String, selected: Boolean, onSelect: () -> Unit) {
                     indication = null,
                     role = Role.RadioButton,
                     onClick = onSelect,
-                )
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                ).padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
         BasicText(
             text = label,
@@ -514,7 +521,7 @@ internal fun TheFourteenFigure() {
                 .semantics {
                     contentDescription =
                         "$filled filled slots and one empty slot outlined in a broken line, " +
-                            "where a fourteenth should be."
+                        "where a fourteenth should be."
                 },
         ) {
             val cols = 7
@@ -549,8 +556,8 @@ internal fun TheFourteenFigure() {
 }
 
 /** Canon, not a count: season two is titled The Ninety-One Pages, and thirteen by seven is ninety-one. */
-private const val caseSlots = 91
-private const val caseColumns = 13
+private const val CaseSlots = 91
+private const val CaseColumns = 13
 
 /**
  * The case, and the season's whole plot in one figure. Derived from the entries themselves rather
@@ -570,7 +577,11 @@ private fun TheCase(burned: Boolean) {
     val gone =
         remember(burned) {
             if (burned) {
-                anthologyEntries.filter { it.season == 3 }.map { it.page }.filter { it != 0 }.toSet()
+                anthologyEntries
+                    .filter { it.season == 3 }
+                    .map { it.page }
+                    .filter { it != 0 }
+                    .toSet()
             } else {
                 emptySet()
             }
@@ -589,13 +600,13 @@ private fun TheCase(burned: Boolean) {
             },
     ) {
         Canvas(Modifier.fillMaxWidth().aspectRatio(13f / 7.4f).padding(20.dp)) {
-            val cellW = size.width / caseColumns
-            val cellH = size.height / (caseSlots / caseColumns)
+            val cellW = size.width / CaseColumns
+            val cellH = size.height / (CaseSlots / CaseColumns)
             val r = min(cellW, cellH) * 0.30f
-            for (page in 1..caseSlots) {
+            for (page in 1..CaseSlots) {
                 val i = page - 1
-                val cx = (i % caseColumns) * cellW + cellW / 2f
-                val cy = (i / caseColumns) * cellH + cellH / 2f
+                val cx = (i % CaseColumns) * cellW + cellW / 2f
+                val cy = (i / CaseColumns) * cellH + cellH / 2f
                 when {
                     gone.contains(page) ->
                         drawCircle(
@@ -624,7 +635,10 @@ private fun TheCase(burned: Boolean) {
 
 /** `<figure>` + `<figcaption>`: a framed panel with the meaning in prose underneath it. */
 @Composable
-private fun Figure(caption: String, content: @Composable () -> Unit) {
+private fun Figure(
+    caption: String,
+    content: @Composable () -> Unit,
+) {
     val colors = cvColors
     val shape = RoundedCornerShape(16.dp)
     Column(
@@ -649,11 +663,16 @@ private fun Figure(caption: String, content: @Composable () -> Unit) {
 // 3. The entry card
 // ---------------------------------------------------------------------------------------------
 
-/** Season three's kindling ordinal: 1-13 withdrawn, 14 the one page kept. */
-private const val kindlingFinale = 14
+/** The burning season: every page in it is withdrawn, except [KindlingFinale]. */
+private const val KindlingSeason = 3
+
+/** The notice board: posted rather than handled, so its plates are flat. */
+private const val NoticeSeason = 4
+
+private const val KindlingFinale = 14
 
 /** Loose warm paper on a desk sits very slightly askew. Season one and the kept page are neither. */
-private const val paperTiltDeg = 0.65f
+private const val PaperTiltDeg = 0.65f
 
 /**
  * Per-entry identity, ported from lib/seasonTheme.ts.
@@ -667,6 +686,8 @@ private const val paperTiltDeg = 0.65f
  * primitive as it stands rather than fork it, so the seasons are told apart here by colour, label
  * and tilt, which is three channels rather than four. `CvCard(shape = …)` is the one-line fix.
  */
+
+/** Season three's kindling ordinal: 1-13 withdrawn, 14 the one page kept. */
 private data class EntryLook(
     val label: String,
     val colors: CvColors,
@@ -701,12 +722,12 @@ private fun entryLook(e: AnthologyEntry): EntryLook =
                 "PAGE ${e.page} OF 91",
                 InkColors,
                 true,
-                paperTiltDeg,
+                PaperTiltDeg,
                 true,
                 "a page out of his case, on warm paper",
             )
         // The exception, and the only undamaged object in the season.
-        e.season == 3 && e.kindling == kindlingFinale ->
+        e.season == KindlingSeason && e.kindling == KindlingFinale ->
             EntryLook(
                 "THE PAGE HE KEEPS",
                 KeptPaperColors,
@@ -717,7 +738,7 @@ private fun entryLook(e: AnthologyEntry): EntryLook =
             )
         // The fire. Same paper, marked by it, so the accent goes to ember and nothing rotates:
         // a burned page is the shape of its own edge and a tilt would fight the bite.
-        e.season == 3 ->
+        e.season == KindlingSeason ->
             EntryLook(
                 "PAGE ${e.page} WITHDRAWN",
                 InkColors.copy(accent = Ember, accentDim = Ember.copy(alpha = 0.8f)),
@@ -728,7 +749,7 @@ private fun entryLook(e: AnthologyEntry): EntryLook =
             )
         // The notice board. Posted rather than handled, so it is flat, and it carries the same
         // coverage cyan its plates do.
-        e.season == 4 ->
+        e.season == NoticeSeason ->
             EntryLook(
                 "NOTICE ${e.idx} OF 14",
                 InkColors.copy(accent = Coverage, accentDim = Coverage.copy(alpha = 0.8f)),
@@ -744,7 +765,7 @@ private fun entryLook(e: AnthologyEntry): EntryLook =
                 "№ ${e.idx}",
                 InkColors,
                 true,
-                paperTiltDeg,
+                PaperTiltDeg,
                 true,
                 "a plate on the season's own stock",
             )
@@ -767,7 +788,11 @@ private fun entryLook(e: AnthologyEntry): EntryLook =
  * three burned or that one page in it is on paper.
  */
 @Composable
-private fun EntryCard(e: AnthologyEntry, index: Int, uri: UriHandler) {
+private fun EntryCard(
+    e: AnthologyEntry,
+    index: Int,
+    uri: UriHandler,
+) {
     val look = entryLook(e)
     val reduced = LocalReducedMotion.current
     CvTheme(colors = look.colors) {
@@ -794,7 +819,7 @@ private fun EntryCard(e: AnthologyEntry, index: Int, uri: UriHandler) {
                 ProjectShot(
                     url = plate,
                     label = "Field plate for ${e.title}: ${look.plateIs}.",
-                    modifier = Modifier.fillMaxWidth().aspectRatio(plateAspect).clip(PlateShape),
+                    modifier = Modifier.fillMaxWidth().aspectRatio(PlateAspect).clip(PlateShape),
                 )
                 Spacer(Modifier.height(16.dp))
             }
@@ -828,7 +853,10 @@ private fun seasonOfKey(k: String): Int = k.substringAfter('s').substringBefore(
 
 private fun idxOfKey(k: String): Int = k.substringAfter('-').toIntOrNull() ?: 0
 
-private fun LazyListScope.tellersLayer(columns: Int, uri: UriHandler) {
+private fun LazyListScope.tellersLayer(
+    columns: Int,
+    uri: UriHandler,
+) {
     item("tellers-intro") {
         Reveal {
             Column(Modifier.pageMeasure().padding(top = 28.dp)) {
@@ -893,7 +921,10 @@ private fun LazyListScope.seasonRoll(
 }
 
 @Composable
-private fun TellerCard(w: AnthologyWitness, uri: UriHandler) {
+private fun TellerCard(
+    w: AnthologyWitness,
+    uri: UriHandler,
+) {
     val colors = cvColors
     // Resolved from the record's own entry keys rather than by scanning the corpus for an entry
     // that kept a copy of this witness: that scan is outright wrong the moment one teller carries
@@ -912,7 +943,7 @@ private fun TellerCard(w: AnthologyWitness, uri: UriHandler) {
             ProjectShot(
                 url = art,
                 label = "Rendered portrait of ${w.name}. ${w.did}",
-                modifier = Modifier.fillMaxWidth().aspectRatio(portraitAspect).clip(PlateShape),
+                modifier = Modifier.fillMaxWidth().aspectRatio(PortraitAspect).clip(PlateShape),
             )
             Spacer(Modifier.height(16.dp))
         }
@@ -938,7 +969,10 @@ private fun AnthologyEntry.entryKey(): String = "s$season-${idx.toString().padSt
 // 5. Unfiled, and the sibling series
 // ---------------------------------------------------------------------------------------------
 
-private fun LazyListScope.unfiledLayer(columns: Int, uri: UriHandler) {
+private fun LazyListScope.unfiledLayer(
+    columns: Int,
+    uri: UriHandler,
+) {
     item("unfiled-intro") {
         Reveal {
             Column(Modifier.pageMeasure().padding(top = 28.dp)) {
@@ -976,7 +1010,10 @@ private fun LazyListScope.unfiledLayer(columns: Int, uri: UriHandler) {
     }
 }
 
-private fun LazyListScope.siblingLayer(columns: Int, uri: UriHandler) {
+private fun LazyListScope.siblingLayer(
+    columns: Int,
+    uri: UriHandler,
+) {
     siblingSeries.forEach { series -> siblingSeriesBlock(series, columns, uri) }
 }
 
@@ -1017,7 +1054,7 @@ private fun LazyListScope.siblingSeriesBlock(
                     // The medium IS the distinction this series exists to make, so the description
                     // says which one it is rather than repeating the word "plate" ten times.
                     label = "Retrieval plate for ${e.title}: a ${series.medium} file from ${series.title}.",
-                    modifier = Modifier.fillMaxWidth().aspectRatio(plateAspect).clip(PlateShape),
+                    modifier = Modifier.fillMaxWidth().aspectRatio(PlateAspect).clip(PlateShape),
                 )
                 Spacer(Modifier.height(16.dp))
             }
@@ -1037,13 +1074,13 @@ private fun LazyListScope.siblingSeriesBlock(
 // ---------------------------------------------------------------------------------------------
 
 /** The Directory's own count of Concluded worlds: 611 on the day of the case's first page, 671 at the end. */
-private const val concludedStart = 611
-private const val concludedEnd = 671
+private const val ConcludedStart = 611
+private const val ConcludedEnd = 671
 
-private const val fieldSeed = 20260815
-private const val fieldRadiusMin = 240f
-private const val fieldRadiusMax = 800f
-private const val fieldYSquash = 0.6f
+private const val FieldSeed = 20260815
+private const val FieldRadiusMin = 240f
+private const val FieldRadiusMax = 800f
+private const val FieldYSquash = 0.6f
 
 /** The states a world can be in, and their colours. Same values as `STATE_COLOR` in Starmap.tsx. */
 private val StateColor: Map<String, Color> =
@@ -1067,7 +1104,7 @@ private val StateLegendRows: List<Pair<String, String>> =
         "Self" to "The Directory. Him.",
         "Withdrawn" to
             "The page burned. The world is still there. The count never reaches it, because the " +
-                "Directory never had it to file.",
+            "Directory never had it to file.",
     )
 
 /**
@@ -1087,7 +1124,7 @@ private val StateLegendRows: List<Pair<String, String>> =
 @Composable
 private fun StarmapLayer() {
     val colors = cvColors
-    var target by remember { mutableStateOf(concludedStart) }
+    var target by remember { mutableStateOf(ConcludedStart) }
     val reduced = LocalReducedMotion.current
     val concluded by
         animateIntAsState(
@@ -1110,15 +1147,15 @@ private fun StarmapLayer() {
             MonoMeta("CONCLUDED COUNT")
             Spacer(Modifier.width(16.dp))
             LayerPill(
-                label = concludedStart.grouped(),
-                selected = target == concludedStart,
-                onSelect = { target = concludedStart },
+                label = ConcludedStart.grouped(),
+                selected = target == ConcludedStart,
+                onSelect = { target = ConcludedStart },
             )
             Spacer(Modifier.width(8.dp))
             LayerPill(
-                label = concludedEnd.grouped(),
-                selected = target == concludedEnd,
-                onSelect = { target = concludedEnd },
+                label = ConcludedEnd.grouped(),
+                selected = target == ConcludedEnd,
+                onSelect = { target = ConcludedEnd },
             )
         }
 
@@ -1138,29 +1175,31 @@ private fun StarmapLayer() {
  * render and on every platform. Kotlin's Int multiply wraps exactly as `Math.imul` does, which is
  * why the two builds produce the same 671 points rather than merely similar ones.
  */
-private const val lcgMultiplier = 1664525
-private const val lcgIncrement = 1013904223
-private const val uint32Mask = 0xFFFFFFFFL
-private const val uint32Span = 4294967296f
+private const val LcgMultiplier = 1664525
+private const val LcgIncrement = 1013904223
+private const val Uint32Mask = 0xFFFFFFFFL
+private const val Uint32Span = 4294967296f
 
-private class Lcg(seed: Int) {
+private class Lcg(
+    seed: Int,
+) {
     private var state: Int = seed
 
     fun next(): Float {
-        state = state * lcgMultiplier + lcgIncrement
-        return (state.toLong() and uint32Mask).toFloat() / uint32Span
+        state = state * LcgMultiplier + LcgIncrement
+        return (state.toLong() and Uint32Mask).toFloat() / Uint32Span
     }
 }
 
 /** Uniform points on a sphere shell, flattened on y so the field reads as a wide sky. */
 private val fieldPoints: List<Offset> =
     run {
-        val rand = Lcg(fieldSeed)
-        List(concludedEnd) {
+        val rand = Lcg(FieldSeed)
+        List(ConcludedEnd) {
             val theta = rand.next() * 2f * PI.toFloat()
             val phi = acos(2f * rand.next() - 1f)
-            val radius = fieldRadiusMin + rand.next() * (fieldRadiusMax - fieldRadiusMin)
-            Offset(radius * sin(phi) * cos(theta), radius * cos(phi) * fieldYSquash)
+            val radius = FieldRadiusMin + rand.next() * (FieldRadiusMax - FieldRadiusMin)
+            Offset(radius * sin(phi) * cos(theta), radius * cos(phi) * FieldYSquash)
         }
     }
 
@@ -1182,7 +1221,7 @@ private fun StarWorld.effectiveState(concluded: Int): String {
     return if (concluded < at) "lit" else state
 }
 
-private const val mapScale = 460f
+private const val MapScale = 460f
 
 @Composable
 private fun Starfield(concluded: Int) {
@@ -1198,14 +1237,15 @@ private fun Starfield(concluded: Int) {
             .semantics {
                 contentDescription =
                     "A flat projection of the Directory's sky. ${fieldPoints.size} anonymous worlds " +
-                        "behind ${worlds.size} named ones, with $concluded of the anonymous field " +
-                        "gone dark. Every named world is listed below."
+                    "behind ${worlds.size} named ones, with $concluded of the anonymous field " +
+                    "gone dark. Every named world is listed below."
             },
     ) {
         val half = min(size.width, size.height) / 2f
-        val k = half / mapScale
+        val k = half / MapScale
         val cx = size.width / 2f
         val cy = size.height / 2f
+
         fun project(p: Offset) = Offset(cx + p.x * k, cy - p.y * k)
 
         // The field. Anything projecting outside the frame simply is not drawn, which reads as a
@@ -1277,10 +1317,11 @@ private fun StateLegend() {
                 Column {
                     BasicText(
                         text = term,
-                        style = cvType.bodySmall.copy(
-                            color = colors.onBackground,
-                            fontWeight = FontWeight.SemiBold,
-                        ),
+                        style =
+                            cvType.bodySmall.copy(
+                                color = colors.onBackground,
+                                fontWeight = FontWeight.SemiBold,
+                            ),
                     )
                     BasicText(text = desc, style = cvType.bodySmall)
                 }
@@ -1312,10 +1353,11 @@ private fun WorldRegister(concluded: Int) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         BasicText(
                             text = w.name,
-                            style = cvType.bodySmall.copy(
-                                color = colors.onBackground,
-                                fontWeight = FontWeight.SemiBold,
-                            ),
+                            style =
+                                cvType.bodySmall.copy(
+                                    color = colors.onBackground,
+                                    fontWeight = FontWeight.SemiBold,
+                                ),
                         )
                         Spacer(Modifier.width(8.dp))
                         TagChip(text = state)
@@ -1366,31 +1408,28 @@ private fun <T> LazyListScope.gridItems(
     }
 }
 
-private fun dashes(): PathEffect =
-    PathEffect.dashPathEffect(floatArrayOf(4f, 4f))
+/** Equal on/off, in px, so the rule reads as a seam rather than as a border. */
+private const val DashSegment = 4f
 
-/**
- * `Number.prototype.toLocaleString()`, minus the locale. `kotlin.text` has no grouping formatter on
- * every target, and the site prints these figures with commas.
- *
- * ponytail: no negatives in this corpus, so no sign handling.
- */
-internal fun Int.grouped(): String = toString().reversed().chunked(3).joinToString(",").reversed()
+private fun dashes(): PathEffect = PathEffect.dashPathEffect(floatArrayOf(DashSegment, DashSegment))
 
 /**
  * `/read/$slug` is not a route in this build. Every hash and path on the React site that this port
  * does not serve resolves against the live site instead of silently doing nothing, which is the same
  * contract `ProjectDetailScreen.openLink` already holds.
  */
-internal fun openRead(slug: String, uri: UriHandler) {
+internal fun openRead(
+    slug: String,
+    uri: UriHandler,
+) {
     uri.openUri(profile.portfolio.trimEnd('/') + "/read/" + slug)
 }
 
 /** `600x780` for a field plate, the size every entry and sibling plate is painted at. */
-internal const val plateAspect = 600f / 780f
+internal const val PlateAspect = 600f / 780f
 
 /** `1100x600` for a teller. Landscape, because a rendering is a scene and not a headshot. */
-internal const val portraitAspect = 1100f / 600f
+internal const val PortraitAspect = 1100f / 600f
 
 /** Inside [CvCard]'s own 24dp padding, so the plate needs its own corner rather than the card's. */
 internal val PlateShape: RoundedCornerShape = RoundedCornerShape(8.dp)
@@ -1475,11 +1514,11 @@ internal fun anthologySelfCheck() {
     }
 
     // The kept page is an exception inside season three's own row, not a season of its own.
-    val kept = anthologyEntries.filter { it.season == 3 && it.kindling == kindlingFinale }
+    val kept = anthologyEntries.filter { it.season == 3 && it.kindling == KindlingFinale }
     check(kept.size == 1) { "season three has ${kept.size} kept pages" }
     check(entryLook(kept.first()).colors == KeptPaperColors) { "the kept page is not on paper" }
     check(
-        anthologyEntries.filter { it.season == 3 }.none {
+        anthologyEntries.filter { it.season == KindlingSeason }.none {
             it != kept.first() && entryLook(it).colors == KeptPaperColors
         },
     ) { "paper leaked onto a burned page" }
@@ -1490,7 +1529,7 @@ internal fun anthologySelfCheck() {
         check(w.effectiveState(at - 1) == "lit") { "${w.name} went dark before the count reached it" }
         check(w.effectiveState(at) == w.state) { "${w.name} never falls to its own state" }
     }
-    check(fieldPoints.size == concludedEnd) { "the field is not the slider's ceiling" }
+    check(fieldPoints.size == ConcludedEnd) { "the field is not the slider's ceiling" }
 
     // The spoiler partition, which is the one thing on /canon that must never be keyed off a
     // season number: a gated season's laws stay inside its own block.

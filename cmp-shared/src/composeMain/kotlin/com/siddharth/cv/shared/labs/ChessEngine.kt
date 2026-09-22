@@ -46,6 +46,13 @@ private const val KING = 6
 /** One rank up. The 0x88 board is 16 wide, so a rank step is 16 and a file step is 1. */
 private const val RANK_STRIDE = 16
 
+/** 0x88 accessors: the low nibble is the file, the high nibble is the rank. */
+private const val FILE_MASK = 7
+private const val RANK_SHIFT = 4
+
+/** FEN field order: pieces, side, castling, en passant, halfmove, fullmove. */
+private const val EN_PASSANT_FIELD = 3
+
 private const val BOARD_SIZE = 128
 private const val OFF_BOARD_MASK = 0x88
 private const val SQUARE_MASK = 0x7F
@@ -119,8 +126,12 @@ private const val FLAG_DOUBLE_PUSH = 3
  * hundreds of thousands of short-lived objects for one button press; an Int is free and the four
  * accessors below cost nothing.
  */
-internal fun chessMove(from: Int, to: Int, promotion: Int, flag: Int): Int =
-    from or (to shl TO_SHIFT) or (promotion shl PROMOTION_SHIFT) or (flag shl FLAG_SHIFT)
+internal fun chessMove(
+    from: Int,
+    to: Int,
+    promotion: Int,
+    flag: Int,
+): Int = from or (to shl TO_SHIFT) or (promotion shl PROMOTION_SHIFT) or (flag shl FLAG_SHIFT)
 
 internal fun moveFrom(move: Int): Int = move and SQUARE_MASK
 
@@ -133,11 +144,14 @@ private fun moveFlag(move: Int): Int = (move shr FLAG_SHIFT) and PIECE_MASK
 private fun offBoard(square: Int): Boolean = (square and OFF_BOARD_MASK) != 0
 
 /** `4 -> "e1"`. Coordinate notation, not SAN — see [ChessSearchResult.moveText]. */
-internal fun chessSquareName(square: Int): String =
-    "${('a' + (square and 7))}${(square shr 4) + 1}"
+internal fun chessSquareName(square: Int): String = "${('a' + (square and FILE_MASK))}${(square shr RANK_SHIFT) + 1}"
 
 /** What [ChessPosition.make] has to put back. */
-internal class ChessUndo(val captured: Int, val castle: Int, val enPassant: Int)
+internal class ChessUndo(
+    val captured: Int,
+    val castle: Int,
+    val enPassant: Int,
+)
 
 /**
  * A position, mutated in place by [make] / [unmake].
@@ -145,7 +159,9 @@ internal class ChessUndo(val captured: Int, val castle: Int, val enPassant: Int)
  * King squares are tracked as fields rather than found by scanning: legality is decided by "is my
  * king attacked after this move", so the scan would otherwise run once per generated move per node.
  */
-internal class ChessPosition(fen: String) {
+internal class ChessPosition(
+    fen: String,
+) {
     val board = IntArray(BOARD_SIZE)
     var side: Int = 1
         private set
@@ -182,7 +198,11 @@ internal class ChessPosition(fen: String) {
         if (parts[2].contains('k')) castle = castle or CASTLE_BLACK_KING
         if (parts[2].contains('q')) castle = castle or CASTLE_BLACK_QUEEN
         enPassant =
-            if (parts[3] == "-") -1 else (parts[3][1] - '1') * RANK_STRIDE + (parts[3][0] - 'a')
+            if (parts[EN_PASSANT_FIELD] == "-") {
+                -1
+            } else {
+                (parts[EN_PASSANT_FIELD][1] - '1') * RANK_STRIDE + (parts[EN_PASSANT_FIELD][0] - 'a')
+            }
     }
 
     private fun pieceType(ch: Char): Int =
@@ -198,7 +218,10 @@ internal class ChessPosition(fen: String) {
     fun kingSquare(of: Int): Int = if (of == 1) whiteKing else blackKing
 
     /** Is [square] attacked by side [by]? Radiates *out* from the square, so it costs no move list. */
-    fun attacked(square: Int, by: Int): Boolean {
+    fun attacked(
+        square: Int,
+        by: Int,
+    ): Boolean {
         // A pawn of `by` attacking this square sits one rank behind it from `by`'s point of view.
         val back = if (by == 1) -RANK_STRIDE else RANK_STRIDE
         val pawn = by * PAWN
@@ -212,14 +235,23 @@ internal class ChessPosition(fen: String) {
     /** The piece on [square], or 0 for empty *and* for anything off the board. */
     private fun pieceAt(square: Int): Int = if (offBoard(square)) 0 else board[square]
 
-    private fun leaperHits(square: Int, offsets: IntArray, piece: Int): Boolean {
+    private fun leaperHits(
+        square: Int,
+        offsets: IntArray,
+        piece: Int,
+    ): Boolean {
         for (offset in offsets) {
             if (pieceAt(square + offset) == piece) return true
         }
         return false
     }
 
-    private fun rayHits(square: Int, offsets: IntArray, slider: Int, queen: Int): Boolean {
+    private fun rayHits(
+        square: Int,
+        offsets: IntArray,
+        slider: Int,
+        queen: Int,
+    ): Boolean {
         for (offset in offsets) {
             var s = square + offset
             while (!offBoard(s) && board[s] == 0) s += offset
@@ -252,7 +284,10 @@ internal class ChessPosition(fen: String) {
         return undo
     }
 
-    fun unmake(move: Int, undo: ChessUndo) {
+    fun unmake(
+        move: Int,
+        undo: ChessUndo,
+    ) {
         side = -side
         val from = moveFrom(move)
         val to = moveTo(move)
@@ -275,14 +310,29 @@ internal class ChessPosition(fen: String) {
     }
 
     /** The rook half of a castle. The king's destination [to] identifies which of the four it is. */
-    private fun moveCastlingRook(to: Int, undoing: Boolean) {
+    private fun moveCastlingRook(
+        to: Int,
+        undoing: Boolean,
+    ) {
         val rookFrom: Int
         val rookTo: Int
         when (to) {
-            G1 -> { rookFrom = H1; rookTo = F1 }
-            C1 -> { rookFrom = A1; rookTo = D1 }
-            G8 -> { rookFrom = H8; rookTo = F8 }
-            else -> { rookFrom = A8; rookTo = D8 }
+            G1 -> {
+                rookFrom = H1
+                rookTo = F1
+            }
+            C1 -> {
+                rookFrom = A1
+                rookTo = D1
+            }
+            G8 -> {
+                rookFrom = H8
+                rookTo = F8
+            }
+            else -> {
+                rookFrom = A8
+                rookTo = D8
+            }
         }
         val source = if (undoing) rookTo else rookFrom
         val target = if (undoing) rookFrom else rookTo
@@ -317,7 +367,10 @@ internal class ChessPosition(fen: String) {
         return legal
     }
 
-    private fun pawnMoves(square: Int, out: MutableList<Int>) {
+    private fun pawnMoves(
+        square: Int,
+        out: MutableList<Int>,
+    ) {
         val forward = if (side == 1) RANK_STRIDE else -RANK_STRIDE
         val homeRank = if (side == 1) 1 else 6
         val lastRank = if (side == 1) 7 else 0
@@ -325,7 +378,7 @@ internal class ChessPosition(fen: String) {
         if (!offBoard(one) && board[one] == 0) {
             pushOrPromote(square, one, lastRank, out)
             val two = square + forward * 2
-            if ((one shr 4) != lastRank && (square shr 4) == homeRank && board[two] == 0) {
+            if ((one shr RANK_SHIFT) != lastRank && (square shr RANK_SHIFT) == homeRank && board[two] == 0) {
                 out += chessMove(square, two, 0, FLAG_DOUBLE_PUSH)
             }
         }
@@ -342,15 +395,24 @@ internal class ChessPosition(fen: String) {
         }
     }
 
-    private fun pushOrPromote(from: Int, to: Int, lastRank: Int, out: MutableList<Int>) {
-        if ((to shr 4) == lastRank) {
+    private fun pushOrPromote(
+        from: Int,
+        to: Int,
+        lastRank: Int,
+        out: MutableList<Int>,
+    ) {
+        if ((to shr RANK_SHIFT) == lastRank) {
             for (promotion in PROMOTION_PIECES) out += chessMove(from, to, promotion, 0)
         } else {
             out += chessMove(from, to, 0, 0)
         }
     }
 
-    private fun stepMoves(square: Int, offsets: IntArray, out: MutableList<Int>) {
+    private fun stepMoves(
+        square: Int,
+        offsets: IntArray,
+        out: MutableList<Int>,
+    ) {
         for (offset in offsets) {
             val target = square + offset
             if (offBoard(target)) continue
@@ -359,7 +421,11 @@ internal class ChessPosition(fen: String) {
         }
     }
 
-    private fun slideMoves(square: Int, offsets: IntArray, out: MutableList<Int>) {
+    private fun slideMoves(
+        square: Int,
+        offsets: IntArray,
+        out: MutableList<Int>,
+    ) {
         for (offset in offsets) {
             var target = square + offset
             while (!offBoard(target) && board[target] == 0) {
@@ -395,7 +461,12 @@ internal class ChessPosition(fen: String) {
         }
     }
 
-    private fun canCastle(right: Int, empties: IntArray, king: Int, passesThrough: Int): Boolean {
+    private fun canCastle(
+        right: Int,
+        empties: IntArray,
+        king: Int,
+        passesThrough: Int,
+    ): Boolean {
         if (castle and right == 0) return false
         for (square in empties) {
             if (board[square] != 0) return false
@@ -411,7 +482,10 @@ internal class ChessPosition(fen: String) {
 }
 
 /** Legal move counting to [depth]. The only honest way to say a move generator is correct. */
-internal fun chessPerft(position: ChessPosition, depth: Int): Long {
+internal fun chessPerft(
+    position: ChessPosition,
+    depth: Int,
+): Long {
     if (depth == 0) return 1L
     var total = 0L
     for (move in position.legalMoves()) {
@@ -462,7 +536,9 @@ private fun evaluate(position: ChessPosition): Int {
 }
 
 /** mulberry32, the same generator the React labs use — 32-bit, seedable, no dependency. */
-internal class Mulberry32(seed: Int) {
+internal class Mulberry32(
+    seed: Int,
+) {
     private var state = seed
 
     fun next(): Float {
@@ -495,7 +571,12 @@ internal class Mulberry32(seed: Int) {
 }
 
 /** One parent-to-child link. Ids are handed out in visit order, so `from` is always less than `to`. */
-internal class ChessTreeEdge(val from: Int, val to: Int, val move: Int, val depth: Int)
+internal class ChessTreeEdge(
+    val from: Int,
+    val to: Int,
+    val move: Int,
+    val depth: Int,
+)
 
 internal class ChessSearchResult(
     val move: Int,
@@ -525,7 +606,10 @@ internal class ChessSearchResult(
     val maxPly: Int get() = edges.maxOfOrNull { it.depth + 1 } ?: 0
 }
 
-private class SearchContext(val rng: Mulberry32, val noise: Float) {
+private class SearchContext(
+    val rng: Mulberry32,
+    val noise: Float,
+) {
     var nodes: Int = 0
     var lastId: Int = 0
     val edges = ArrayList<ChessTreeEdge>(MAX_TREE_EDGES)
@@ -539,7 +623,10 @@ private class SearchContext(val rng: Mulberry32, val noise: Float) {
  * ponytail: no MVV-LVA, no killer moves, no transposition table. Measured node counts run from a
  * couple of hundred at two ply to about twelve thousand at four; nothing is waiting on this.
  */
-private fun rankMove(position: ChessPosition, move: Int): Int {
+private fun rankMove(
+    position: ChessPosition,
+    move: Int,
+): Int {
     var score = 0
     if (position.board[moveTo(move)] != 0) {
         val attacker = abs(position.board[moveFrom(move)])
@@ -591,7 +678,10 @@ private fun negamax(
 }
 
 /** The evaluation at the horizon, from the moving side's point of view, plus the preset's jitter. */
-private fun leafScore(position: ChessPosition, ctx: SearchContext): Int {
+private fun leafScore(
+    position: ChessPosition,
+    ctx: SearchContext,
+): Int {
     val own = if (position.side == 1) evaluate(position) else -evaluate(position)
     if (ctx.noise <= 0f) return own
     return own + ((ctx.rng.next() * 2f - 1f) * ctx.noise * (NOISE_SPAN_CENTIPAWNS / 2f)).toInt()
@@ -608,7 +698,12 @@ private fun leafScore(position: ChessPosition, ctx: SearchContext): Int {
  * and would redraw a different tree on every resize. The clock-pressure argument it was making is
  * the one the Clock Burn instrument makes directly, from measured games rather than from a model.
  */
-internal fun chessSearch(fen: String, depth: Int, noise: Float, seed: Int): ChessSearchResult {
+internal fun chessSearch(
+    fen: String,
+    depth: Int,
+    noise: Float,
+    seed: Int,
+): ChessSearchResult {
     val position = ChessPosition(fen)
     val roots = position.legalMoves()
     if (roots.isEmpty()) return ChessSearchResult(0, 0, 0, emptyList(), false)
@@ -638,7 +733,11 @@ internal fun chessSearch(fen: String, depth: Int, noise: Float, seed: Int): Ches
 // -------------------------------------------------------------------------------------------
 
 /** A placed node. Parallel arrays rather than objects: the layout is read once per drawn edge. */
-internal class ChessTreeLayout(val x: FloatArray, val y: FloatArray, val inChosenLine: BooleanArray)
+internal class ChessTreeLayout(
+    val x: FloatArray,
+    val y: FloatArray,
+    val inChosenLine: BooleanArray,
+)
 
 private const val TREE_MARGIN = 14f
 private const val TREE_ROOT_LIFT = 22f
@@ -737,7 +836,10 @@ internal const val CHESS_SEARCH_SEED: Int = 20260724
 internal const val CHESS_REPLAY_SECONDS: Float = 1.6f
 
 /** How much of [ChessSearchResult.edges] exists yet at [seconds]. */
-internal fun chessRevealedAt(result: ChessSearchResult, seconds: Float): Int {
+internal fun chessRevealedAt(
+    result: ChessSearchResult,
+    seconds: Float,
+): Int {
     val ratio = (seconds / CHESS_REPLAY_SECONDS).coerceIn(0f, 1f)
     return (result.edges.size * ratio).toInt().coerceIn(0, result.edges.size)
 }
@@ -752,7 +854,12 @@ internal fun chessRevealedAt(result: ChessSearchResult, seconds: Float): Int {
  * build cannot show its working for. The noise term survives: it is what makes the shallow setting
  * settle for the second-best move often enough to feel like a person.
  */
-internal class ChessPreset(val label: String, val depth: Int, val noise: Float, val note: String)
+internal class ChessPreset(
+    val label: String,
+    val depth: Int,
+    val noise: Float,
+    val note: String,
+)
 
 internal val chessSearchPresets: List<ChessPreset> =
     listOf(
@@ -819,6 +926,10 @@ private const val PRUNING_FACTOR = 100
  * every one of them is wrong by a specific amount if a specific rule is wrong. Nothing else in this
  * port has a check this sharp.
  */
+// MagicNumber: assertion fixtures. detekt excludes every test source set from this rule by
+// default; these are tests that live in main source only because composeMain is `internal`
+// and this project has no commonTest. SelfCheckTest.kt now runs them from `check`.
+@Suppress("MagicNumber")
 internal fun chessEngineSelfCheck() {
     PERFT_CASES.forEach { (name, fen, counts) ->
         counts.forEachIndexed { i, want ->
@@ -858,7 +969,11 @@ internal fun chessEngineSelfCheck() {
 }
 
 /** One corpus position, searched, laid out and revealed. Split out to keep the check readable. */
-private fun checkOnePosition(preset: ChessPreset, index: Int, entry: ChessQuizPosition) {
+private fun checkOnePosition(
+    preset: ChessPreset,
+    index: Int,
+    entry: ChessQuizPosition,
+) {
     val where = "${preset.label} / position $index (${entry.at})"
     val run = chessSearch(entry.fen, preset.depth, preset.noise, CHESS_SEARCH_SEED + index)
     check(run.edges.isNotEmpty()) { "$where: the search recorded no tree" }

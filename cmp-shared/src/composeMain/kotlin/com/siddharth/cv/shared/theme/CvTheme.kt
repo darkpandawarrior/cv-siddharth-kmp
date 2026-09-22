@@ -129,13 +129,20 @@ val LocalCvType: ProvidableCompositionLocal<CvTypography> =
 val LocalReducedMotion: ProvidableCompositionLocal<Boolean> = staticCompositionLocalOf { false }
 
 val cvColors: CvColors
-    @Composable @ReadOnlyComposable get() = LocalCvColors.current
+    @Composable @ReadOnlyComposable
+    get() = LocalCvColors.current
 
 val cvType: CvTypography
-    @Composable @ReadOnlyComposable get() = LocalCvType.current
+    @Composable @ReadOnlyComposable
+    get() = LocalCvType.current
+
+/** `#RRGGBB` carries no alpha channel, so every parsed colour is forced fully opaque. */
+private const val OpaqueAlpha = 0xFF000000
+
+private const val HexRadix = 16
 
 /** `"#3ddc84"` -> opaque [Color]. Accepts a leading `#` or not. */
-fun cvColor(hex: String): Color = Color(hex.removePrefix("#").toLong(16) or 0xFF000000)
+fun cvColor(hex: String): Color = Color(hex.removePrefix("#").toLong(HexRadix) or OpaqueAlpha)
 
 /**
  * The CSS-cascade analogue of ProjectDetail.tsx:270-284 — a project's optional `theme` becomes an
@@ -161,7 +168,11 @@ fun projectColors(theme: ProjectTheme?): CvColors {
  * `widthDp` of 0 is treated as 375 — on wasmJs `LocalWindowInfo.containerSize` legitimately reports
  * 0 during the first composition and every fluid size would otherwise collapse to its minimum.
  */
-fun fluidSp(minSp: Float, maxSp: Float, widthDp: Float): TextUnit {
+fun fluidSp(
+    minSp: Float,
+    maxSp: Float,
+    widthDp: Float,
+): TextUnit {
     val w = if (widthDp <= 0f) 375f else widthDp
     val t = ((w - 375f) / (1920f - 375f)).coerceIn(0f, 1f)
     return (minSp + (maxSp - minSp) * t).sp
@@ -179,22 +190,24 @@ fun fluidSp(minSp: Float, maxSp: Float, widthDp: Float): TextUnit {
  * the whole reason `compose.components.resources` is a dependency.
  */
 @Composable
-private fun rememberDisplayFamily(): FontFamily = FontFamily(
-    Font(Res.font.space_grotesk_regular, FontWeight.Normal),
-    Font(Res.font.space_grotesk_medium, FontWeight.Medium),
-    Font(Res.font.space_grotesk_semibold, FontWeight.SemiBold),
-    Font(Res.font.space_grotesk_bold, FontWeight.Bold),
-    // No Black cut is vendored; ghostNumeral asks for W900 and Skia synthesises it from Bold.
-    // ponytail: add space_grotesk_black.ttf if the synthesised weight ever reads wrong.
-    Font(Res.font.space_grotesk_bold, FontWeight.Black),
-)
+private fun rememberDisplayFamily(): FontFamily =
+    FontFamily(
+        Font(Res.font.space_grotesk_regular, FontWeight.Normal),
+        Font(Res.font.space_grotesk_medium, FontWeight.Medium),
+        Font(Res.font.space_grotesk_semibold, FontWeight.SemiBold),
+        Font(Res.font.space_grotesk_bold, FontWeight.Bold),
+        // No Black cut is vendored; ghostNumeral asks for W900 and Skia synthesises it from Bold.
+        // ponytail: add space_grotesk_black.ttf if the synthesised weight ever reads wrong.
+        Font(Res.font.space_grotesk_bold, FontWeight.Black),
+    )
 
 /** DM Mono stands in for JetBrains Mono — same monospace feel, one weight, far fewer bytes. */
 @Composable
-private fun rememberMonoFamily(): FontFamily = FontFamily(
-    Font(Res.font.dm_mono_medium, FontWeight.Normal),
-    Font(Res.font.dm_mono_medium, FontWeight.Medium),
-)
+private fun rememberMonoFamily(): FontFamily =
+    FontFamily(
+        Font(Res.font.dm_mono_medium, FontWeight.Normal),
+        Font(Res.font.dm_mono_medium, FontWeight.Medium),
+    )
 
 @Composable
 private fun rememberCvTypography(
@@ -204,15 +217,13 @@ private fun rememberCvTypography(
     monoFamily: FontFamily,
 ): CvTypography =
     remember(colors, widthDp, displayFamily, monoFamily) {
-        val DisplayFamily = displayFamily
-        val MonoFamily = monoFamily
         val hero = fluidSp(36f, 60f, widthDp)
         val h2 = fluidSp(28f, 36f, widthDp)
         val metric = fluidSp(30f, 40f, widthDp)
         CvTypography(
             hero =
                 TextStyle(
-                    fontFamily = DisplayFamily,
+                    fontFamily = displayFamily,
                     fontWeight = FontWeight.Bold,
                     fontSize = hero,
                     lineHeight = hero * 1.05f,
@@ -221,7 +232,7 @@ private fun rememberCvTypography(
                 ),
             h2 =
                 TextStyle(
-                    fontFamily = DisplayFamily,
+                    fontFamily = displayFamily,
                     fontWeight = FontWeight.Bold,
                     fontSize = h2,
                     lineHeight = h2 * 1.15f,
@@ -230,7 +241,7 @@ private fun rememberCvTypography(
                 ),
             metric =
                 TextStyle(
-                    fontFamily = DisplayFamily,
+                    fontFamily = displayFamily,
                     fontWeight = FontWeight.Bold,
                     fontSize = metric,
                     lineHeight = metric * 1.1f,
@@ -239,7 +250,7 @@ private fun rememberCvTypography(
                 ),
             cardTitle =
                 TextStyle(
-                    fontFamily = DisplayFamily,
+                    fontFamily = displayFamily,
                     fontWeight = FontWeight.Bold,
                     fontSize = 20.sp,
                     lineHeight = 26.sp,
@@ -248,7 +259,7 @@ private fun rememberCvTypography(
                 ),
             body =
                 TextStyle(
-                    fontFamily = DisplayFamily,
+                    fontFamily = displayFamily,
                     fontWeight = FontWeight.Normal,
                     fontSize = 16.sp,
                     lineHeight = 25.sp,
@@ -256,7 +267,7 @@ private fun rememberCvTypography(
                 ),
             bodySmall =
                 TextStyle(
-                    fontFamily = DisplayFamily,
+                    fontFamily = displayFamily,
                     fontWeight = FontWeight.Normal,
                     fontSize = 14.sp,
                     lineHeight = 22.sp,
@@ -264,7 +275,7 @@ private fun rememberCvTypography(
                 ),
             mono =
                 TextStyle(
-                    fontFamily = MonoFamily,
+                    fontFamily = monoFamily,
                     fontWeight = FontWeight.Normal,
                     fontSize = 13.sp,
                     lineHeight = 20.sp,
@@ -272,7 +283,7 @@ private fun rememberCvTypography(
                 ),
             metaMono =
                 TextStyle(
-                    fontFamily = MonoFamily,
+                    fontFamily = monoFamily,
                     fontWeight = FontWeight.Medium,
                     fontSize = 11.sp,
                     lineHeight = 16.sp,
@@ -281,7 +292,7 @@ private fun rememberCvTypography(
                 ),
             eyebrow =
                 TextStyle(
-                    fontFamily = DisplayFamily,
+                    fontFamily = displayFamily,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 12.sp,
                     lineHeight = 16.sp,
@@ -290,7 +301,7 @@ private fun rememberCvTypography(
                 ),
             ghostNumeral =
                 TextStyle(
-                    fontFamily = DisplayFamily,
+                    fontFamily = displayFamily,
                     fontWeight = FontWeight.Black,
                     fontSize = 36.sp,
                     lineHeight = 36.sp,
@@ -313,7 +324,12 @@ fun CvTheme(
     reducedMotion: Boolean = LocalReducedMotion.current,
     content: @Composable () -> Unit,
 ) {
-    val widthDp = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp().value }
+    val widthDp =
+        with(LocalDensity.current) {
+            LocalWindowInfo.current.containerSize.width
+                .toDp()
+                .value
+        }
     val typography =
         rememberCvTypography(colors, widthDp, rememberDisplayFamily(), rememberMonoFamily())
     CompositionLocalProvider(

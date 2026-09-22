@@ -43,12 +43,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.siddharth.cv.shared.anthology.grouped
 import com.siddharth.cv.shared.data.generated.ChessArcPoint
+import com.siddharth.cv.shared.data.generated.chess
 import com.siddharth.cv.shared.data.generated.chessArc
 import com.siddharth.cv.shared.data.generated.chessGraveyard
 import com.siddharth.cv.shared.data.generated.chessRepertoireByPlatform
-import com.siddharth.cv.shared.data.generated.chess
+import com.siddharth.cv.shared.format.grouped
 import com.siddharth.cv.shared.theme.MonoMeta
 import com.siddharth.cv.shared.theme.cvColor
 import com.siddharth.cv.shared.theme.cvColors
@@ -110,7 +110,12 @@ private data class ArcLine(
     val points: List<ChessArcPoint>,
 )
 
-private data class ArcBand(val platform: String, val ratingMin: Int, val ratingMax: Int, val lines: List<ArcLine>)
+private data class ArcBand(
+    val platform: String,
+    val ratingMin: Int,
+    val ratingMax: Int,
+    val lines: List<ArcLine>,
+)
 
 private val arcFormatOrder: List<String> = chessArc.series.map { it.format }.distinct()
 
@@ -143,10 +148,13 @@ private fun arcBandSentence(band: ArcBand): String =
     "${band.platform}, own scale ${band.ratingMin} to ${band.ratingMax}: " +
         band.lines.joinToString("; ") { "${it.format} ${it.min} to ${it.max}" }
 
+/** Accent, accent2, then the third tint: three arcs before the palette repeats. */
+private const val OpeningStyleCount = 3
+
 @Composable
 private fun arcTintFor(styleIndex: Int): Color {
     val colors = cvColors
-    return when (styleIndex % 3) {
+    return when (styleIndex % OpeningStyleCount) {
         0 -> colors.accent
         1 -> colors.accent2
         else -> ArcThirdTint
@@ -154,7 +162,7 @@ private fun arcTintFor(styleIndex: Int): Color {
 }
 
 private fun arcDashFor(styleIndex: Int): List<Float>? =
-    when (styleIndex % 3) {
+    when (styleIndex % OpeningStyleCount) {
         0 -> null
         1 -> ArcDashMedium
         else -> ArcDashFine
@@ -267,7 +275,10 @@ private fun ArcBandFigure(band: ArcBand) {
 }
 
 @Composable
-private fun ArcSwatch(tint: Color, dash: List<Float>?) {
+private fun ArcSwatch(
+    tint: Color,
+    dash: List<Float>?,
+) {
     Canvas(Modifier.size(width = 20.dp, height = 6.dp)) {
         drawLine(
             color = tint,
@@ -297,6 +308,7 @@ private fun ArcBandCanvas(band: ArcBand) {
             val plotW = size.width - 2f * inset
             val span = (arcStampMax - arcStampMin).takeIf { it > 0.0 } ?: 1.0
             if (plotW <= 0f || size.height <= 0f) return@Canvas
+
             fun xAt(t: Double): Float = inset + (((t - arcStampMin) / span) * plotW).toFloat()
 
             chessArc.yearTicks.forEach { tick ->
@@ -337,13 +349,15 @@ private fun ArcBandCanvas(band: ArcBand) {
 
 private const val GRAVEYARD_TOP = 8
 
+/** Eight files, eight ranks: `index` counts a1..h8 row by row. */
+private const val BoardEdge = 8
+
 /** Index 0 is a1 and 63 is h8, the convention the generator's square matrix fixed. */
-internal fun squareName(index: Int): String = "${"abcdefgh"[index % 8]}${index / 8 + 1}"
+internal fun squareName(index: Int): String = "${"abcdefgh"[index % BoardEdge]}${index / BoardEdge + 1}"
 
 private val graveyardViews: List<String> = listOf("losses", "wins")
 
-private fun graveyardCounts(view: String): List<Int> =
-    if (view == "wins") chessGraveyard.wins else chessGraveyard.losses
+private fun graveyardCounts(view: String): List<Int> = if (view == "wins") chessGraveyard.wins else chessGraveyard.losses
 
 private fun graveyardTop(view: String): List<Pair<String, Int>> =
     graveyardCounts(view)
@@ -435,7 +449,12 @@ internal fun platformLabel(key: String): String = if (key == "lichess") "lichess
 /** `0.4107` to `"41.1%"`; a thin slice has no percentage to quote and says so instead. */
 internal fun sharePct(share: Double?): String = if (share == null) "thin" else "${oneDecimal(share * 100)}%"
 
-private data class SharePoint(val year: String, val key: String, val share: Double?, val thin: Boolean)
+private data class SharePoint(
+    val year: String,
+    val key: String,
+    val share: Double?,
+    val thin: Boolean,
+)
 
 /** One opening's full WITHIN-platform history, year by year. Absence is a genuine zero: the
  *  generator tracks the union of every platform-year's top five, so a missing line means no games. */
@@ -471,8 +490,7 @@ private val focusLines: List<String> =
                 put(name, (this[name] ?: 0.0) + (shares.max() - shares.min()))
             }
         }
-    }
-        .entries
+    }.entries
         .sortedWith(compareByDescending<Map.Entry<String, Double>> { it.value }.thenBy { it.key })
         .take(FOCUS_LINES)
         .map { it.key }
@@ -623,7 +641,11 @@ private fun RepertoireTable(year: String) {
  * screen reader, and "selected" is the state that matters.
  */
 @Composable
-internal fun ChessTogglePill(label: String, selected: Boolean, onSelect: () -> Unit) {
+internal fun ChessTogglePill(
+    label: String,
+    selected: Boolean,
+    onSelect: () -> Unit,
+) {
     val colors = cvColors
     val interaction = remember { MutableInteractionSource() }
     val shape = RoundedCornerShape(999.dp)
@@ -639,8 +661,7 @@ internal fun ChessTogglePill(label: String, selected: Boolean, onSelect: () -> U
                     indication = null,
                     role = Role.RadioButton,
                     onClick = onSelect,
-                )
-                .padding(horizontal = 14.dp, vertical = 7.dp),
+                ).padding(horizontal = 14.dp, vertical = 7.dp),
     ) {
         BasicText(
             text = label,
@@ -664,6 +685,9 @@ internal fun ChessTogglePill(label: String, selected: Boolean, onSelect: () -> U
  * has collapsed to a point, a square index that no longer maps a1 to h8, a swing ranking that
  * quietly quotes a thin platform-year, and a run sentence spliced across the handoff.
  */
+// MagicNumber: assertion fixtures. detekt excludes every test source set from this rule by
+// default; these are tests that live in main source only because composeMain is `internal`
+// and this project has no commonTest. SelfCheckTest.kt now runs them from `check`.
 @Suppress("MagicNumber")
 internal fun chessScenePanesSelfCheck() {
     check(arcBands.isNotEmpty()) { "the arc has no bands to draw" }

@@ -2,6 +2,7 @@ package com.siddharth.cv.shared
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -29,7 +30,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.foundation.focusable
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isCtrlPressed
@@ -39,12 +39,12 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.platform.UriHandler
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.siddharth.cv.shared.anthology.AnthologyScreen
 import com.siddharth.cv.shared.anthology.CanonScreen
@@ -52,30 +52,30 @@ import com.siddharth.cv.shared.anthology.MakingScreen
 import com.siddharth.cv.shared.chat.FloatingChat
 import com.siddharth.cv.shared.chess.ChessScreen
 import com.siddharth.cv.shared.data.profile
+import com.siddharth.cv.shared.detail.ProjectDetailScreen
+import com.siddharth.cv.shared.detail.ResumeScreen
 import com.siddharth.cv.shared.excelsior.ExcelsiorScreen
 import com.siddharth.cv.shared.forge.ParticleForge
 import com.siddharth.cv.shared.hire.HireScreen
+import com.siddharth.cv.shared.home.HomeScreen
+import com.siddharth.cv.shared.home.homeSections
 import com.siddharth.cv.shared.labs.LabScreen
 import com.siddharth.cv.shared.map.MapScreen
+import com.siddharth.cv.shared.media.InstallCvImageLoader
 import com.siddharth.cv.shared.ops.OpsScreen
 import com.siddharth.cv.shared.palette.CommandPalette
 import com.siddharth.cv.shared.palette.PaletteCommand
 import com.siddharth.cv.shared.playground.PlaygroundScreen
 import com.siddharth.cv.shared.read.ReadScreen
-import com.siddharth.cv.shared.detail.ProjectDetailScreen
-import com.siddharth.cv.shared.detail.ResumeScreen
-import com.siddharth.cv.shared.home.HomeScreen
-import com.siddharth.cv.shared.home.homeSections
-import com.siddharth.cv.shared.media.InstallCvImageLoader
 import com.siddharth.cv.shared.shipped.ShippedScreen
 import com.siddharth.cv.shared.terminal.TerminalScreen
-import com.siddharth.cv.shared.weeb.WeebScreen
-import com.siddharth.cv.shared.writing.InkScreen
-import com.siddharth.cv.shared.writing.LoopdownScreen
 import com.siddharth.cv.shared.theme.CvTheme
 import com.siddharth.cv.shared.theme.ShaderOrGradientBackground
 import com.siddharth.cv.shared.theme.cvColors
 import com.siddharth.cv.shared.theme.cvType
+import com.siddharth.cv.shared.weeb.WeebScreen
+import com.siddharth.cv.shared.writing.InkScreen
+import com.siddharth.cv.shared.writing.LoopdownScreen
 
 /**
  * The single Compose entry point every platform renders. Android's MainActivity, the desktop `main`,
@@ -122,7 +122,8 @@ fun App(
     CvTheme {
         CompositionLocalProvider(LocalNav provides nav) {
             Box(
-                Modifier.fillMaxSize()
+                Modifier
+                    .fillMaxSize()
                     .focusRequester(focus)
                     .focusable()
                     .onPreviewKeyEvent { event ->
@@ -202,40 +203,45 @@ private fun RouteHost(nav: CvNavState, homeList: LazyListState, content: Modifie
         Route.Weeb -> WeebScreen(content)
         Route.Ops -> OpsScreen(content)
         Route.Loopdown -> LoopdownScreen(onOpenInk = { nav.go(Route.Ink) }, modifier = content)
-        Route.Ink -> InkScreen(
-            onOpenLoopdown = { nav.go(Route.Loopdown) },
-            onOpenAnthology = { nav.go(Route.Anthology()) },
-            modifier = content,
-        )
-        is Route.Anthology -> AnthologyScreen(
-            onOpenCanon = { nav.go(Route.Canon) },
-            modifier = content,
-            initialLayer = route.layer,
-        )
+        Route.Ink ->
+            InkScreen(
+                onOpenLoopdown = { nav.go(Route.Loopdown) },
+                onOpenAnthology = { nav.go(Route.Anthology()) },
+                modifier = content,
+            )
+        is Route.Anthology ->
+            AnthologyScreen(
+                onOpenCanon = { nav.go(Route.Canon) },
+                modifier = content,
+                initialLayer = route.layer,
+            )
         // The layer travels: /canon points at a named one, and Route.Anthology carries it into the
         // URL, so the Back button and a pasted link agree with the click that got you there.
-        Route.Canon -> CanonScreen(
-            onOpenAnthology = { layer -> nav.go(Route.Anthology(layer)) },
-            modifier = content,
-        )
+        Route.Canon ->
+            CanonScreen(
+                onOpenAnthology = { layer -> nav.go(Route.Anthology(layer)) },
+                modifier = content,
+            )
         Route.Making -> MakingScreen(onReadAnthology = { nav.go(Route.Anthology()) }, modifier = content)
         is Route.ProjectDetail -> ProjectDetailScreen(route.slug, content)
         // The two halves of the archive, and they point at each other. A piece links to the exact
         // magazine page it ran on and the page links back to the readable prose, which is the pair
         // the React route's own doc comment calls the point: read it properly AND see it was
         // really printed. `year` is a String on the route because the corpus keys editions by one.
-        is Route.Read -> ReadScreen(
-            slug = route.slug,
-            onOpenPiece = { nav.go(Route.Read(it)) },
-            onSeeInPrint = { year, page -> nav.go(Route.Excelsior(year.toString(), page)) },
-            modifier = content,
-        )
-        is Route.Excelsior -> ExcelsiorScreen(
-            year = route.year,
-            page = route.page,
-            onOpenRead = { nav.go(Route.Read(it)) },
-            modifier = content,
-        )
+        is Route.Read ->
+            ReadScreen(
+                slug = route.slug,
+                onOpenPiece = { nav.go(Route.Read(it)) },
+                onSeeInPrint = { year, page -> nav.go(Route.Excelsior(year.toString(), page)) },
+                modifier = content,
+            )
+        is Route.Excelsior ->
+            ExcelsiorScreen(
+                year = route.year,
+                page = route.page,
+                onOpenRead = { nav.go(Route.Read(it)) },
+                modifier = content,
+            )
         // Both take nav from LocalNav rather than a callback: their links are to sections of the
         // homepage and to arbitrary rooms, which is a router's job and not a parameter list's.
         Route.Chess -> ChessScreen(content)
@@ -270,11 +276,12 @@ private fun runPaletteCommand(
         // fifteen branches that has to be remembered. `paletteSelfCheck` already asserts every
         // route row's id is exactly this string, so the lookup cannot miss one.
         "route" -> staticRoutes.firstOrNull { it.toPath().removePrefix("/") == value }?.let(nav::go)
-        "action" -> when (value) {
-            "copy-email" -> clipboard.setText(AnnotatedString(profile.email))
-            "github" -> uriHandler.openUri(profile.github)
-            "linkedin" -> uriHandler.openUri(profile.linkedin)
-        }
+        "action" ->
+            when (value) {
+                "copy-email" -> clipboard.setText(AnnotatedString(profile.email))
+                "github" -> uriHandler.openUri(profile.github)
+                "linkedin" -> uriHandler.openUri(profile.linkedin)
+            }
     }
 }
 
@@ -287,9 +294,16 @@ private val TopBarHeight = 64.dp
 private val WideBreakpoint = 900.dp
 
 @Composable
-private fun TopBar(nav: CvNavState, homeList: LazyListState) {
+private fun TopBar(
+    nav: CvNavState,
+    homeList: LazyListState,
+) {
     val colors = cvColors
-    val widthDp = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() }
+    val widthDp =
+        with(LocalDensity.current) {
+            LocalWindowInfo.current.containerSize.width
+                .toDp()
+        }
     val onHome = nav.current == Route.Home
 
     // The scroll-spy. `homeSections[i]` is LazyColumn item `i` by construction (see HomeScreen), so
@@ -301,7 +315,8 @@ private fun TopBar(nav: CvNavState, homeList: LazyListState) {
 
     Row(
         modifier =
-            Modifier.fillMaxWidth()
+            Modifier
+                .fillMaxWidth()
                 .height(TopBarHeight)
                 .background(colors.glass)
                 .padding(horizontal = 24.dp),
@@ -333,21 +348,25 @@ private fun TopBar(nav: CvNavState, homeList: LazyListState) {
 }
 
 @Composable
-private fun NavLink(text: String, accent: Boolean = false, onClick: () -> Unit) {
+private fun NavLink(
+    text: String,
+    accent: Boolean = false,
+    onClick: () -> Unit,
+) {
     val colors = cvColors
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
     BasicText(
         text = text,
         modifier =
-            Modifier.hoverable(interaction)
+            Modifier
+                .hoverable(interaction)
                 .clickable(
                     interactionSource = interaction,
                     indication = null,
                     role = Role.Button,
                     onClick = onClick,
-                )
-                .padding(vertical = 8.dp),
+                ).padding(vertical = 8.dp),
         style = cvType.metaMono.copy(color = if (accent || hovered) colors.accent else colors.muted),
     )
 }

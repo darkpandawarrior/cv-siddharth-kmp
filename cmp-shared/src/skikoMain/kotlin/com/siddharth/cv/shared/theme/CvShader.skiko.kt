@@ -18,10 +18,11 @@ actual fun runtimeShaderBrush(
     widthPx: Float,
     heightPx: Float,
     timeSeconds: Float,
-): Brush? = runCatching {
-    val effect = cache.getOrPut(sksl) { RuntimeEffect.makeForShader(sksl) }
-    val builder = RuntimeShaderBuilder(effect)
-    builder.uniform("uSize", widthPx, heightPx)
-    builder.uniform("uTime", timeSeconds)
-    ShaderBrush(builder.makeShader().asComposeShader())
-}.getOrNull() // a bad SkSL string must degrade to the gradient, never crash the page
+): Brush? =
+    runCatching {
+        val effect = cache.getOrPut(sksl) { RuntimeEffect.makeForShader(sksl) }
+        val builder = RuntimeShaderBuilder(effect)
+        builder.uniform("uSize", widthPx, heightPx)
+        builder.uniform("uTime", timeSeconds)
+        ShaderBrush(builder.makeShader().asComposeShader())
+    }.getOrNull() // a bad SkSL string must degrade to the gradient, never crash the page

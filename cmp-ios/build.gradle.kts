@@ -31,7 +31,10 @@ kotlin {
             baseName = "ComposeApp"
             isStatic = true
             // export() requires api() in the source set below to surface the module's public API.
-            export(project(":cmp-shared"))
+            // `dependencies.project(...)`, not `project(...)`: outside a dependencies block
+            // the bare form resolves to Project.project(String) and hands export() a Project
+            // object, which Gradle 10 refuses as a dependency notation.
+            export(dependencies.project(":cmp-shared"))
         }
     }
 

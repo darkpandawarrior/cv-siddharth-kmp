@@ -33,8 +33,14 @@ kotlin {
 
     android {
         namespace = "com.siddharth.cv.shared"
-        compileSdk = libs.versions.android.compileSdk.get().toInt()
-        minSdk = libs.versions.android.minSdk.get().toInt()
+        compileSdk =
+            libs.versions.android.compileSdk
+                .get()
+                .toInt()
+        minSdk =
+            libs.versions.android.minSdk
+                .get()
+                .toInt()
     }
 
     // iosArm64/iosSimulatorArm64 get the Compose UI (below); iosX64 is kept as a bare
@@ -69,37 +75,45 @@ kotlin {
 
         // Compose UI lives here, not in commonMain, so it's only on the classpath of targets
         // Compose Multiplatform actually supports (android, jvm, iosArm64, iosSimulatorArm64).
-        val composeMain by creating {
-            dependsOn(commonMain.get())
-            dependencies {
-                implementation(compose.runtime)
-                implementation(compose.foundation)
-                implementation(compose.material3)
-                implementation(compose.ui)
-                // Res.font/Res.drawable — Compose draws through Skia and can't see CSS fonts.
-                implementation(compose.components.resources)
-                implementation(libs.coil.compose)
-                // Mandatory companion: coil-core ships no coil3.network package, so
-                // coil-compose alone silently renders nothing for an https:// URL.
-                implementation(libs.coil.network.ktor3)
-                // kmp-toolkit, composite-built from external/kmp-toolkit (see settings.gradle.kts).
-                // Both modules publish exactly composeMain's target set (android/jvm/iosArm64/
-                // iosSimulatorArm64/wasmJs) — no iosX64/watchOS artifacts exist, which is why this
-                // dependency lives here and not in commonMain. The "1.0.0" is a placeholder: the
-                // settings.gradle.kts dependencySubstitution always redirects it to the local
-                // checkout, so no version is ever actually resolved from a repo.
-                implementation("com.siddharth.kmp:network:1.0.0") // real per-platform HttpClientEngine
-                implementation("com.siddharth.kmp:result:1.0.0") // shared AiResult<T>/AiFailure
-                // FitCheckScreen.kt's JD analyzer only — see settings.gradle.kts for why the
-                // ordinary chat client (ChatClient.kt) deliberately does not use this provider.
-                implementation("com.siddharth.kmp:llm-chat:1.0.0")
+        val composeMain =
+            create("composeMain") {
+                dependsOn(commonMain.get())
+                dependencies {
+                    implementation(compose.runtime)
+                    implementation(compose.foundation)
+                    implementation(compose.material3)
+                    implementation(compose.ui)
+                    // @Preview for the CvComponents design system (CvComponentPreviews.kt).
+                    // The RENDERER (org.jetbrains.compose.ui:ui-tooling) is deliberately NOT
+                    // declared: it is androidRuntimeClasspath-only under AGP's KMP library plugin,
+                    // and the IDE preview panel needs an Android Studio that understands AGP
+                    // 9.5.0-alpha06 anyway. Previews here compile on every composeMain target and
+                    // are the input a preview scanner would read; IDE rendering is a bonus.
+                    implementation(libs.ui.tooling.preview.mp)
+                    // Res.font/Res.drawable — Compose draws through Skia and can't see CSS fonts.
+                    implementation(compose.components.resources)
+                    implementation(libs.coil.compose)
+                    // Mandatory companion: coil-core ships no coil3.network package, so
+                    // coil-compose alone silently renders nothing for an https:// URL.
+                    implementation(libs.coil.network.ktor3)
+                    // kmp-toolkit, composite-built from external/kmp-toolkit (see settings.gradle.kts).
+                    // Both modules publish exactly composeMain's target set (android/jvm/iosArm64/
+                    // iosSimulatorArm64/wasmJs) — no iosX64/watchOS artifacts exist, which is why this
+                    // dependency lives here and not in commonMain. The "1.0.0" is a placeholder: the
+                    // settings.gradle.kts dependencySubstitution always redirects it to the local
+                    // checkout, so no version is ever actually resolved from a repo.
+                    implementation("com.siddharth.kmp:network:1.0.0") // real per-platform HttpClientEngine
+                    implementation("com.siddharth.kmp:result:1.0.0") // shared AiResult<T>/AiFailure
+                    // FitCheckScreen.kt's JD analyzer only — see settings.gradle.kts for why the
+                    // ordinary chat client (ChatClient.kt) deliberately does not use this provider.
+                    implementation("com.siddharth.kmp:llm-chat:1.0.0")
+                }
             }
-        }
         // Skiko-backed targets. `org.jetbrains.skia.*` (RuntimeEffect / RuntimeShaderBuilder —
         // GPU fragment shaders) exists on every Compose target EXCEPT Android, which renders
         // through the platform's own pipeline and would need AGSL instead. Android therefore
         // hangs off composeMain directly and supplies its own actual; everyone else shares one.
-        val skikoMain by creating { dependsOn(composeMain) }
+        val skikoMain = create("skikoMain") { dependsOn(composeMain) }
 
         androidMain.get().dependsOn(composeMain)
         jvmMain.get().dependsOn(skikoMain)
@@ -126,9 +140,10 @@ kotlin {
 
         // iosArm64/iosSimulatorArm64 only: the ComposeUIViewController entry point (UIKit API,
         // not available on watchOS/other Apple targets).
-        val composeIosMain by creating {
-            dependsOn(skikoMain)
-        }
+        val composeIosMain =
+            create("composeIosMain") {
+                dependsOn(skikoMain)
+            }
         getByName("iosArm64Main").dependsOn(composeIosMain)
         getByName("iosSimulatorArm64Main").dependsOn(composeIosMain)
     }
@@ -153,7 +168,7 @@ kotlin {
 // ponytail: the origin defaults to the Vercel URL baked into Prerender.kt. Pass -Pprerender.origin
 // (or CV_SITE_ORIGIN) when deploying anywhere else — a wrong <link rel="canonical"> is worse than
 // none, so make this a required property the day this is deployed from CI.
-val prerenderSite by tasks.registering(JavaExec::class) {
+tasks.register<JavaExec>("prerenderSite") {
     group = "distribution"
     description = "Generates static per-route HTML + sitemap.xml + robots.txt into the wasm distribution."
     dependsOn(":cmp-web:wasmJsBrowserDistribution")
@@ -161,8 +176,10 @@ val prerenderSite by tasks.registering(JavaExec::class) {
     mainClass.set("com.siddharth.cv.shared.prerender.Prerender")
     classpath = files(tasks.named("jvmJar"), configurations.named("jvmRuntimeClasspath"))
 
-    val outDir = providers.gradleProperty("prerender.out")
-        .getOrElse("${rootProject.projectDir}/cmp-web/build/dist/wasmJs/productionExecutable")
+    val outDir =
+        providers
+            .gradleProperty("prerender.out")
+            .getOrElse("${rootProject.projectDir}/cmp-web/build/dist/wasmJs/productionExecutable")
     val origin = providers.gradleProperty("prerender.origin").orNull
     argumentProviders.add(CommandLineArgumentProvider { listOfNotNull(outDir, origin) })
 }
@@ -175,15 +192,24 @@ val prerenderSite by tasks.registering(JavaExec::class) {
 // ponytail: this exists only to keep the UI-less scaffold targets alive. Delete the block and
 // the targets together if watchOS/iosX64 are ever dropped.
 afterEvaluate {
-    val nonComposeTargets = listOf(
-        "iosX64Main", "watchosArm64Main", "watchosSimulatorArm64Main", "watchosX64Main",
-    )
+    val nonComposeTargets =
+        listOf(
+            "iosX64Main",
+            "watchosArm64Main",
+            "watchosSimulatorArm64Main",
+            "watchosX64Main",
+        )
     kotlin.sourceSets.configureEach {
         if (name == "commonMain" || name in nonComposeTargets) {
             kotlin.setSrcDirs(kotlin.srcDirs.filterNot { "compose/resourceGenerator" in it.path })
         }
     }
-    kotlin.sourceSets.getByName("composeMain").kotlin.srcDir(tasks.named("generateComposeResClass"))
-    kotlin.sourceSets.getByName("composeMain").kotlin
+    kotlin.sourceSets
+        .getByName("composeMain")
+        .kotlin
+        .srcDir(tasks.named("generateComposeResClass"))
+    kotlin.sourceSets
+        .getByName("composeMain")
+        .kotlin
         .srcDir(tasks.named("generateExpectResourceCollectorsForCommonMain"))
 }

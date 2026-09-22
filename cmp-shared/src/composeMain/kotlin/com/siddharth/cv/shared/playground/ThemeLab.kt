@@ -83,7 +83,11 @@ import kotlin.math.pow
 
 /** [fromData] separates the site's own audited accents from the three hues added for range. */
 @Immutable
-data class ThemeSeed(val label: String, val color: Color, val fromData: Boolean)
+data class ThemeSeed(
+    val label: String,
+    val color: Color,
+    val fromData: Boolean,
+)
 
 /**
  * The site default, then every project that declares a `theme` (5 of 6 — Stutter through Gaddi),
@@ -123,19 +127,38 @@ val themeLabSeeds: List<ThemeSeed> =
  * hue-preserving, which is all the ladder needs. Move to Oklch if a seed ever needs a perceptually
  * even ramp rather than a proportional one.
  */
+// The tone ladder, as multipliers on the hue direction. These are the whole derivation: they are
+// what makes ink/surface/card/line a strictly brightening ramp rather than four similar darks, and
+// [themeLabSelfCheck] asserts that ordering, so moving one of them is a deliberate design change.
+private const val AccentDimScale = 0.74f
+private const val InkScale = 0.055f
+private const val SurfaceScale = 0.10f
+private const val CardScale = 0.145f
+private const val LineScale = 0.29f
+private const val DeepVoidScale = 0.03f
+
+/** How far body text is pulled off white toward the seed — enough to tint, not enough to dim. */
+private const val OnBackgroundTint = 0.12f
+
 fun paletteFromSeed(seed: Color): CvColors {
     val base = seed.hueDirection()
     return CvDarkColors.copy(
         accent = seed,
-        accentDim = seed.scaled(0.74f),
-        ink = base.scaled(0.055f),
-        surface = base.scaled(0.10f),
-        card = base.scaled(0.145f),
-        line = base.scaled(0.29f),
-        onBackground = mixRgb(Color.White, base, 0.12f),
-        deepVoid = base.scaled(0.03f),
+        accentDim = seed.scaled(AccentDimScale),
+        ink = base.scaled(InkScale),
+        surface = base.scaled(SurfaceScale),
+        card = base.scaled(CardScale),
+        line = base.scaled(LineScale),
+        onBackground = mixRgb(Color.White, base, OnBackgroundTint),
+        deepVoid = base.scaled(DeepVoidScale),
     )
 }
+
+/** Below this the seed is black to within 8-bit rounding and carries no recoverable hue. */
+private const val BlackSeedEpsilon = 0.004f
+
+/** The neutral slate a black seed falls back to. Slightly blue, so the ladder still reads cool. */
+private val NeutralHueDirection = Color(0.55f, 0.58f, 0.62f, 1f)
 
 /**
  * The seed with its brightest channel normalised to 1.0 — its hue and saturation without its
@@ -144,7 +167,7 @@ fun paletteFromSeed(seed: Color): CvColors {
  */
 private fun Color.hueDirection(): Color {
     val peak = max(red, max(green, blue))
-    if (peak <= 0.004f) return Color(0.55f, 0.58f, 0.62f, 1f)
+    if (peak <= BlackSeedEpsilon) return NeutralHueDirection
     return Color(red / peak, green / peak, blue / peak, 1f)
 }
 
@@ -162,7 +185,11 @@ private fun Color.scaled(k: Float): Color =
  * [themeLabSelfCheck] and they should be reproducible by hand from the hex, not from a colour
  * pipeline that can change under us on a beta toolchain.
  */
-private fun mixRgb(a: Color, b: Color, t: Float): Color =
+private fun mixRgb(
+    a: Color,
+    b: Color,
+    t: Float,
+): Color =
     Color(
         a.red + (b.red - a.red) * t,
         a.green + (b.green - a.green) * t,
@@ -170,17 +197,42 @@ private fun mixRgb(a: Color, b: Color, t: Float): Color =
         1f,
     )
 
+// The sRGB electro-optical transfer function, verbatim from WCAG 2.1 / IEC 61966-2-1. Every one of
+// these six numbers is fixed by the specification — they are quoted, not chosen, and a bare 0.2126
+// in a luminance sum is precisely the literal that should never sit unnamed in a contrast audit.
+private const val SrgbLinearCutoff = 0.04045f
+private const val SrgbLinearSlope = 12.92f
+private const val SrgbGammaOffset = 0.055f
+private const val SrgbGammaScale = 1.055f
+private const val SrgbGammaExponent = 2.4f
+
+/** Rec. 709 luminance weights, the Y row of the sRGB-to-XYZ matrix. */
+private const val LumaRed = 0.2126f
+private const val LumaGreen = 0.7152f
+private const val LumaBlue = 0.0722f
+
 /** WCAG 2.1 relative luminance. The sRGB transfer curve, then the 709 weights. */
 internal fun relativeLuminance(color: Color): Float {
-    fun linear(c: Float): Float = if (c <= 0.04045f) c / 12.92f else ((c + 0.055f) / 1.055f).pow(2.4f)
-    return 0.2126f * linear(color.red) + 0.7152f * linear(color.green) + 0.0722f * linear(color.blue)
+    fun linear(c: Float): Float =
+        if (c <= SrgbLinearCutoff) {
+            c / SrgbLinearSlope
+        } else {
+            ((c + SrgbGammaOffset) / SrgbGammaScale).pow(SrgbGammaExponent)
+        }
+    return LumaRed * linear(color.red) + LumaGreen * linear(color.green) + LumaBlue * linear(color.blue)
 }
 
+/** WCAG's flare term: what stops a pair of near-blacks reporting an infinite ratio. */
+private const val ContrastFlare = 0.05f
+
 /** WCAG contrast ratio, 1.0 (identical) … 21.0 (black on white). Order-independent. */
-internal fun contrastRatio(a: Color, b: Color): Float {
+internal fun contrastRatio(
+    a: Color,
+    b: Color,
+): Float {
     val la = relativeLuminance(a)
     val lb = relativeLuminance(b)
-    return (max(la, lb) + 0.05f) / (min(la, lb) + 0.05f)
+    return (max(la, lb) + ContrastFlare) / (min(la, lb) + ContrastFlare)
 }
 
 /**
@@ -188,9 +240,15 @@ internal fun contrastRatio(a: Color, b: Color): Float {
  * `+ 0.5f` matches how `Color(r, g, b)` itself rounds into its 8-bit sRGB packing: truncating here
  * instead would print #3CDC84 for a channel that came back as 60.9999.
  */
+private const val ByteMax = 255
+private const val HexRadix = 16
+private const val HexDigits = 2
+
+/** Round to nearest, matching how `Color(r, g, b)` itself rounds into its 8-bit sRGB packing. */
+private const val RoundToNearest = 0.5f
+
 private fun hexOf(color: Color): String {
-    fun byte(c: Float): String =
-        ((c * 255f + 0.5f).toInt().coerceIn(0, 255)).toString(16).padStart(2, '0')
+    fun byte(c: Float): String = ((c * ByteMax + RoundToNearest).toInt().coerceIn(0, ByteMax)).toString(HexRadix).padStart(HexDigits, '0')
     return "#${byte(color.red)}${byte(color.green)}${byte(color.blue)}".uppercase()
 }
 
@@ -230,9 +288,10 @@ fun ThemeLabSection(modifier: Modifier = Modifier) {
                 SectionHeading("One seed colour, one UI")
                 Spacer(Modifier.height(10.dp))
                 BasicText(
-                    text = "Brand is a token, not a codebase. Every swatch below is a real accent " +
-                        "from this site's own project data; pick one and the pane underneath " +
-                        "re-skins through the same CompositionLocal the production app uses.",
+                    text =
+                        "Brand is a token, not a codebase. Every swatch below is a real accent " +
+                            "from this site's own project data; pick one and the pane underneath " +
+                            "re-skins through the same CompositionLocal the production app uses.",
                     modifier = Modifier.widthIn(max = 680.dp),
                     style = cvType.bodySmall,
                 )
@@ -257,8 +316,9 @@ fun ThemeLabSection(modifier: Modifier = Modifier) {
 
         Spacer(Modifier.height(8.dp))
         MonoMeta(
-            text = themeLabSeeds.count { it.fromData }.toString() +
-                " real project tokens · " + themeLabSeeds.count { !it.fromData } + " added for range",
+            text =
+                themeLabSeeds.count { it.fromData }.toString() +
+                    " real project tokens · " + themeLabSeeds.count { !it.fromData } + " added for range",
         )
 
         Spacer(Modifier.height(20.dp))
@@ -276,19 +336,21 @@ fun ThemeLabSection(modifier: Modifier = Modifier) {
 
         if (reskins > 0) {
             MonoMeta(
-                text = "$reskins " + (if (reskins == 1) "reskin" else "reskins") +
-                    " · 1 CvTheme call · 0 forks",
+                text =
+                    "$reskins " + (if (reskins == 1) "reskin" else "reskins") +
+                        " · 1 CvTheme call · 0 forks",
                 modifier = Modifier.padding(bottom = 10.dp),
             )
         }
 
         BasicText(
-            text = "One seed colour drives the palette. The accent and its dim variant come " +
-                "straight off the seed; the ink → surface → card → line ladder is derived from " +
-                "the seed's hue. Nothing in the pane names a colour — every surface reads " +
-                "cvColors, so a single CvTheme(colors = paletteFromSeed(seed)) re-skins all of " +
-                "it. That is the mechanism that cut UI development friction ~60% on the Dice " +
-                "platform: a new tenant is a token, not a screen pass.",
+            text =
+                "One seed colour drives the palette. The accent and its dim variant come " +
+                    "straight off the seed; the ink → surface → card → line ladder is derived from " +
+                    "the seed's hue. Nothing in the pane names a colour — every surface reads " +
+                    "cvColors, so a single CvTheme(colors = paletteFromSeed(seed)) re-skins all of " +
+                    "it. That is the mechanism that cut UI development friction ~60% on the Dice " +
+                    "platform: a new tenant is a token, not a screen pass.",
             modifier = Modifier.widthIn(max = 680.dp),
             style = cvType.bodySmall,
         )
@@ -307,12 +369,13 @@ fun ThemeLabSection(modifier: Modifier = Modifier) {
                 MonoMeta("// the honest detail")
                 Spacer(Modifier.height(8.dp))
                 BasicText(
-                    text = "The real engine is hybrid, not server-driven theming. The server " +
-                        "supplies one thing — the tenant's seed colour, on " +
-                        "UserConfigResponseV2.color. The client owns everything else: dark mode, " +
-                        "the user's own chosen colour, the MaterialKolor palette style, Material " +
-                        "You, and the theme variant. Calling it \"server-driven\" would be a " +
-                        "bigger claim than the code makes.",
+                    text =
+                        "The real engine is hybrid, not server-driven theming. The server " +
+                            "supplies one thing — the tenant's seed colour, on " +
+                            "UserConfigResponseV2.color. The client owns everything else: dark mode, " +
+                            "the user's own chosen colour, the MaterialKolor palette style, Material " +
+                            "You, and the theme variant. Calling it \"server-driven\" would be a " +
+                            "bigger claim than the code makes.",
                     style = cvType.bodySmall.copy(color = colors.muted),
                 )
             }
@@ -329,7 +392,11 @@ fun ThemeLabSection(modifier: Modifier = Modifier) {
  * does, or the demo loses its reference point.
  */
 @Composable
-private fun SeedSwatch(seed: ThemeSeed, selected: Boolean, onPick: () -> Unit) {
+private fun SeedSwatch(
+    seed: ThemeSeed,
+    selected: Boolean,
+    onPick: () -> Unit,
+) {
     val colors = cvColors
     val interaction = remember { MutableInteractionSource() }
     val shape = RoundedCornerShape(999.dp)
@@ -346,8 +413,7 @@ private fun SeedSwatch(seed: ThemeSeed, selected: Boolean, onPick: () -> Unit) {
                     indication = null,
                     role = Role.RadioButton,
                     onClick = onPick,
-                )
-                .padding(horizontal = 12.dp, vertical = 7.dp),
+                ).padding(horizontal = 12.dp, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
@@ -372,7 +438,10 @@ private fun SeedSwatch(seed: ThemeSeed, selected: Boolean, onPick: () -> Unit) {
  * dead control is worse than an honest one.
  */
 @Composable
-private fun ThemePreviewPane(onNextSeed: () -> Unit, onReset: () -> Unit) {
+private fun ThemePreviewPane(
+    onNextSeed: () -> Unit,
+    onReset: () -> Unit,
+) {
     val colors = cvColors
     val shape = RoundedCornerShape(18.dp)
 
@@ -400,8 +469,9 @@ private fun ThemePreviewPane(onNextSeed: () -> Unit, onReset: () -> Unit) {
             BasicText(text = "Trip summary", style = cvType.cardTitle)
             Spacer(Modifier.height(8.dp))
             BasicText(
-                text = "A card, a chip row, two buttons and a metric — the same components the " +
-                    "rest of this page is built from, one CompositionLocal deeper.",
+                text =
+                    "A card, a chip row, two buttons and a metric — the same components the " +
+                        "rest of this page is built from, one CompositionLocal deeper.",
                 style = cvType.bodySmall,
             )
             Spacer(Modifier.height(14.dp))
@@ -463,6 +533,13 @@ private fun MetricColumn() {
 // text that stops being readable on the surface it was derived alongside. Both are invisible on
 // the one seed you happened to look at and wrong on the seventh.
 // ---------------------------------------------------------------------------------------------
+// MagicNumber: assertion fixtures. detekt excludes every test source set from this rule by
+// default and these functions are tests — they live in main source because composeMain is
+// `internal` and this project has no commonTest, not because they are production code. `800f` in
+// `recomposeCellAt(1f, 1f, 800f, 500f)` is the grid being asserted against; naming it would add a
+// constant that means "the number in this one assertion".
+// The real end state is these moving to jvmTest, which SelfCheckTest.kt now makes possible.
+@Suppress("MagicNumber")
 internal fun themeLabSelfCheck() {
     check(themeLabSeeds.size >= 8) { "the swatch row needs enough hues to be a demonstration" }
     check(themeLabSeeds.count { it.fromData } >= 6) { "site default + the 5 themed projects" }

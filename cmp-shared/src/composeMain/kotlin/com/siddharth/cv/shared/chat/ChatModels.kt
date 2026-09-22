@@ -82,9 +82,10 @@ fun List<ChatMessage>.toWire(): List<AiMessage> =
 // assistant turn verbatim". Call from any target's main() while poking at chat.
 internal fun chatModelsSelfCheck() {
     val long = "x".repeat(CHAT_MAX_ASSISTANT_CHARS + 500)
-    val turns = List(30) { ChatMessage(ChatRole.User, "q$it") } +
-        ChatMessage(ChatRole.Assistant, long) +
-        ChatMessage(ChatRole.Assistant, "", streaming = true)
+    val turns =
+        List(30) { ChatMessage(ChatRole.User, "q$it") } +
+            ChatMessage(ChatRole.Assistant, long) +
+            ChatMessage(ChatRole.Assistant, "", streaming = true)
 
     val wire = turns.toWire()
     check(wire.size == CHAT_MAX_SENT_TURNS) { "history must be capped at the server's MAX_HISTORY" }

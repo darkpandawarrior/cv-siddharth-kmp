@@ -73,41 +73,46 @@ import com.siddharth.cv.shared.toPath
  * pure value — orderable, filterable, checkable, and (see [paletteSelfCheck]) provable — while the
  * caller owns the single `when (id)` that turns a pick into an effect.
  */
-data class PaletteCommand(val label: String, val group: String, val id: String)
+data class PaletteCommand(
+    val label: String,
+    val group: String,
+    val id: String,
+)
 
 /** Palette wording for a route. Exhaustive on purpose: see the call site. */
 @Suppress("CyclomaticComplexMethod") // A route table. See the note on Route.toPath() in Nav.kt.
-private fun routeLabel(route: Route): String = when (route) {
-    Route.Home -> "Home"
-    Route.Resume -> "Résumé"
-    Route.Terminal -> "The Terminal, a faux shell you can type in"
-    Route.Lab -> "The Lab Bench, the numbers running live"
-    Route.Forge -> "The Particle Forge, cursor-reactive swarm"
-    Route.Playground -> "The Compose Playground, write Compose and watch it recompose"
-    Route.Hire -> "Hire me, the whole case in ninety seconds"
-    Route.Shipped -> "Shipped, every Play Store listing his commits reached"
-    Route.Weeb -> "Weeb Central, an anime and manga ledger read as evidence"
-    Route.Ops -> "The Ops Board, what reports, what is stale, what is broken"
-    Route.Loopdown -> "Loopdown, the engineering field notes"
-    Route.Ink -> "The Ink, the writing that predates the code"
-    // Layer-less on purpose: the palette is a way in, and the way in is the first layer. The
-    // deep links at named layers are `/canon`'s job, and they carry the layer in the URL.
-    is Route.Anthology ->
-        "The Anthology, ${anthologyEntries.size} entries across ${anthology.seasons.size} seasons"
-    Route.Canon -> "The Canon, the laws and the count"
-    Route.Making -> "The Making, how the anthology was built and audited"
-    Route.Chess -> "The Board, seven years of games mined for what decides them"
-    Route.Map -> "The Story Map, the constellation of everything on this site"
-    // Counted rather than typed, the same way the anthology row counts its entries: a fourth
-    // edition would announce itself here instead of leaving the row quietly wrong.
-    is Route.Excelsior ->
-        "Excelsior, ${excelsiorEditions.size} editions of the institute magazine, " +
-            "${excelsiorEditions.sumOf { it.pages }} scanned pages"
-    is Route.ProjectDetail -> "Open project: ${route.slug}"
-    // Never reached from a route row (Read is parameterised, so it is not in `staticRoutes`), but
-    // the `when` is exhaustive and a label that reads as a placeholder would be the one that ships.
-    is Route.Read -> "Read: ${route.slug}"
-}
+private fun routeLabel(route: Route): String =
+    when (route) {
+        Route.Home -> "Home"
+        Route.Resume -> "Résumé"
+        Route.Terminal -> "The Terminal, a faux shell you can type in"
+        Route.Lab -> "The Lab Bench, the numbers running live"
+        Route.Forge -> "The Particle Forge, cursor-reactive swarm"
+        Route.Playground -> "The Compose Playground, write Compose and watch it recompose"
+        Route.Hire -> "Hire me, the whole case in ninety seconds"
+        Route.Shipped -> "Shipped, every Play Store listing his commits reached"
+        Route.Weeb -> "Weeb Central, an anime and manga ledger read as evidence"
+        Route.Ops -> "The Ops Board, what reports, what is stale, what is broken"
+        Route.Loopdown -> "Loopdown, the engineering field notes"
+        Route.Ink -> "The Ink, the writing that predates the code"
+        // Layer-less on purpose: the palette is a way in, and the way in is the first layer. The
+        // deep links at named layers are `/canon`'s job, and they carry the layer in the URL.
+        is Route.Anthology ->
+            "The Anthology, ${anthologyEntries.size} entries across ${anthology.seasons.size} seasons"
+        Route.Canon -> "The Canon, the laws and the count"
+        Route.Making -> "The Making, how the anthology was built and audited"
+        Route.Chess -> "The Board, seven years of games mined for what decides them"
+        Route.Map -> "The Story Map, the constellation of everything on this site"
+        // Counted rather than typed, the same way the anthology row counts its entries: a fourth
+        // edition would announce itself here instead of leaving the row quietly wrong.
+        is Route.Excelsior ->
+            "Excelsior, ${excelsiorEditions.size} editions of the institute magazine, " +
+                "${excelsiorEditions.sumOf { it.pages }} scanned pages"
+        is Route.ProjectDetail -> "Open project: ${route.slug}"
+        // Never reached from a route row (Read is parameterised, so it is not in `staticRoutes`), but
+        // the `when` is exhaustive and a label that reads as a placeholder would be the one that ships.
+        is Route.Read -> "Read: ${route.slug}"
+    }
 
 /**
  * The whole command list, generated from the same data the site renders.
@@ -122,35 +127,36 @@ private fun routeLabel(route: Route): String = when (route) {
  * table. `section:` scrolls the homepage, `route:` navigates, `project:` opens a case study,
  * `action:` does something that isn't navigation.
  */
-fun paletteCommands(): List<PaletteCommand> = buildList {
-    homeSections.forEach { section ->
-        add(PaletteCommand(label = section.label, group = "Jump", id = "section:${section.id}"))
-    }
+fun paletteCommands(): List<PaletteCommand> =
+    buildList {
+        homeSections.forEach { section ->
+            add(PaletteCommand(label = section.label, group = "Jump", id = "section:${section.id}"))
+        }
 
-    // Route rows come from `staticRoutes`, so a route added to Nav.kt cannot ship without a way to
-    // reach it: [routeLabel]'s `when` stops compiling until it is given one. Hand-typing these is
-    // how /compose came to be routed, prerendered, and unreachable from the palette.
-    staticRoutes.filter { it != Route.Home }.forEach { route ->
-        add(PaletteCommand(routeLabel(route), "Open", "route:${route.toPath().removePrefix("/")}"))
-    }
+        // Route rows come from `staticRoutes`, so a route added to Nav.kt cannot ship without a way to
+        // reach it: [routeLabel]'s `when` stops compiling until it is given one. Hand-typing these is
+        // how /compose came to be routed, prerendered, and unreachable from the palette.
+        staticRoutes.filter { it != Route.Home }.forEach { route ->
+            add(PaletteCommand(routeLabel(route), "Open", "route:${route.toPath().removePrefix("/")}"))
+        }
 
-    // Only projects with a detail page: a palette row that lands on a 404 is worse than no row.
-    projects.filter { it.detail != null }.forEach { p ->
-        add(PaletteCommand("Open project: ${p.name}", "Case study", "project:${p.slug}"))
-    }
+        // Only projects with a detail page: a palette row that lands on a 404 is worse than no row.
+        projects.filter { it.detail != null }.forEach { p ->
+            add(PaletteCommand("Open project: ${p.name}", "Case study", "project:${p.slug}"))
+        }
 
-    // The nine printed pieces, by title, for the same reason projects get a row each: `/read` is
-    // parameterised, so no route row can reach any of them and a reader who knows the name of a
-    // story has no other way in short of typing the slug. Titles rather than slugs, because the
-    // title is what the reader knows; the slug is what the URL knows.
-    printedPieces.forEach { piece ->
-        add(PaletteCommand("Read: ${piece.title}", "Writing", "read:${piece.slug}"))
-    }
+        // The nine printed pieces, by title, for the same reason projects get a row each: `/read` is
+        // parameterised, so no route row can reach any of them and a reader who knows the name of a
+        // story has no other way in short of typing the slug. Titles rather than slugs, because the
+        // title is what the reader knows; the slug is what the URL knows.
+        printedPieces.forEach { piece ->
+            add(PaletteCommand("Read: ${piece.title}", "Writing", "read:${piece.slug}"))
+        }
 
-    add(PaletteCommand("Copy email address", "Action", "action:copy-email"))
-    add(PaletteCommand("Open GitHub", "External", "action:github"))
-    add(PaletteCommand("Open LinkedIn", "External", "action:linkedin"))
-}
+        add(PaletteCommand("Copy email address", "Action", "action:copy-email"))
+        add(PaletteCommand("Open GitHub", "External", "action:github"))
+        add(PaletteCommand("Open LinkedIn", "External", "action:linkedin"))
+    }
 
 // ---------------------------------------------------------------------------------------------
 // Matching
@@ -166,8 +172,10 @@ private const val TierSubsequence = 200
 private const val BonusCap = 150
 
 /** A match starts at a "word" if it starts the string or follows a non-alphanumeric character. */
-private fun isWordStart(text: String, index: Int): Boolean =
-    index == 0 || !text[index - 1].isLetterOrDigit()
+private fun isWordStart(
+    text: String,
+    index: Int,
+): Boolean = index == 0 || !text[index - 1].isLetterOrDigit()
 
 /**
  * Lower-case and strip the diacritics, so "resume" finds "Résumé".
@@ -177,18 +185,20 @@ private fun isWordStart(text: String, index: Int): Boolean =
  * an explicit table — which is also all the site's Latin-1 labels need.
  */
 private fun fold(text: String): String =
-    text.lowercase().map { c ->
-        when (c) {
-            'é', 'è', 'ê', 'ë' -> 'e'
-            'á', 'à', 'â', 'ä', 'ã', 'å' -> 'a'
-            'í', 'ì', 'î', 'ï' -> 'i'
-            'ó', 'ò', 'ô', 'ö', 'õ' -> 'o'
-            'ú', 'ù', 'û', 'ü' -> 'u'
-            'ç' -> 'c'
-            'ñ' -> 'n'
-            else -> c
-        }
-    }.joinToString("")
+    text
+        .lowercase()
+        .map { c ->
+            when (c) {
+                'é', 'è', 'ê', 'ë' -> 'e'
+                'á', 'à', 'â', 'ä', 'ã', 'å' -> 'a'
+                'í', 'ì', 'î', 'ï' -> 'i'
+                'ó', 'ò', 'ô', 'ö', 'õ' -> 'o'
+                'ú', 'ù', 'û', 'ü' -> 'u'
+                'ç' -> 'c'
+                'ñ' -> 'n'
+                else -> c
+            }
+        }.joinToString("")
 
 /**
  * How well [query] matches [label] — higher is better, `null` is no match at all.
@@ -209,7 +219,10 @@ private fun fold(text: String): String =
  * one ("aa" in "a-aa"). Swap in a backwards second pass if a real query ever ranks visibly wrong;
  * with ~25 short labels it never has.
  */
-internal fun paletteScore(query: String, label: String): Int? {
+internal fun paletteScore(
+    query: String,
+    label: String,
+): Int? {
     val q = fold(query.trim())
     if (q.isEmpty()) return 0
     val l = fold(label)
@@ -266,15 +279,18 @@ private fun positionBonus(index: Int): Int = (BonusCap - index).coerceIn(0, Bonu
  * and LinkedIn rows without ever outranking a real label hit. `sortedByDescending` is a stable sort,
  * which is what makes an empty query render the declared order rather than an arbitrary one.
  */
-internal fun paletteFilter(query: String, commands: List<PaletteCommand>): List<PaletteCommand> {
+internal fun paletteFilter(
+    query: String,
+    commands: List<PaletteCommand>,
+): List<PaletteCommand> {
     if (query.isBlank()) return commands
     return commands
         .mapNotNull { cmd ->
-            val score = paletteScore(query, cmd.label)
-                ?: paletteScore(query, cmd.group)?.let { it / 4 }
+            val score =
+                paletteScore(query, cmd.label)
+                    ?: paletteScore(query, cmd.group)?.let { it / 4 }
             score?.let { cmd to it }
-        }
-        .sortedByDescending { it.second }
+        }.sortedByDescending { it.second }
         .map { it.first }
 }
 
@@ -335,9 +351,10 @@ fun CommandPalette(
     LaunchedEffect(activeIndex, results.size) {
         val info = listState.layoutInfo
         val row = info.visibleItemsInfo.firstOrNull { it.index == activeIndex }
-        val onScreen = row != null &&
-            row.offset >= info.viewportStartOffset &&
-            row.offset + row.size <= info.viewportEndOffset
+        val onScreen =
+            row != null &&
+                row.offset >= info.viewportStartOffset &&
+                row.offset + row.size <= info.viewportEndOffset
         if (!onScreen) {
             // Keyboard navigation under reduced motion jumps: a smooth scroll fired by a keypress is
             // exactly the involuntary movement the preference asks us to drop.
@@ -351,33 +368,34 @@ fun CommandPalette(
     }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(colors.ink.copy(alpha = 0.82f))
-            // Click-outside closes. `indication = null` because a ripple across the whole window is
-            // not a thing; the role stays Button so it is at least announced as dismissable.
-            .clickable(
-                interactionSource = scrim,
-                indication = null,
-                role = Role.Button,
-                onClick = onDismiss,
-            )
-            .semantics { contentDescription = "Command palette. Press Escape to close." }
-            .padding(horizontal = 16.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(colors.ink.copy(alpha = 0.82f))
+                // Click-outside closes. `indication = null` because a ripple across the whole window is
+                // not a thing; the role stays Button so it is at least announced as dismissable.
+                .clickable(
+                    interactionSource = scrim,
+                    indication = null,
+                    role = Role.Button,
+                    onClick = onDismiss,
+                ).semantics { contentDescription = "Command palette. Press Escape to close." }
+                .padding(horizontal = 16.dp),
         contentAlignment = Alignment.TopCenter,
     ) {
         Reveal {
             Column(
-                modifier = Modifier
-                    .padding(top = 88.dp)
-                    .widthIn(max = 560.dp)
-                    .fillMaxWidth()
-                    // Swallow taps so a click on the panel doesn't reach the scrim's dismiss.
-                    // A no-op `clickable` would do it too, but would also publish a second phantom
-                    // button to assistive tech.
-                    .pointerInput(Unit) { detectTapGestures { } }
-                    .background(colors.surface, PanelShape)
-                    .border(1.dp, colors.line, PanelShape),
+                modifier =
+                    Modifier
+                        .padding(top = 88.dp)
+                        .widthIn(max = 560.dp)
+                        .fillMaxWidth()
+                        // Swallow taps so a click on the panel doesn't reach the scrim's dismiss.
+                        // A no-op `clickable` would do it too, but would also publish a second phantom
+                        // button to assistive tech.
+                        .pointerInput(Unit) { detectTapGestures { } }
+                        .background(colors.surface, PanelShape)
+                        .border(1.dp, colors.line, PanelShape),
             ) {
                 QueryRow(
                     query = query,
@@ -449,9 +467,10 @@ private fun QueryRow(
 ) {
     val colors = cvColors
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         BasicText("⌘K", style = cvType.metaMono.copy(color = colors.accent))
@@ -470,13 +489,14 @@ private fun QueryRow(
                 singleLine = true,
                 textStyle = cvType.bodySmall.copy(color = colors.onBackground),
                 cursorBrush = SolidColor(colors.accent),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .focusRequester(focusRequester)
-                    // The whole keymap hangs off the field because the field always holds focus while
-                    // the palette is open, so this is the one node every key event passes through.
-                    .onPreviewKeyEvent(onKey)
-                    .semantics { contentDescription = "Command palette search" },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .focusRequester(focusRequester)
+                        // The whole keymap hangs off the field because the field always holds focus while
+                        // the palette is open, so this is the one node every key event passes through.
+                        .onPreviewKeyEvent(onKey)
+                        .semantics { contentDescription = "Command palette search" },
             )
         }
 
@@ -513,26 +533,27 @@ private fun CommandRow(
     LaunchedEffect(hovered) { if (hovered) onHover() }
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(if (active) colors.accent.copy(alpha = 0.15f) else Color.Transparent, RowShape)
-            .hoverable(interaction)
-            .clickable(
-                interactionSource = interaction,
-                indication = null,
-                role = Role.Button,
-                onClick = onSelect,
-            )
-            .semantics { selected = active }
-            .padding(horizontal = 12.dp, vertical = 10.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(if (active) colors.accent.copy(alpha = 0.15f) else Color.Transparent, RowShape)
+                .hoverable(interaction)
+                .clickable(
+                    interactionSource = interaction,
+                    indication = null,
+                    role = Role.Button,
+                    onClick = onSelect,
+                ).semantics { selected = active }
+                .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         BasicText(
             text = command.label,
             modifier = Modifier.weight(1f),
-            style = cvType.bodySmall.copy(
-                color = if (active) colors.onBackground else colors.muted,
-            ),
+            style =
+                cvType.bodySmall.copy(
+                    color = if (active) colors.onBackground else colors.muted,
+                ),
         )
         Spacer(Modifier.width(12.dp))
         if (active) {
@@ -548,13 +569,17 @@ private fun CommandRow(
 
 /** Visible text, not a tooltip — the match count is the only feedback that filtering happened. */
 @Composable
-private fun FooterRow(shown: Int, total: Int) {
+private fun FooterRow(
+    shown: Int,
+    total: Int,
+) {
     val colors = cvColors
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(colors.card, RoundedCornerShape(bottomStart = 18.dp, bottomEnd = 18.dp))
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(colors.card, RoundedCornerShape(bottomStart = 18.dp, bottomEnd = 18.dp))
+                .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         MonoMeta("↑↓ move · ↵ open · esc close")
@@ -621,5 +646,6 @@ internal fun paletteSelfCheck() {
     val ranked = paletteFilter("resume", commands)
     check(ranked.firstOrNull()?.id == "route:resume") { "typing 'resume' must put the résumé first, got ${ranked.firstOrNull()?.id}" }
     check(paletteFilter("zzzz", commands).isEmpty()) { "a nonsense query filters everything out" }
-    check(paletteFilter("doori", commands).firstOrNull()?.id == "project:mileway") { "project rows are reachable by name" } // claim-audit:allow -- query is the new label, id is the stable slug
+    val dooriId = "project:mileway" // claim-audit:allow -- stable command id, not display copy
+    check(paletteFilter("doori", commands).firstOrNull()?.id == dooriId) { "project rows are reachable by name" }
 }

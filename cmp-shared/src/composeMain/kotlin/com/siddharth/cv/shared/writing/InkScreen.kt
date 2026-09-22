@@ -41,6 +41,7 @@ import com.siddharth.cv.shared.data.generated.coverStory2021
 import com.siddharth.cv.shared.data.generated.loopdownOrigin
 import com.siddharth.cv.shared.data.generated.societies
 import com.siddharth.cv.shared.data.generated.writingArchive
+import com.siddharth.cv.shared.format.grouped
 import com.siddharth.cv.shared.theme.CvCard
 import com.siddharth.cv.shared.theme.CvColors
 import com.siddharth.cv.shared.theme.CvDarkColors
@@ -195,7 +196,11 @@ private fun InkHero(onOpenAnthology: () -> Unit) {
 // ---------------------------------------------------------------------------------------------
 
 @Composable
-private fun ArchiveIntro(onOpenLoopdown: () -> Unit, nav: CvNavState, uri: UriHandler) {
+private fun ArchiveIntro(
+    onOpenLoopdown: () -> Unit,
+    nav: CvNavState,
+    uri: UriHandler,
+) {
     Reveal {
         Column(Modifier.writingMeasure().padding(top = CvSectionGap)) {
             WritingSectionHead("// the archive", "Writing")
@@ -310,7 +315,6 @@ private fun archiveMeta(piece: WritingArchivePiece): List<String> {
 private const val WORDS_PER_MINUTE = 220f
 
 /** `1966` -> `"1,966"`. No locale formatting anywhere in this port, on purpose. */
-private fun Int.grouped(): String = toString().reversed().chunked(3).joinToString(",").reversed()
 
 // ---------------------------------------------------------------------------------------------
 // The print lineage
@@ -323,7 +327,10 @@ private fun Int.grouped(): String = toString().reversed().chunked(3).joinToStrin
  * frame. Nothing is lost but a border.
  */
 @Composable
-private fun ExcelsiorSection(nav: CvNavState, uri: UriHandler) {
+private fun ExcelsiorSection(
+    nav: CvNavState,
+    uri: UriHandler,
+) {
     Reveal {
         Column(Modifier.writingMeasure().padding(top = CvSectionGap)) {
             WritingSectionHead("// print", "Excelsior, MANIT's institute magazine")
@@ -368,7 +375,10 @@ private fun ExcelsiorSection(nav: CvNavState, uri: UriHandler) {
 }
 
 @Composable
-private fun BoardSection(nav: CvNavState, uri: UriHandler) {
+private fun BoardSection(
+    nav: CvNavState,
+    uri: UriHandler,
+) {
     Reveal {
         Column(Modifier.writingMeasure().padding(top = CvSectionGap)) {
             WritingSectionHead("// eb profiles", "How the board wrote me")
@@ -401,7 +411,11 @@ private fun BoardSection(nav: CvNavState, uri: UriHandler) {
  * the card either way.
  */
 @Composable
-private fun BoardCard(p: BoardProfile, nav: CvNavState, uri: UriHandler) {
+private fun BoardCard(
+    p: BoardProfile,
+    nav: CvNavState,
+    uri: UriHandler,
+) {
     val colors = cvColors
     CvCard(
         modifier = Modifier.widthIn(min = 260.dp, max = 320.dp),
@@ -432,7 +446,10 @@ private fun BoardCard(p: BoardProfile, nav: CvNavState, uri: UriHandler) {
 }
 
 @Composable
-private fun SocietiesSection(nav: CvNavState, uri: UriHandler) {
+private fun SocietiesSection(
+    nav: CvNavState,
+    uri: UriHandler,
+) {
     Reveal {
         Column(Modifier.writingMeasure().padding(top = CvSectionGap)) {
             WritingSectionHead("// the rooms", "The societies")
@@ -448,7 +465,11 @@ private fun SocietiesSection(nav: CvNavState, uri: UriHandler) {
 }
 
 @Composable
-private fun SocietyCard(s: Society, nav: CvNavState, uri: UriHandler) {
+private fun SocietyCard(
+    s: Society,
+    nav: CvNavState,
+    uri: UriHandler,
+) {
     val colors = cvColors
     CvCard(modifier = Modifier.widthIn(min = 280.dp, max = 400.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -486,12 +507,22 @@ private const val BOOKS_BEFORE_BROS_URL = "https://booksbeforebros.wordpress.com
 private const val EXCELSIOR_COVER_YEAR = "2021"
 
 /** One scanned page of one edition, on the live site, in the shape /excelsior expects. */
-private fun openScan(year: String, page: Int, nav: CvNavState, uri: UriHandler) {
+private fun openScan(
+    year: String,
+    page: Int,
+    nav: CvNavState,
+    uri: UriHandler,
+) {
     openWritingLink("/excelsior?year=$year&page=$page", nav, uri)
 }
 
 @Composable
-private fun ScanChip(year: String, page: Int, nav: CvNavState, uri: UriHandler) {
+private fun ScanChip(
+    year: String,
+    page: Int,
+    nav: CvNavState,
+    uri: UriHandler,
+) {
     TagChip(
         text = "Excelsior '${year.takeLast(2)} · page $page",
         onClick = { openScan(year, page, nav, uri) },

@@ -35,6 +35,12 @@ actual val resumePrintSupported: Boolean = true
  * machine ever loses the dialog: listen for `afterprint` on the child window and keep the
  * timer only as the fallback.
  */
+// `html` IS used — `doc.write(html)` below. The body of a `js(...)` function is a string literal
+// as far as Kotlin's frontend is concerned, and the Kotlin/Wasm backend substitutes the parameter
+// by name when it emits the JS, so no analyser working on the Kotlin tree can see the reference.
+// Deleting the parameter to satisfy the rule would delete the argument the whole function exists
+// to pass.
+@Suppress("UnusedParameter")
 @OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
 private fun printInHiddenIframe(html: String): Unit =
     js(

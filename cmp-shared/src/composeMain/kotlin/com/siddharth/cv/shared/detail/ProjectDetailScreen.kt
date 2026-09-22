@@ -35,8 +35,8 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.siddharth.cv.shared.LocalNav
 import com.siddharth.cv.shared.CvNavState
+import com.siddharth.cv.shared.LocalNav
 import com.siddharth.cv.shared.Route
 import com.siddharth.cv.shared.data.Diagram
 import com.siddharth.cv.shared.data.LabeledValue
@@ -89,7 +89,10 @@ import kotlin.math.sin
  * a backend, and none is load-bearing for the page's argument.
  */
 @Composable
-fun ProjectDetailScreen(slug: String, modifier: Modifier = Modifier) {
+fun ProjectDetailScreen(
+    slug: String,
+    modifier: Modifier = Modifier,
+) {
     val project = projectBySlug(slug)
     if (project == null) {
         // Also the app's 404 surface — Route.ProjectDetail is the only route carrying free text.
@@ -106,7 +109,10 @@ fun ProjectDetailScreen(slug: String, modifier: Modifier = Modifier) {
 // -------------------------------------------------------------------------------------------
 
 @Composable
-private fun NoCarrier(slug: String, modifier: Modifier = Modifier) {
+private fun NoCarrier(
+    slug: String,
+    modifier: Modifier = Modifier,
+) {
     val colors = cvColors
     val nav = LocalNav.current
     Box(
@@ -139,11 +145,13 @@ private fun NoCarrier(slug: String, modifier: Modifier = Modifier) {
 // -------------------------------------------------------------------------------------------
 
 /** `max-w-5xl mx-auto px-6` — the measure every section on this page shares. */
-private fun Modifier.pageMeasure(): Modifier =
-    this.widthIn(max = CvContentMaxWidth).fillMaxWidth().padding(horizontal = CvGutter)
+private fun Modifier.pageMeasure(): Modifier = this.widthIn(max = CvContentMaxWidth).fillMaxWidth().padding(horizontal = CvGutter)
 
 @Composable
-private fun ProjectBody(project: Project, modifier: Modifier = Modifier) {
+private fun ProjectBody(
+    project: Project,
+    modifier: Modifier = Modifier,
+) {
     val colors = cvColors
     val nav = LocalNav.current
     val uri = LocalUriHandler.current
@@ -298,7 +306,11 @@ private fun Section(
 // -------------------------------------------------------------------------------------------
 
 @Composable
-private fun ProjectHero(project: Project, nav: CvNavState, uri: UriHandler) {
+private fun ProjectHero(
+    project: Project,
+    nav: CvNavState,
+    uri: UriHandler,
+) {
     val colors = cvColors
     // `.aurora` — two slow radial washes orbiting the hero. One loop drives both so they never
     // drift out of phase, and rememberInfiniteFloat pins it under reduced motion for free.
@@ -314,20 +326,22 @@ private fun ProjectHero(project: Project, nav: CvNavState, uri: UriHandler) {
                     drawRect(
                         Brush.radialGradient(
                             colors = listOf(colors.accent.copy(alpha = 0.20f), Color.Transparent),
-                            center = Offset(
-                                size.width * (0.18f + 0.08f * cos(t)),
-                                size.height * (0.08f + 0.10f * sin(t)),
-                            ),
+                            center =
+                                Offset(
+                                    size.width * (0.18f + 0.08f * cos(t)),
+                                    size.height * (0.08f + 0.10f * sin(t)),
+                                ),
                             radius = reach,
                         ),
                     )
                     drawRect(
                         Brush.radialGradient(
                             colors = listOf(colors.accentDim.copy(alpha = 0.16f), Color.Transparent),
-                            center = Offset(
-                                size.width * (0.84f - 0.08f * sin(t)),
-                                size.height * (0.16f + 0.08f * cos(t)),
-                            ),
+                            center =
+                                Offset(
+                                    size.width * (0.84f - 0.08f * sin(t)),
+                                    size.height * (0.16f + 0.08f * cos(t)),
+                                ),
                             radius = reach,
                         ),
                     )
@@ -390,7 +404,10 @@ private fun ProjectHero(project: Project, nav: CvNavState, uri: UriHandler) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ChipRow(items: List<String>, selected: Boolean) {
+private fun ChipRow(
+    items: List<String>,
+    selected: Boolean,
+) {
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -402,7 +419,11 @@ private fun ChipRow(items: List<String>, selected: Boolean) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun LinkRow(project: Project, nav: CvNavState, uri: UriHandler) {
+private fun LinkRow(
+    project: Project,
+    nav: CvNavState,
+    uri: UriHandler,
+) {
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -420,7 +441,11 @@ private fun LinkRow(project: Project, nav: CvNavState, uri: UriHandler) {
  * site routes this port doesn't ship (/lab, /map, /compose …) resolve against the live React site
  * rather than silently doing nothing.
  */
-private fun openLink(url: String, nav: CvNavState, uri: UriHandler) {
+private fun openLink(
+    url: String,
+    nav: CvNavState,
+    uri: UriHandler,
+) {
     when {
         url.startsWith("#project/") -> nav.go(Route.ProjectDetail(url.removePrefix("#project/")))
         url == "#resume" || url == "/resume" -> nav.go(Route.Resume)
@@ -635,7 +660,11 @@ private fun Bullet(text: String) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ExtraLinks(links: List<NamedLink>, nav: CvNavState, uri: UriHandler) {
+private fun ExtraLinks(
+    links: List<NamedLink>,
+    nav: CvNavState,
+    uri: UriHandler,
+) {
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -653,7 +682,10 @@ private fun ExtraLinks(links: List<NamedLink>, nav: CvNavState, uri: UriHandler)
 // -------------------------------------------------------------------------------------------
 
 @Composable
-private fun NextBuild(slug: String, nav: CvNavState) {
+private fun NextBuild(
+    slug: String,
+    nav: CvNavState,
+) {
     val next = nextProject(slug) ?: return
     Reveal {
         Column(Modifier.pageMeasure().padding(top = CvSectionGap)) {

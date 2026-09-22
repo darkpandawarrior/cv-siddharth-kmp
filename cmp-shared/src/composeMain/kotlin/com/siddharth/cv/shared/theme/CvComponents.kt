@@ -164,7 +164,10 @@ fun AmbientBackground(modifier: Modifier = Modifier) {
  * animation on it), so there is no reduced-motion branch.
  */
 @Composable
-fun SectionEyebrow(text: String, modifier: Modifier = Modifier) {
+fun SectionEyebrow(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
     val colors = cvColors
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
         Box(
@@ -179,7 +182,10 @@ fun SectionEyebrow(text: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun SectionHeading(text: String, modifier: Modifier = Modifier) {
+fun SectionHeading(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
     BasicText(text = text, modifier = modifier, style = cvType.h2)
 }
 
@@ -288,8 +294,7 @@ fun CvCard(
                     } else {
                         Modifier
                     },
-                )
-                .background(colors.card, CardShape)
+                ).background(colors.card, CardShape)
                 .border(1.dp, if (lifted) colors.accent.copy(alpha = 0.35f) else colors.line, CardShape)
                 .then(
                     if (onClick != null) {
@@ -302,8 +307,7 @@ fun CvCard(
                     } else {
                         Modifier.hoverable(interaction)
                     },
-                )
-                .padding(24.dp),
+                ).padding(24.dp),
         content = content,
     )
 }
@@ -346,8 +350,7 @@ fun TagChip(
                     scaleX = scale
                     scaleY = scale
                     translationY = lift * density
-                }
-                .background(if (selected) accent.copy(alpha = 0.08f) else Color.Transparent, shape)
+                }.background(if (selected) accent.copy(alpha = 0.08f) else Color.Transparent, shape)
                 .border(1.dp, if (selected) accent.copy(alpha = 0.55f) else colors.line, shape)
                 .then(
                     if (onClick != null) {
@@ -360,8 +363,7 @@ fun TagChip(
                     } else {
                         Modifier.hoverable(interaction)
                     },
-                )
-                .padding(horizontal = 12.dp, vertical = 6.dp),
+                ).padding(horizontal = 12.dp, vertical = 6.dp),
     ) {
         BasicText(
             text = text,
@@ -372,7 +374,10 @@ fun TagChip(
 
 /** Muted 11px mono — stack lists, receipt labels, the hero stat row. */
 @Composable
-fun MonoMeta(text: String, modifier: Modifier = Modifier) {
+fun MonoMeta(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
     BasicText(text = text, modifier = modifier, style = cvType.metaMono)
 }
 
@@ -385,7 +390,11 @@ fun MonoMeta(text: String, modifier: Modifier = Modifier) {
  * press. The breathing loop stops on hover/press exactly as `animation-play-state: paused` does.
  */
 @Composable
-fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun PrimaryButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val colors = cvColors
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
@@ -425,8 +434,7 @@ fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifi
                     scaleX = scale
                     scaleY = scale
                     translationY = lift * density
-                }
-                .glow(colors.accent, radius = 26.dp, alpha = glowAlpha, offsetY = 6.dp)
+                }.glow(colors.accent, radius = 26.dp, alpha = glowAlpha, offsetY = 6.dp)
                 .background(colors.accent, shape)
                 .clickable(interactionSource = interaction, indication = null, role = Role.Button, onClick = onClick)
                 .padding(horizontal = 20.dp, vertical = 12.dp),
@@ -441,7 +449,11 @@ fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifi
 
 /** The secondary CTA — transparent fill, hairline border, body text. */
 @Composable
-fun GhostButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun GhostButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val colors = cvColors
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
@@ -492,7 +504,10 @@ fun AnimatedCounter(
  * animated `drawArc` sweep over the same 270° track.
  */
 @Composable
-fun MetricGauge(progress: Float, modifier: Modifier = Modifier) {
+fun MetricGauge(
+    progress: Float,
+    modifier: Modifier = Modifier,
+) {
     val colors = cvColors
     val reduced = LocalReducedMotion.current
     var armed by remember(progress) { mutableStateOf(false) }
@@ -544,7 +559,10 @@ fun MetricGauge(progress: Float, modifier: Modifier = Modifier) {
  * transitions the offset over 1s; the Compose analogue is a [PathMeasure] segment reveal.
  */
 @Composable
-fun Sparkline(points: List<Float>, modifier: Modifier = Modifier) {
+fun Sparkline(
+    points: List<Float>,
+    modifier: Modifier = Modifier,
+) {
     val colors = cvColors
     val reduced = LocalReducedMotion.current
     var armed by remember(points) { mutableStateOf(false) }
@@ -594,7 +612,11 @@ fun Sparkline(points: List<Float>, modifier: Modifier = Modifier) {
  * legibility shadow because a shadow muddies the clipped gradient to olive. Keep that exclusion.
  */
 @Composable
-fun HeroShimmerText(text: String, modifier: Modifier = Modifier, style: TextStyle? = null) {
+fun HeroShimmerText(
+    text: String,
+    modifier: Modifier = Modifier,
+    style: TextStyle? = null,
+) {
     val colors = cvColors
     var widthPx by remember { mutableStateOf(0f) }
     val t by rememberInfiniteFloat(9000, easing = LinearEasing)
@@ -628,7 +650,11 @@ fun HeroShimmerText(text: String, modifier: Modifier = Modifier, style: TextStyl
  * as a ghost numeral. The same project therefore always looks the same, on every platform.
  */
 @Composable
-fun MediaPanel(seed: String, label: String, modifier: Modifier = Modifier) {
+fun MediaPanel(
+    seed: String,
+    label: String,
+    modifier: Modifier = Modifier,
+) {
     val colors = cvColors
     val angleRad = remember(seed) { (seed.hashCode().mod(360)) * PI.toFloat() / 180f }
     Box(
@@ -663,8 +689,7 @@ fun MediaPanel(seed: String, label: String, modifier: Modifier = Modifier) {
                     }
                     y += pitch
                 }
-            }
-            .border(1.dp, colors.line, CardShape)
+            }.border(1.dp, colors.line, CardShape)
             .padding(16.dp),
         contentAlignment = Alignment.BottomStart,
     ) {
@@ -692,8 +717,7 @@ fun StatusDot(modifier: Modifier = Modifier) {
                         radius = size.minDimension / 2f + ring,
                     )
                 }
-            }
-            .background(colors.accent, CircleShape),
+            }.background(colors.accent, CircleShape),
     )
 }
 
@@ -732,14 +756,12 @@ fun ExpanderSection(
                         } else {
                             Modifier
                         },
-                    )
-                    .clickable(
+                    ).clickable(
                         interactionSource = interaction,
                         indication = null,
                         role = Role.Button,
                         onClick = { open = !open },
-                    )
-                    .padding(vertical = 10.dp),
+                    ).padding(vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Canvas(Modifier.size(10.dp).graphicsLayer { rotationZ = rotation }) {
