@@ -237,13 +237,18 @@ style:
       # findings, because the survivors live in `DrawScope` extension functions and Canvas draw
       # lambdas, which carry no annotation for any ignore to match. Those are NOT artefacts —
       # `private const val NeedleRadiusFraction = 0.86f` is strictly better code.
+      # Both @Preview FQNs on purpose. This is Compose MULTIPLATFORM: a shared source set
+      # annotates with org.jetbrains.compose.ui.tooling.preview.Preview, and the androidx FQN
+      # inherited from the family config never matches there. Listing only the androidx one is
+      # how the ignore silently fails on exactly the shared UI it was written for.
       - 'Preview'
       - 'androidx.compose.ui.tooling.preview.Preview'
-      - 'PreviewLightDark'
-      - 'PreviewMatrix'
-      - 'PreviewFontScales'
-      - 'PreviewDevices'
-      - 'PreviewStates'
+      - 'org.jetbrains.compose.ui.tooling.preview.Preview'
+      # PreviewLightDark / PreviewMatrix / PreviewFontScales / PreviewDevices / PreviewStates
+      # are dropped: they are project-local annotations belonging to a sibling app and no such
+      # declaration exists here (`grep -r '@Preview' src` returns nothing at all today). An
+      # ignoreAnnotated entry naming an annotation the repo does not have is a claim that some
+      # code is exempt when none is, which is worse than no entry.
     ignoreNumbers:
       # Keep this list SHORT. This repo previously listed 0 through 10 inclusive, which
       # silently exempts `if (retries > 5)` and `grade >= 7`; and '1000', which is a debounce
@@ -306,13 +311,18 @@ style:
     ignoreAnnotated:
       # A @Preview function is invoked by the IDE and by screenshot tests, never by application
       # code. Prescribed by detekt's Compose guide.
+      # Both @Preview FQNs on purpose. This is Compose MULTIPLATFORM: a shared source set
+      # annotates with org.jetbrains.compose.ui.tooling.preview.Preview, and the androidx FQN
+      # inherited from the family config never matches there. Listing only the androidx one is
+      # how the ignore silently fails on exactly the shared UI it was written for.
       - 'Preview'
       - 'androidx.compose.ui.tooling.preview.Preview'
-      - 'PreviewLightDark'
-      - 'PreviewMatrix'
-      - 'PreviewFontScales'
-      - 'PreviewDevices'
-      - 'PreviewStates'
+      - 'org.jetbrains.compose.ui.tooling.preview.Preview'
+      # PreviewLightDark / PreviewMatrix / PreviewFontScales / PreviewDevices / PreviewStates
+      # are dropped: they are project-local annotations belonging to a sibling app and no such
+      # declaration exists here (`grep -r '@Preview' src` returns nothing at all today). An
+      # ignoreAnnotated entry naming an annotation the repo does not have is a claim that some
+      # code is exempt when none is, which is worse than no entry.
   UnusedPrivateProperty:
     excludes: *notOurs
     allowedNames: '(_|ignored|expected|serialVersionUID)'

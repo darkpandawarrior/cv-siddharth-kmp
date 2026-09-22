@@ -31,7 +31,10 @@ subprojects {
         // already sets `ktlint = disabled` under build/, but without this filter the ktlint tasks
         // still take a build dependency on the codegen — formatting would start forcing a
         // resource-generation run.
-        filter { exclude("**/build/**") }
+        filter {
+            exclude("**/build/**")
+            exclude("**/data/generated/**")
+        }
     }
     extensions.configure<dev.detekt.gradle.extensions.DetektExtension> {
         config.setFrom(rootProject.files("config/detekt/detekt.yml"))

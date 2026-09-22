@@ -25,6 +25,13 @@ ktlint = disabled
 [external/**]
 ktlint = disabled
 
+# Machine-written, but NOT under build/: scripts/ regenerates these from the live corpora into the
+# source tree so the wasm bundle can read them without a network call. detekt already excludes
+# `**/generated/**` on both its task types; ktlint has to be told separately or the next generator
+# run lands a diff nobody wrote.
+[**/data/generated/**]
+ktlint = disabled
+
 [*]
 charset = utf-8
 end_of_line = lf
@@ -63,6 +70,39 @@ ktlint_standard_no-wildcard-imports = disabled
 # SCREAMING_SNAKE for `const val` and has no ignore-when-annotated escape, so it has to come
 # off wholesale.
 ktlint_standard_property-naming = disabled
+
+# NOT half a pair — detekt has no equivalent rule. Two deliberate comment shapes this codebase uses
+# everywhere, which ktlint_official's `no-consecutive-comments` forbids and which carry real
+# information:
+#   1. A KDoc, then a `//` line, then the declaration. The KDoc says what the thing is; the `//`
+#      says why the `@Suppress` or the odd construct immediately below it exists. Folding the second
+#      into the first turns a note about one annotation into documentation of the function's
+#      behaviour, which is where suppression rationales go to be forgotten.
+#   2. A file-header KDoc — the design note at the top of the file — followed by the first
+#      declaration's own KDoc. Kotlin has no file-doc syntax, so `/** */` at the top of the file is
+#      the convention, and the rule cannot tell one from a stray comment.
+# 55 occurrences across 24 files, none of them a mistake. The orphaned KDocs this pass DID create
+# (a doc separated from its declaration by an inserted constant) were fixed in code first, so this
+# is not hiding them.
+ktlint_standard_no-consecutive-comments = disabled
+
+# The prose corpora. Every rule but one still applies to these two files; ONLY the line limit is
+# lifted, and only here.
+#
+# Their payload is `description`/`overview`/`body` written as one `"""..."""` literal per field —
+# 118 of them, the longest 939 characters. ProjectDetailScreen renders `overview` and `section.body`
+# straight into BasicText (ProjectDetailScreen.kt:183, :202), NOT through InlineMarkdown.parsePiece,
+# which is the one path that folds a soft break back into a space. So a wrap inside one of these
+# literals is not a formatting change: it puts a hard line break into published portfolio copy at
+# whatever column 140 happens to land on. There is no edit that satisfies the rule and leaves the
+# rendered page alone.
+#
+# This is deliberately NOT `ktlint = disabled`: indentation, trailing commas, import order and the
+# rest are still enforced here, and the three long lines in CvProjectData.kt that were ordinary
+# code — two NamedLink calls and `projectOrder`, each pushed over by a trailing claim-audit marker —
+# were wrapped in code rather than covered by this.
+[**/data/{CvProjectData,CvProfileData}.kt]
+max_line_length = off
 
 [*.{yml,yaml}]
 indent_size = 2
