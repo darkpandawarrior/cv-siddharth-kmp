@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import com.siddharth.cv.shared.LocalNav
 import com.siddharth.cv.shared.Route
 import com.siddharth.cv.shared.data.CaseStudy
+import com.siddharth.cv.shared.data.CvGallery
 import com.siddharth.cv.shared.data.Experience
 import com.siddharth.cv.shared.data.Metric
 import com.siddharth.cv.shared.data.Project
@@ -62,12 +63,6 @@ import com.siddharth.cv.shared.data.recentGrowth
 import com.siddharth.cv.shared.data.sharedFoundation
 import com.siddharth.cv.shared.data.siteRooms
 import com.siddharth.cv.shared.data.skills
-import com.siddharth.cv.shared.routeOrNull
-import com.siddharth.cv.shared.theme.AnimatedCounter
-import com.siddharth.cv.shared.theme.CvCard
-import com.siddharth.cv.shared.theme.ExpanderSection
-import com.siddharth.cv.shared.theme.GhostButton
-import com.siddharth.cv.shared.data.CvGallery
 import com.siddharth.cv.shared.media.ProjectShot
 import com.siddharth.cv.shared.net.GITHUB_ACTIVITY_ENDPOINT
 import com.siddharth.cv.shared.net.GithubActivity
@@ -78,6 +73,11 @@ import com.siddharth.cv.shared.net.SpotifyTrack
 import com.siddharth.cv.shared.net.byRepo
 import com.siddharth.cv.shared.net.fetchSignal
 import com.siddharth.cv.shared.net.nowOrLast
+import com.siddharth.cv.shared.routeOrNull
+import com.siddharth.cv.shared.theme.AnimatedCounter
+import com.siddharth.cv.shared.theme.CvCard
+import com.siddharth.cv.shared.theme.ExpanderSection
+import com.siddharth.cv.shared.theme.GhostButton
 import com.siddharth.cv.shared.theme.MetricGauge
 import com.siddharth.cv.shared.theme.MonoMeta
 import com.siddharth.cv.shared.theme.PrimaryButton
@@ -111,7 +111,11 @@ import kotlinx.coroutines.delay
 
 /** `// eyebrow` + `<h2>` + the lede paragraph, the header every section on the site opens with. */
 @Composable
-private fun SectionHeader(eyebrow: String, heading: String, lede: String? = null) {
+private fun SectionHeader(
+    eyebrow: String,
+    heading: String,
+    lede: String? = null,
+) {
     Reveal {
         Column(Modifier.fillMaxWidth()) {
             SectionEyebrow(eyebrow)
@@ -154,7 +158,10 @@ private fun <T> GridRows(
 
 /** The `<li>` with its accent dot — used by case studies, projects and the experience timeline. */
 @Composable
-private fun Bullet(text: String, label: String? = null) {
+private fun Bullet(
+    text: String,
+    label: String? = null,
+) {
     val colors = cvColors
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
         Box(
@@ -178,7 +185,11 @@ private fun Bullet(text: String, label: String? = null) {
 
 /** A text row that opens an external URL. One place so the focus/hover treatment stays identical. */
 @Composable
-private fun LinkRow(modifier: Modifier = Modifier, url: String, content: @Composable () -> Unit) {
+private fun LinkRow(
+    modifier: Modifier = Modifier,
+    url: String,
+    content: @Composable () -> Unit,
+) {
     val uriHandler = LocalUriHandler.current
     Box(
         modifier
@@ -286,7 +297,11 @@ fun CaseStudiesSection(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun CaseStudyCard(cs: CaseStudy, index: Int, featured: Boolean = false) {
+private fun CaseStudyCard(
+    cs: CaseStudy,
+    index: Int,
+    featured: Boolean = false,
+) {
     val colors = cvColors
     CvCard(Modifier.fillMaxWidth()) {
         Box(Modifier.fillMaxWidth()) {
@@ -371,7 +386,14 @@ fun ProjectsSection(modifier: Modifier = Modifier) {
                 SectionEyebrow("// recently shipped")
                 Spacer(Modifier.height(16.dp))
                 BoxWithConstraints(Modifier.fillMaxWidth()) {
-                    val columns = if (maxWidth >= 860.dp) 4 else if (maxWidth >= 520.dp) 2 else 1
+                    val columns =
+                        if (maxWidth >= 860.dp) {
+                            4
+                        } else if (maxWidth >= 520.dp) {
+                            2
+                        } else {
+                            1
+                        }
                     GridRows(recentGrowth.takeLast(4).reversed(), columns, spacing = 16.dp) { g ->
                         CvCard(glowOnHover = false) {
                             MonoMeta(g.date)
@@ -587,7 +609,10 @@ fun ExperienceSection(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun TimelineRow(dotColor: Color, content: @Composable () -> Unit) {
+private fun TimelineRow(
+    dotColor: Color,
+    content: @Composable () -> Unit,
+) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
         Box(
             Modifier
@@ -712,8 +737,9 @@ fun ExploreSection(modifier: Modifier = Modifier) {
         SectionHeader(
             eyebrow = "// the playground",
             heading = "This site is a live demo",
-            lede = "Not a PDF with a pulse — a running program. The rooms below are the interactive " +
-                "proofs of the engineering above.",
+            lede =
+                "Not a PDF with a pulse — a running program. The rooms below are the interactive " +
+                    "proofs of the engineering above.",
         )
 
         Spacer(Modifier.height(28.dp))
@@ -903,9 +929,10 @@ fun LiveSignalStrip(modifier: Modifier = Modifier) {
                         // nothing; an upstream row keeps its arrow, which is the part that does.
                         text = item.repo.substringAfterLast('/') + if (item.upstream) " ↗" else "",
                         accent = item.upstream,
-                        onClick = item.url.takeIf { it.isNotBlank() }?.let { url ->
-                            { uriHandler.openUri(url) }
-                        },
+                        onClick =
+                            item.url.takeIf { it.isNotBlank() }?.let { url ->
+                                { uriHandler.openUri(url) }
+                            },
                     )
                 }
             }
@@ -915,7 +942,11 @@ fun LiveSignalStrip(modifier: Modifier = Modifier) {
 
 /** One live-signal word. Clickable only when the endpoint gave it somewhere to go. */
 @Composable
-private fun SignalChip(text: String, accent: Boolean, onClick: (() -> Unit)?) {
+private fun SignalChip(
+    text: String,
+    accent: Boolean,
+    onClick: (() -> Unit)?,
+) {
     val colors = cvColors
     BasicText(
         text = text,

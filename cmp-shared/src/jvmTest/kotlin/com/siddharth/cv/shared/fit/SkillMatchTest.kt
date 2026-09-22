@@ -18,7 +18,6 @@ import kotlin.test.assertTrue
  * composeMain rather than commonMain for an unrelated toolchain reason (see its own file doc).
  */
 class SkillMatchTest {
-
     // -----------------------------------------------------------------------------------------
     // mentions() — whole-word, case-insensitive containment
     // -----------------------------------------------------------------------------------------
@@ -123,8 +122,9 @@ class SkillMatchTest {
 
     @Test
     fun `toFitReport caps strengths at four and gaps at three`() {
-        val jd = "Senior Android Engineer needing Kotlin, Compose, Coroutines, Room, Hilt, " +
-            "Retrofit, Rust, Kubernetes, Docker, AWS, Terraform, Kafka."
+        val jd =
+            "Senior Android Engineer needing Kotlin, Compose, Coroutines, Room, Hilt, " +
+                "Retrofit, Rust, Kubernetes, Docker, AWS, Terraform, Kafka."
         val report = toFitReport(matchJd(jd))
         assertTrue(report.strengths.size <= 4)
         assertTrue(report.gaps.size <= 3)
@@ -183,9 +183,10 @@ class SkillMatchTest {
 
     @Test
     fun `parseJdFitDirective drops a row missing a required field rather than crashing`() {
-        val report = parseJdFitDirective(
-            """[[jdfit:{"score":50,"summary":"x","strengths":[{"need":"Kotlin"}],"gaps":[]}]]""",
-        )
+        val report =
+            parseJdFitDirective(
+                """[[jdfit:{"score":50,"summary":"x","strengths":[{"need":"Kotlin"}],"gaps":[]}]]""",
+            )
         assertNotNull(report)
         assertTrue(report.strengths.isEmpty(), "a strength with no evidence is dropped, not half-shown")
     }

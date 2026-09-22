@@ -47,6 +47,7 @@ import com.siddharth.cv.shared.data.generated.opsGeneratedAt
 import com.siddharth.cv.shared.data.generated.opsLeverage
 import com.siddharth.cv.shared.data.generated.opsPerimeter
 import com.siddharth.cv.shared.data.generated.storeGeneratedAt
+import com.siddharth.cv.shared.format.grouped
 import com.siddharth.cv.shared.theme.CvContentMaxWidth
 import com.siddharth.cv.shared.theme.CvGutter
 import com.siddharth.cv.shared.theme.CvMotion
@@ -97,7 +98,6 @@ import kotlin.time.Instant
  * PROVENANCE. Nothing here claims current access to an employer's code. The fleet block is measured
  * history: public Play listings anyone can re-check. The fleet note says so in its own words.
  */
-
 private const val RepoUrl = "https://github.com/darkpandawarrior/cv-siddharth"
 
 /**
@@ -133,7 +133,12 @@ private data class OpsRow(
     val sinceDay: Long?,
 )
 
-private data class OpsBlock(val lane: String, val title: String, val note: String, val rows: List<OpsRow>)
+private data class OpsBlock(
+    val lane: String,
+    val title: String,
+    val note: String,
+    val rows: List<OpsRow>,
+)
 
 // ---------------------------------------------------------------------------------------------
 // Dates
@@ -154,8 +159,7 @@ private fun isoSeconds(seconds: Long): String = Instant.fromEpochSeconds(seconds
 
 /** `"2026-08-29"` to its epoch day, or null when the stamp is not a date this build can read. */
 @OptIn(ExperimentalTime::class)
-private fun epochDay(stamp: String): Long? =
-    runCatching { Instant.parse(stamp + "T00:00:00Z").epochSeconds / SecondsPerDay }.getOrNull()
+private fun epochDay(stamp: String): Long? = runCatching { Instant.parse(stamp + "T00:00:00Z").epochSeconds / SecondsPerDay }.getOrNull()
 
 private val ShortMonths =
     listOf("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
@@ -175,16 +179,24 @@ private fun playDay(updated: String): Long? {
     return epochDay("$year-${pad(month)}-${pad(day)}")
 }
 
-private fun pad(n: Long): String = if (n < 10) "0$n" else "$n"
+private fun pad(n: Long): String = n.toString().padStart(2, '0')
 
 private fun pad(n: Int): String = pad(n.toLong())
 
 /** Aging is DEGRADED from two-thirds of the way to the deadline. Same rule as freshnessSla.ts. */
-private fun stateForAge(age: Long, sla: Int): OpsState = when {
-    age > sla -> OpsState.BROKEN
-    age >= sla * 2 / 3 -> OpsState.DEGRADED
-    else -> OpsState.OK
-}
+// Integer arithmetic on purpose: `sla * 2 / 3` truncates, and freshnessSla.ts truncates too.
+private const val DegradedNumerator = 2
+private const val DegradedDenominator = 3
+
+private fun stateForAge(
+    age: Long,
+    sla: Int,
+): OpsState =
+    when {
+        age > sla -> OpsState.BROKEN
+        age >= sla * DegradedNumerator / DegradedDenominator -> OpsState.DEGRADED
+        else -> OpsState.OK
+    }
 
 /**
  * Time REMAINING, not elapsed.
@@ -193,14 +205,17 @@ private fun stateForAge(age: Long, sla: Int): OpsState = when {
  * to the part that matters, and it turns the perimeter from trivia into a countdown, which is what
  * it actually is.
  */
-private fun budget(age: Long, sla: Int): String = when {
-    age > sla -> "${age - sla}d OVER the ${sla}d SLA"
-    age.toInt() == sla -> "due today · ${sla}d SLA"
-    else -> "${sla - age}d left of ${sla}d"
-}
+private fun budget(
+    age: Long,
+    sla: Int,
+): String =
+    when {
+        age > sla -> "${age - sla}d OVER the ${sla}d SLA"
+        age.toInt() == sla -> "due today · ${sla}d SLA"
+        else -> "${sla - age}d left of ${sla}d"
+    }
 
 /** `2922170` to `"2,922,170"`. Kotlin common has no `toLocaleString`. */
-private fun num(n: Int): String = n.toString().reversed().chunked(3).joinToString(",").reversed()
 
 // ---------------------------------------------------------------------------------------------
 // The blocks
@@ -210,61 +225,67 @@ private fun num(n: Int): String = n.toString().reversed().chunked(3).joinToStrin
 // the page, not the moment some generator last ran.
 // ---------------------------------------------------------------------------------------------
 
-private fun opsBlocks(today: Long): List<OpsBlock> = listOf(
-    OpsBlock(
-        lane = "perimeter",
-        title = "Freshness perimeter",
-        note = "generated data against the SLA its own test enforces · worst first · " +
-            "aged as you loaded this page",
-        rows = perimeterRows(today),
-    ),
-    OpsBlock(
-        lane = "drift",
-        title = "Vendored drift",
-        note = "how far each app is behind the shared foundation it pins as a git submodule",
-        rows = driftRows(),
-    ),
-    OpsBlock(
-        lane = "fleet",
-        title = "Fleet heartbeat",
-        note = "${fleetStats.live} apps re-verified against their live Play listings on the last " +
-            "sweep · ${num(fleetStats.installFloor)} installs floor · ${fleetStats.delisted} since " +
-            "delisted. No SLA on a row here: a quiet app is not a broken one, and the sweep has " +
-            "its own perimeter row above. These shipped from employer work. The listings are " +
-            "public and anyone can re-check them; the source was never his and is not tracked on " +
-            "this board.",
-        rows = fleetRows(),
-    ),
-    OpsBlock(
-        lane = "leverage",
-        title = "Leverage",
-        note = "convention plugins by the modules that apply them · a plugin nothing applies is " +
-            "DEGRADED, not absent",
-        rows = leverageRows(),
-    ),
-)
+private fun opsBlocks(today: Long): List<OpsBlock> =
+    listOf(
+        OpsBlock(
+            lane = "perimeter",
+            title = "Freshness perimeter",
+            note =
+                "generated data against the SLA its own test enforces · worst first · " +
+                    "aged as you loaded this page",
+            rows = perimeterRows(today),
+        ),
+        OpsBlock(
+            lane = "drift",
+            title = "Vendored drift",
+            note = "how far each app is behind the shared foundation it pins as a git submodule",
+            rows = driftRows(),
+        ),
+        OpsBlock(
+            lane = "fleet",
+            title = "Fleet heartbeat",
+            note =
+                "${fleetStats.live} apps re-verified against their live Play listings on the last " +
+                    "sweep · ${fleetStats.installFloor.grouped()} installs floor · ${fleetStats.delisted} since " +
+                    "delisted. No SLA on a row here: a quiet app is not a broken one, and the sweep has " +
+                    "its own perimeter row above. These shipped from employer work. The listings are " +
+                    "public and anyone can re-check them; the source was never his and is not tracked on " +
+                    "this board.",
+            rows = fleetRows(),
+        ),
+        OpsBlock(
+            lane = "leverage",
+            title = "Leverage",
+            note =
+                "convention plugins by the modules that apply them · a plugin nothing applies is " +
+                    "DEGRADED, not absent",
+            rows = leverageRows(),
+        ),
+    )
 
 private fun perimeterRows(today: Long): List<OpsRow> {
-    val files = opsPerimeter.map { p ->
-        perimeterRow(
-            subject = p.file,
-            subjectUrl = "$RepoUrl/blob/main/src/data/${p.file}",
-            stamp = p.generatedAt,
-            sla = p.slaDays,
-            trailer = p.generator.removePrefix("npm run "),
-            today = today,
-        )
-    }
+    val files =
+        opsPerimeter.map { p ->
+            perimeterRow(
+                subject = p.file,
+                subjectUrl = "$RepoUrl/blob/main/src/data/${p.file}",
+                stamp = p.generatedAt,
+                sla = p.slaDays,
+                trailer = p.generator.removePrefix("npm run "),
+                today = today,
+            )
+        }
     // The sweep is not in ops.ts because it stamps store.ts instead, but it ages like everything
     // else and is the one generator on the list nobody has put on a cron.
-    val sweep = perimeterRow(
-        subject = "Play Store fleet sweep",
-        subjectUrl = "$RepoUrl/blob/main/scripts/gen-store.mjs",
-        stamp = storeGeneratedAt,
-        sla = SweepSlaDays,
-        trailer = "gen:store · run by hand, not on a cron",
-        today = today,
-    )
+    val sweep =
+        perimeterRow(
+            subject = "Play Store fleet sweep",
+            subjectUrl = "$RepoUrl/blob/main/scripts/gen-store.mjs",
+            stamp = storeGeneratedAt,
+            sla = SweepSlaDays,
+            trailer = "gen:store · run by hand, not on a cron",
+            today = today,
+        )
     return (files + sweep).sortedBy { it.state.ordinal }
 }
 
@@ -289,12 +310,13 @@ private fun perimeterRow(
         state = if (age == null) OpsState.BROKEN else stateForAge(age, sla),
         subject = subject,
         subjectUrl = subjectUrl,
-        detail = if (age == null) {
-            "stamp \"$stamp\" is not a date this build can read, so its age is unknown rather " +
-                "than fresh · $trailer"
-        } else {
-            "${budget(age, sla)} · $trailer"
-        },
+        detail =
+            if (age == null) {
+                "stamp \"$stamp\" is not a date this build can read, so its age is unknown rather " +
+                    "than fresh · $trailer"
+            } else {
+                "${budget(age, sla)} · $trailer"
+            },
         verified = stamp,
         verifiedUrl = "$RepoUrl/actions/workflows/refresh-media.yml",
         sinceDay = day,
@@ -308,24 +330,27 @@ private fun perimeterRow(
  * number invented to make a row red, the exact thing this board refuses elsewhere. Drift has no
  * declared SLA, so it reports two honest states: level, or behind by a measured amount.
  */
-private fun driftRows(): List<OpsRow> = opsDrift.map { d ->
-    OpsRow(
-        key = "drift:${d.repo}:${d.upstream}",
-        state = if (d.behind == 0) OpsState.OK else OpsState.DEGRADED,
-        subject = "${d.repo} > ${d.upstream}",
-        subjectUrl = "https://github.com/darkpandawarrior/${d.upstream}",
-        detail = when (d.behind) {
-            null -> "pinned at ${d.pin}, a commit this clone has never fetched, so the distance " +
-                "is unmeasured rather than assumed zero"
-            0 -> "pinned at ${d.pin} · level with upstream"
-            1 -> "pinned at ${d.pin} · 1 commit behind upstream"
-            else -> "pinned at ${d.pin} · ${d.behind} commits behind upstream"
-        },
-        verified = d.pinnedAt ?: "unknown",
-        verifiedUrl = null,
-        sinceDay = d.pinnedAt?.let(::epochDay),
-    )
-}
+private fun driftRows(): List<OpsRow> =
+    opsDrift.map { d ->
+        OpsRow(
+            key = "drift:${d.repo}:${d.upstream}",
+            state = if (d.behind == 0) OpsState.OK else OpsState.DEGRADED,
+            subject = "${d.repo} > ${d.upstream}",
+            subjectUrl = "https://github.com/darkpandawarrior/${d.upstream}",
+            detail =
+                when (d.behind) {
+                    null ->
+                        "pinned at ${d.pin}, a commit this clone has never fetched, so the distance " +
+                            "is unmeasured rather than assumed zero"
+                    0 -> "pinned at ${d.pin} · level with upstream"
+                    1 -> "pinned at ${d.pin} · 1 commit behind upstream"
+                    else -> "pinned at ${d.pin} · ${d.behind} commits behind upstream"
+                },
+            verified = d.pinnedAt ?: "unknown",
+            verifiedUrl = null,
+            sinceDay = d.pinnedAt?.let(::epochDay),
+        )
+    }
 
 /**
  * All of them, oldest release first. Eight rows with a dot is a status badge; the whole fleet is
@@ -339,22 +364,23 @@ private fun driftRows(): List<OpsRow> = opsDrift.map { d ->
  * Rebuilt from `liveClients[].apps` rather than the web's flat `fleet` export, which the Kotlin
  * emitter dropped as an exact duplicate of exactly this flattening.
  */
-private fun fleetRows(): List<OpsRow> = liveClients
-    .flatMap { client -> client.apps.map { client to it } }
-    .filter { (_, app) -> app.updated.isNotBlank() }
-    .sortedBy { (_, app) -> playDay(app.updated) ?: Long.MAX_VALUE }
-    .map { (client, app) ->
-        OpsRow(
-            key = "fleet:${app.id}",
-            state = OpsState.OK,
-            subject = app.name,
-            subjectUrl = app.url,
-            detail = "${client.developer} · ${app.installs} installs · last shipped ${app.updated}",
-            verified = storeGeneratedAt,
-            verifiedUrl = app.url,
-            sinceDay = null,
-        )
-    }
+private fun fleetRows(): List<OpsRow> =
+    liveClients
+        .flatMap { client -> client.apps.map { client to it } }
+        .filter { (_, app) -> app.updated.isNotBlank() }
+        .sortedBy { (_, app) -> playDay(app.updated) ?: Long.MAX_VALUE }
+        .map { (client, app) ->
+            OpsRow(
+                key = "fleet:${app.id}",
+                state = OpsState.OK,
+                subject = app.name,
+                subjectUrl = app.url,
+                detail = "${client.developer} · ${app.installs} installs · last shipped ${app.updated}",
+                verified = storeGeneratedAt,
+                verifiedUrl = app.url,
+                sinceDay = null,
+            )
+        }
 
 /**
  * Convention plugins by the modules that apply them.
@@ -365,23 +391,26 @@ private fun fleetRows(): List<OpsRow> = liveClients
  * counted every plugin's own declaration file as a consumer of itself. It reported
  * shared.android.library at 63 against a true 24, and painted all ten of the zeros green.
  */
-private fun leverageRows(): List<OpsRow> = opsLeverage.map { l ->
-    OpsRow(
-        key = "leverage:${l.id}",
-        state = if (l.modules > 0) OpsState.OK else OpsState.DEGRADED,
-        subject = l.id,
-        subjectUrl = "https://github.com/darkpandawarrior/kmp-build-logic",
-        detail = if (l.modules > 0) {
-            l.repos.joinToString(" · ")
-        } else {
-            "authored, applied by no consumer module. The id appears in no build file outside its " +
-                "own declaration."
-        },
-        verified = "${l.modules} modules",
-        verifiedUrl = null,
-        sinceDay = null,
-    )
-}.sortedBy { it.state.ordinal }
+private fun leverageRows(): List<OpsRow> =
+    opsLeverage
+        .map { l ->
+            OpsRow(
+                key = "leverage:${l.id}",
+                state = if (l.modules > 0) OpsState.OK else OpsState.DEGRADED,
+                subject = l.id,
+                subjectUrl = "https://github.com/darkpandawarrior/kmp-build-logic",
+                detail =
+                    if (l.modules > 0) {
+                        l.repos.joinToString(" · ")
+                    } else {
+                        "authored, applied by no consumer module. The id appears in no build file outside its " +
+                            "own declaration."
+                    },
+                verified = "${l.modules} modules",
+                verifiedUrl = null,
+                sinceDay = null,
+            )
+        }.sortedBy { it.state.ordinal }
 
 // ---------------------------------------------------------------------------------------------
 // The page
@@ -404,10 +433,12 @@ fun OpsScreen(modifier: Modifier = Modifier) {
     // Every non-OK row, worst first, carrying the lane it was hoisted out of. The rows stay in
     // their own blocks below and the census there still counts them, because hoisting a row out
     // silently would make that block read clean when it is not.
-    val escalated = remember(blocks) {
-        blocks.flatMap { b -> b.rows.filter { it.state != OpsState.OK }.map { b.lane to it } }
-            .sortedBy { it.second.state.ordinal }
-    }
+    val escalated =
+        remember(blocks) {
+            blocks
+                .flatMap { b -> b.rows.filter { it.state != OpsState.OK }.map { b.lane to it } }
+                .sortedBy { it.second.state.ordinal }
+        }
     val total = remember(blocks) { blocks.sumOf { it.rows.size } }
     val broken = escalated.count { it.second.state == OpsState.BROKEN }
     val worst = escalated.firstOrNull()?.second
@@ -452,12 +483,13 @@ private fun BoardHeader() {
         SectionHeading("Still true, or only once true")
         Spacer(Modifier.height(14.dp))
         BasicText(
-            text = "Every other page here argues the work was good. This one argues it is still " +
-                "true, and shows the machinery that would notice if it stopped being. Three " +
-                "states: OK is a check that ran and passed, BROKEN is a check that failed or an " +
-                "SLA that is blown, and DEGRADED, meaning passing, succeeding daily, and quietly " +
-                "aging toward its deadline, is the state every failure this board was built after " +
-                "actually lived in.",
+            text =
+                "Every other page here argues the work was good. This one argues it is still " +
+                    "true, and shows the machinery that would notice if it stopped being. Three " +
+                    "states: OK is a check that ran and passed, BROKEN is a check that failed or an " +
+                    "SLA that is blown, and DEGRADED, meaning passing, succeeding daily, and quietly " +
+                    "aging toward its deadline, is the state every failure this board was built after " +
+                    "actually lived in.",
             modifier = Modifier.widthIn(max = 760.dp),
             style = cvType.bodySmall,
         )
@@ -476,8 +508,7 @@ private fun BoardFooter() {
 }
 
 /** `mx-auto max-w-[92rem] px-6`. Wider than the rest of the site: this page is a console. */
-private fun Modifier.pageMeasure(): Modifier =
-    this.widthIn(max = CvContentMaxWidth).fillMaxWidth().padding(horizontal = CvGutter)
+private fun Modifier.pageMeasure(): Modifier = this.widthIn(max = CvContentMaxWidth).fillMaxWidth().padding(horizontal = CvGutter)
 
 // ---------------------------------------------------------------------------------------------
 // Banner + rail
@@ -507,10 +538,11 @@ private fun Banner(
             ) {
                 BasicText(
                     text = "SID//OS",
-                    style = cvType.metaMono.copy(
-                        color = colors.onBackground,
-                        fontWeight = FontWeight.Bold,
-                    ),
+                    style =
+                        cvType.metaMono.copy(
+                            color = colors.onBackground,
+                            fontWeight = FontWeight.Bold,
+                        ),
                 )
                 BasicText(
                     text = "ops console",
@@ -546,17 +578,22 @@ private fun Banner(
 }
 
 @Composable
-private fun LoopStation(label: String, count: Int, hot: Boolean) {
+private fun LoopStation(
+    label: String,
+    count: Int,
+    hot: Boolean,
+) {
     val colors = cvColors
     Row(verticalAlignment = Alignment.CenterVertically) {
         MonoMeta(label)
         Spacer(Modifier.width(7.dp))
         BasicText(
             text = count.toString().padStart(3, '0'),
-            style = cvType.metaMono.copy(
-                color = if (hot) DegradedTint else colors.onBackground,
-                fontWeight = FontWeight.Bold,
-            ),
+            style =
+                cvType.metaMono.copy(
+                    color = if (hot) DegradedTint else colors.onBackground,
+                    fontWeight = FontWeight.Bold,
+                ),
         )
     }
 }
@@ -583,10 +620,11 @@ private fun Rail(
         ) {
             BasicText(
                 text = if (escalated.isEmpty()) "ALL CLEAR" else "ESCALATED",
-                style = cvType.metaMono.copy(
-                    color = colors.onBackground,
-                    fontWeight = FontWeight.Bold,
-                ),
+                style =
+                    cvType.metaMono.copy(
+                        color = colors.onBackground,
+                        fontWeight = FontWeight.Bold,
+                    ),
             )
             MonoMeta("$broken broken")
             MonoMeta("${escalated.size - broken} degraded")
@@ -637,8 +675,9 @@ private fun BrokenClock(sinceDay: Long) {
     val elapsed = (now - sinceDay * SecondsPerDay).coerceAtLeast(0)
     val rest = elapsed % SecondsPerDay
     BasicText(
-        text = "worst unchanged for ${elapsed / SecondsPerDay}d " +
-            "${pad(rest / 3600)}:${pad(rest / 60 % 60)}:${pad(rest % 60)}",
+        text =
+            "worst unchanged for ${elapsed / SecondsPerDay}d " +
+                "${pad(rest / 3600)}:${pad(rest / 60 % 60)}:${pad(rest % 60)}",
         style = cvType.metaMono.copy(color = BrokenTint),
     )
 }
@@ -651,6 +690,7 @@ private fun BrokenClock(sinceDay: Long) {
 @Composable
 private fun BlockRule(block: OpsBlock) {
     val colors = cvColors
+
     fun census(state: OpsState) = block.rows.count { it.state == state }
     Column(Modifier.pageMeasure().padding(top = 26.dp)) {
         FlowRow(
@@ -678,7 +718,11 @@ private fun BlockRule(block: OpsBlock) {
 }
 
 @Composable
-private fun Census(n: Int, label: String, tint: Color) {
+private fun Census(
+    n: Int,
+    label: String,
+    tint: Color,
+) {
     Row {
         BasicText(
             text = n.toString(),
@@ -701,7 +745,11 @@ private val VerifiedColumn = 104.dp
  * only re-flowed.
  */
 @Composable
-private fun OpsRowView(row: OpsRow, narrow: Boolean, lane: String? = null) {
+private fun OpsRowView(
+    row: OpsRow,
+    narrow: Boolean,
+    lane: String? = null,
+) {
     val colors = cvColors
     Column(Modifier.pageMeasure()) {
         Row(Modifier.fillMaxWidth().padding(vertical = 5.dp), verticalAlignment = Alignment.Top) {
@@ -759,10 +807,11 @@ private fun Led(state: OpsState) {
     val breath by rememberInfiniteFloat(1600, from = 0.35f, to = 1f, easing = CvMotion.EaseOutQuart)
     val broken = state == OpsState.BROKEN
     Box(
-        modifier = Modifier
-            .padding(top = 4.dp)
-            .size(14.dp)
-            .then(if (broken && reduced) Modifier.border(2.dp, tint, CircleShape) else Modifier),
+        modifier =
+            Modifier
+                .padding(top = 4.dp)
+                .size(14.dp)
+                .then(if (broken && reduced) Modifier.border(2.dp, tint, CircleShape) else Modifier),
         contentAlignment = Alignment.Center,
     ) {
         Box(
@@ -774,8 +823,9 @@ private fun Led(state: OpsState) {
 }
 
 @Composable
-private fun stateTint(state: OpsState): Color = when (state) {
-    OpsState.OK -> cvColors.accent
-    OpsState.DEGRADED -> DegradedTint
-    OpsState.BROKEN -> BrokenTint
-}
+private fun stateTint(state: OpsState): Color =
+    when (state) {
+        OpsState.OK -> cvColors.accent
+        OpsState.DEGRADED -> DegradedTint
+        OpsState.BROKEN -> BrokenTint
+    }

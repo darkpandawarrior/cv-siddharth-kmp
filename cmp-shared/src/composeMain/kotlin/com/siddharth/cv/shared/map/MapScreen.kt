@@ -131,8 +131,7 @@ fun MapScreen(modifier: Modifier = Modifier) {
 }
 
 /** `max-w-5xl mx-auto px-6`, held to the sitewide measure so the page does not jump on arrival. */
-private fun Modifier.pageMeasure(): Modifier =
-    this.widthIn(max = CvContentMaxWidth).fillMaxWidth().padding(horizontal = CvGutter)
+private fun Modifier.pageMeasure(): Modifier = this.widthIn(max = CvContentMaxWidth).fillMaxWidth().padding(horizontal = CvGutter)
 
 // ---------------------------------------------------------------------------------------------
 // The corpus, resolved once
@@ -212,7 +211,10 @@ private const val CANVAS_ASPECT: Float = 0.58f
 private val HitSlop: Dp = 12.dp
 
 @Composable
-private fun Constellation(selected: String?, onSelect: (String?) -> Unit) {
+private fun Constellation(
+    selected: String?,
+    onSelect: (String?) -> Unit,
+) {
     val reduced = LocalReducedMotion.current
     val measurer = rememberTextMeasurer()
     val colors = cvColors
@@ -337,7 +339,10 @@ private val CanvasInsetTop: Dp = 34.dp
 /** Room for a subtitle below the lowest. */
 private val CanvasInsetBottom: Dp = 28.dp
 
-private fun Density.canvasFrame(width: Float, height: Float): CanvasFrame =
+private fun Density.canvasFrame(
+    width: Float,
+    height: Float,
+): CanvasFrame =
     CanvasFrame(
         width = width,
         height = height,
@@ -413,9 +418,15 @@ private const val COLD_WIRE_PASS: Int = 0
 private const val HOT_WIRE_PASS: Int = 1
 
 /** Node x in px. The layout is unit-square; the canvas stretches it, exactly as the React one does. */
-private fun nodeX(p: ConstellationPaint, i: Int): Float = p.geometry.x(storyLayout.xOf(p.frame, i))
+private fun nodeX(
+    p: ConstellationPaint,
+    i: Int,
+): Float = p.geometry.x(storyLayout.xOf(p.frame, i))
 
-private fun nodeY(p: ConstellationPaint, i: Int): Float = p.geometry.y(storyLayout.yOf(p.frame, i))
+private fun nodeY(
+    p: ConstellationPaint,
+    i: Int,
+): Float = p.geometry.y(storyLayout.yOf(p.frame, i))
 
 /**
  * The wires, cold first and hot last, so a highlighted dependency is never painted under a dim one.
@@ -461,11 +472,12 @@ private fun DrawScope.drawWire(
     // the wire falls back to the cold tint rather than handing a node id to a hex parser.
     val hotTint = if (hot) nodesById[edge.to]?.color?.let { cvColor(it) } else null
     val tint = hotTint ?: p.colors.accent2
-    val alpha = when {
-        hot -> HOT_EDGE_ALPHA
-        hasFocus -> DIM_EDGE_ALPHA
-        else -> COLD_EDGE_ALPHA
-    }
+    val alpha =
+        when {
+            hot -> HOT_EDGE_ALPHA
+            hasFocus -> DIM_EDGE_ALPHA
+            else -> COLD_EDGE_ALPHA
+        }
     val path =
         Path().apply {
             moveTo(ax, ay)
@@ -550,7 +562,12 @@ private fun DrawScope.drawStars(p: ConstellationPaint) {
  * Without the clamp the widest labels leave the card on a narrow window: the layout's padding is a
  * fraction of the frame, and a label's width is not.
  */
-private fun DrawScope.drawClamped(text: TextLayoutResult, color: Color, centerX: Float, top: Float) {
+private fun DrawScope.drawClamped(
+    text: TextLayoutResult,
+    color: Color,
+    centerX: Float,
+    top: Float,
+) {
     val w = text.size.width.toFloat()
     val left = (centerX - w / 2f).coerceIn(0f, maxOf(0f, size.width - w))
     drawText(text, color = color, topLeft = Offset(left, top))
@@ -597,7 +614,13 @@ private suspend fun PointerInputScope.trackConstellation(
 }
 
 /** The id under (x, y), or null. Nearest wins, so overlapping halos cannot make a node unclickable. */
-private fun hitTest(geometry: CanvasFrame, x: Float, y: Float, slop: Float, density: Float): String? {
+private fun hitTest(
+    geometry: CanvasFrame,
+    x: Float,
+    y: Float,
+    slop: Float,
+    density: Float,
+): String? {
     var best: String? = null
     var bestDistance = Float.MAX_VALUE
     val settled = storyLayout.settled
@@ -682,7 +705,10 @@ private fun SelectionPanel(
  * to reach anything on it. The hub is left out, because it is the page you are already on.
  */
 @Composable
-private fun DestinationChips(nav: CvNavState, uri: UriHandler) {
+private fun DestinationChips(
+    nav: CvNavState,
+    uri: UriHandler,
+) {
     val colors = cvColors
     Column(Modifier.pageMeasure().padding(top = CvSectionGap)) {
         SectionEyebrow("// every destination")
@@ -767,14 +793,22 @@ private fun HowItIsDrawn() {
  * row, exactly as `classifyNodeTarget` in StoryMap.tsx decides it once for its own three consumers.
  */
 private sealed interface MapTarget {
-    data class Section(val id: String) : MapTarget
+    data class Section(
+        val id: String,
+    ) : MapTarget
 
-    data class Go(val route: Route) : MapTarget
+    data class Go(
+        val route: Route,
+    ) : MapTarget
 
-    data class External(val url: String) : MapTarget
+    data class External(
+        val url: String,
+    ) : MapTarget
 
     /** No destination on this build, and the reason a reader is owed. */
-    data class Absent(val why: String) : MapTarget
+    data class Absent(
+        val why: String,
+    ) : MapTarget
 }
 
 private const val CHAT_TARGET: String = "chat"
@@ -810,15 +844,20 @@ private fun classifyTarget(target: String): MapTarget {
     }
 }
 
-private fun absentReason(id: String): String = when (id) {
-    BLUEPRINT_ID ->
-        "not on this build: it is a tldraw and three.js canvas, and a DOM widget cannot be laid " +
-            "out inside a Compose one"
+private fun absentReason(id: String): String =
+    when (id) {
+        BLUEPRINT_ID ->
+            "not on this build: it is a tldraw and three.js canvas, and a DOM widget cannot be laid " +
+                "out inside a Compose one"
 
-    else -> "not on this build: nothing here serves /$id"
-}
+        else -> "not on this build: nothing here serves /$id"
+    }
 
-private fun travel(target: MapTarget, nav: CvNavState, uri: UriHandler) {
+private fun travel(
+    target: MapTarget,
+    nav: CvNavState,
+    uri: UriHandler,
+) {
     when (target) {
         is MapTarget.Section -> nav.goSection(target.id)
         is MapTarget.Go -> nav.go(target.route)
@@ -861,9 +900,8 @@ internal fun mapScreenSelfCheck() {
 
     check(classifyTarget("chat") is MapTarget.Absent) { "the chat bubble is not a destination" }
     check(classifyTarget("https://example.com") is MapTarget.External) { "a bare url is external" }
-    check(classifyTarget("#project/mileway") == MapTarget.Go(Route.ProjectDetail("mileway"))) { // claim-audit:allow -- stable route slug, not display copy
-        "a project hash carries its slug"
-    }
+    val dooriSlug = "mileway" // claim-audit:allow -- stable route slug, not display copy
+    check(classifyTarget("#project/$dooriSlug") == MapTarget.Go(Route.ProjectDetail(dooriSlug))) { "a project hash carries its slug" }
     check(classifyTarget("#work") == MapTarget.Section("work")) { "a home section stays on the page" }
     check(classifyTarget("#loopdown") == MapTarget.Go(Route.Loopdown)) { "a ported route navigates" }
     check(classifyTarget("#blueprint") is MapTarget.Absent) { "an unported route says so" }

@@ -98,7 +98,10 @@ import kotlin.math.roundToInt
  *   - There is no footer and no floating chat on this screen; both are App-level furniture.
  */
 @Composable
-fun MakingScreen(onReadAnthology: () -> Unit, modifier: Modifier = Modifier) {
+fun MakingScreen(
+    onReadAnthology: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val colors = cvColors
     val nav = LocalNav.current
     val uri = LocalUriHandler.current
@@ -124,12 +127,14 @@ fun MakingScreen(onReadAnthology: () -> Unit, modifier: Modifier = Modifier) {
 }
 
 /** `max-w-5xl mx-auto px-6`: the measure every section on this page shares. */
-private fun Modifier.pageMeasure(): Modifier =
-    this.widthIn(max = CvContentMaxWidth).fillMaxWidth().padding(horizontal = CvGutter)
+private fun Modifier.pageMeasure(): Modifier = this.widthIn(max = CvContentMaxWidth).fillMaxWidth().padding(horizontal = CvGutter)
 
 /** `SectionHeader` + `section-y mx-auto max-w-5xl px-6`, matching ProjectDetailScreen's own. */
 @Composable
-private fun Section(title: String, content: @Composable () -> Unit) {
+private fun Section(
+    title: String,
+    content: @Composable () -> Unit,
+) {
     Reveal {
         Column(Modifier.pageMeasure().padding(top = CvSectionGap)) {
             SectionHeading(title, Modifier.semantics { heading() })
@@ -141,7 +146,10 @@ private fun Section(title: String, content: @Composable () -> Unit) {
 
 /** A paragraph at the page's reading measure. `max-w-2xl` on the web. */
 @Composable
-private fun Prose(text: String, dim: Boolean = true) {
+private fun Prose(
+    text: String,
+    dim: Boolean = true,
+) {
     BasicText(
         text = text,
         modifier = Modifier.widthIn(max = ProseMeasure),
@@ -151,7 +159,10 @@ private fun Prose(text: String, dim: Boolean = true) {
 
 /** `border-l-2 pl-5`: the accent-ruled pull quote, used three times on this page. */
 @Composable
-private fun PullQuote(text: String, accentText: Boolean) {
+private fun PullQuote(
+    text: String,
+    accentText: Boolean,
+) {
     val colors = cvColors
     Row(Modifier.widthIn(max = ProseMeasure).height(IntrinsicSize.Min)) {
         Box(Modifier.width(2.dp).fillMaxHeight().background(colors.accent))

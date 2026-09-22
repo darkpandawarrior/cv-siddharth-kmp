@@ -111,11 +111,13 @@ fun CanonScreen(
 }
 
 /** `max-w-5xl mx-auto px-6`. */
-private fun Modifier.pageMeasure(): Modifier =
-    this.widthIn(max = CvContentMaxWidth).fillMaxWidth().padding(horizontal = CvGutter)
+private fun Modifier.pageMeasure(): Modifier = this.widthIn(max = CvContentMaxWidth).fillMaxWidth().padding(horizontal = CvGutter)
 
 @Composable
-private fun CanonBody(onOpenAnthology: (AnthologyLayer) -> Unit, modifier: Modifier = Modifier) {
+private fun CanonBody(
+    onOpenAnthology: (AnthologyLayer) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val colors = cvColors
     val uri = LocalUriHandler.current
 
@@ -178,8 +180,7 @@ private fun CanonBody(onOpenAnthology: (AnthologyLayer) -> Unit, modifier: Modif
     }
 }
 
-private fun seasonTitle(n: Int): String =
-    anthology.seasons.firstOrNull { it.n == n }?.title ?: "Season $n"
+private fun seasonTitle(n: Int): String = anthology.seasons.firstOrNull { it.n == n }?.title ?: "Season $n"
 
 /**
  * The seam between sections. On the web this is Tveggi's scratch from Entry #2250, the object that
@@ -275,8 +276,7 @@ private fun TheCount(twoUp: Boolean) {
                                     topLeft = Offset(0f, size.height - h),
                                     size = Size(size.width, h),
                                 )
-                            }
-                            .padding(vertical = 14.dp),
+                            }.padding(vertical = 14.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         countLedger.forEach { row ->
@@ -315,8 +315,7 @@ private fun TheCount(twoUp: Boolean) {
                                     width = 1.dp,
                                     color = InkDanger,
                                     shape = RoundedCornerShape(4.dp),
-                                )
-                                .padding(horizontal = 8.dp, vertical = 2.dp),
+                                ).padding(horizontal = 8.dp, vertical = 2.dp),
                         ) {
                             BasicText(
                                 text = "no name · XIV",
@@ -341,7 +340,11 @@ private fun TheCount(twoUp: Boolean) {
  * ONE DIRECTION ONLY. The canon cites its subjects and the subjects do not cite the institution
  * back: no entry anywhere carries "this demonstrates law five". That asymmetry is the argument.
  */
-private fun LazyListScope.lawsSection(laws: List<CanonLaw>, twoUp: Boolean, uri: UriHandler) {
+private fun LazyListScope.lawsSection(
+    laws: List<CanonLaw>,
+    twoUp: Boolean,
+    uri: UriHandler,
+) {
     item("laws-head") {
         Reveal {
             Column(Modifier.pageMeasure()) {
@@ -382,7 +385,10 @@ private const val LawsAtFull = 7
 private val Roman = listOf("", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X")
 
 @Composable
-private fun LawCard(law: CanonLaw, uri: UriHandler) {
+private fun LawCard(
+    law: CanonLaw,
+    uri: UriHandler,
+) {
     val colors = cvColors
     CvCard(Modifier.fillMaxWidth(), glowOnHover = false) {
         Box(Modifier.fillMaxWidth()) {
@@ -426,7 +432,10 @@ private fun LawCard(law: CanonLaw, uri: UriHandler) {
  * node at all, so the numeral is decorative by construction and never reaches the a11y tree.
  */
 @Composable
-private fun GhostNumeral(n: Int, modifier: Modifier = Modifier) {
+private fun GhostNumeral(
+    n: Int,
+    modifier: Modifier = Modifier,
+) {
     val colors = cvColors
     val measurer = rememberTextMeasurer(cacheSize = 8)
     val label = Roman.getOrNull(n) ?: n.toString()
@@ -450,7 +459,10 @@ private val GhostNumeralBox: Dp = 72.dp
 
 /** An accent link in a body of prose. Underlined, because colour is never the only channel. */
 @Composable
-private fun RefLink(label: String, onClick: () -> Unit) {
+private fun RefLink(
+    label: String,
+    onClick: () -> Unit,
+) {
     val colors = cvColors
     BasicText(
         text = label,
@@ -560,7 +572,10 @@ private fun LazyListScope.renderingSection(
  * would read as a cut-out that is not there.
  */
 @Composable
-private fun RenderingCard(r: Rendering, uri: UriHandler) {
+private fun RenderingCard(
+    r: Rendering,
+    uri: UriHandler,
+) {
     val witness = anthology.witnesses.firstOrNull { it.id == r.witnessId }
     CvCard(Modifier.fillMaxWidth(), glowOnHover = false) {
         val art = witness?.art?.let { plateUrl(it) }
@@ -589,7 +604,10 @@ private fun RenderingCard(r: Rendering, uri: UriHandler) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Consequences(points: List<CanonPoint>, twoUp: Boolean) {
+private fun Consequences(
+    points: List<CanonPoint>,
+    twoUp: Boolean,
+) {
     val colors = cvColors
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
@@ -605,10 +623,11 @@ private fun Consequences(points: List<CanonPoint>, twoUp: Boolean) {
             ) {
                 BasicText(
                     text = c.term,
-                    style = cvType.body.copy(
-                        color = colors.onBackground,
-                        fontWeight = FontWeight.Bold,
-                    ),
+                    style =
+                        cvType.body.copy(
+                            color = colors.onBackground,
+                            fontWeight = FontWeight.Bold,
+                        ),
                 )
                 Spacer(Modifier.height(8.dp))
                 BasicText(text = c.gloss, style = cvType.bodySmall)
@@ -619,7 +638,10 @@ private fun Consequences(points: List<CanonPoint>, twoUp: Boolean) {
 
 /** `border-l-2 pl-5`: the display pull quote, in accent or in the body colour. */
 @Composable
-private fun PullQuote(text: String, accentText: Boolean) {
+private fun PullQuote(
+    text: String,
+    accentText: Boolean,
+) {
     val colors = cvColors
     Column(
         Modifier
@@ -892,7 +914,10 @@ private data class TableCell(
  * every column a stated width and putting a `horizontalScroll` around the lot.
  */
 @Composable
-private fun ScrollingTable(headers: List<Pair<String, Dp>>, rows: @Composable () -> Unit) {
+private fun ScrollingTable(
+    headers: List<Pair<String, Dp>>,
+    rows: @Composable () -> Unit,
+) {
     val colors = cvColors
     Column(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) {
         Row(
@@ -903,8 +928,7 @@ private fun ScrollingTable(headers: List<Pair<String, Dp>>, rows: @Composable ()
                         topLeft = Offset(0f, size.height - 1.dp.toPx()),
                         size = Size(size.width, 1.dp.toPx()),
                     )
-                }
-                .padding(bottom = 8.dp),
+                }.padding(bottom = 8.dp),
         ) {
             headers.forEach { (label, width) ->
                 BasicText(
@@ -929,8 +953,7 @@ private fun TableRow(cells: List<TableCell>) {
                     topLeft = Offset(0f, size.height - 1.dp.toPx()),
                     size = Size(size.width, 1.dp.toPx()),
                 )
-            }
-            .padding(vertical = 10.dp),
+            }.padding(vertical = 10.dp),
     ) {
         cells.forEach { c ->
             BasicText(

@@ -60,9 +60,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.siddharth.cv.shared.anthology.grouped
 import com.siddharth.cv.shared.data.generated.chess
 import com.siddharth.cv.shared.data.projects
+import com.siddharth.cv.shared.format.grouped
 import com.siddharth.cv.shared.theme.CvContentMaxWidth
 import com.siddharth.cv.shared.theme.CvDarkColors
 import com.siddharth.cv.shared.theme.CvGutter
@@ -140,7 +140,10 @@ private fun rememberElapsedSeconds(): State<Float> {
  * Compose-native equivalent of the `statsAcc > 400` throttles in `CrashLab.tsx` / `FanoutLab.tsx`.
  */
 @Composable
-private fun rememberCoarseSeconds(seconds: State<Float>, stepSeconds: Float): State<Float> =
+private fun rememberCoarseSeconds(
+    seconds: State<Float>,
+    stepSeconds: Float,
+): State<Float> =
     remember(seconds, stepSeconds) {
         derivedStateOf { (seconds.value / stepSeconds).toInt() * stepSeconds }
     }
@@ -189,8 +192,11 @@ private fun DrawScope.drawLabel(
 }
 
 /** True when [text] fits in [slotWidth] at [style] — the honest alternative to drawing a smear. */
-private fun TextMeasurer.fits(text: String, style: TextStyle, slotWidth: Float): Boolean =
-    measure(text, style).size.width <= slotWidth
+private fun TextMeasurer.fits(
+    text: String,
+    style: TextStyle,
+    slotWidth: Float,
+): Boolean = measure(text, style).size.width <= slotWidth
 
 // ---------------------------------------------------------------------------------------------
 // The screen
@@ -221,11 +227,12 @@ fun LabScreen(modifier: Modifier = Modifier) {
             SectionHeading("Don't take the numbers on faith")
             Spacer(Modifier.height(10.dp))
             BasicText(
-                text = "$labCount instruments across Dice.tech's production case studies and the " +
-                    "personal open-source builds — the actual idea behind each headline metric, " +
-                    "running live. Flip a switch and watch the number happen. The white-label " +
-                    "instrument has its own room on the homepage as the theme engine, where it " +
-                    "re-skins a real subtree instead of a mock of one.",
+                text =
+                    "$labCount instruments across Dice.tech's production case studies and the " +
+                        "personal open-source builds — the actual idea behind each headline metric, " +
+                        "running live. Flip a switch and watch the number happen. The white-label " +
+                        "instrument has its own room on the homepage as the theme engine, where it " +
+                        "re-skins a real subtree instead of a mock of one.",
                 modifier = Modifier.widthIn(max = 680.dp),
                 style = cvType.bodySmall,
             )
@@ -284,8 +291,15 @@ fun LabScreen(modifier: Modifier = Modifier) {
 /** Ids with a drawing below. Kept next to the `when` above so the two can't drift apart silently. */
 private val labInstrumentIds =
     setOf(
-        "recompose", "crashes", "modules", "search", "fanout",
-        "gateways", "replay", "chess-search", "chess-clock",
+        "recompose",
+        "crashes",
+        "modules",
+        "search",
+        "fanout",
+        "gateways",
+        "replay",
+        "chess-search",
+        "chess-clock",
     )
 
 /**
@@ -294,7 +308,11 @@ private val labInstrumentIds =
  * matters — the same call the theme-engine swatches make.
  */
 @Composable
-private fun LabTab(experiment: LabExperiment, selected: Boolean, onSelect: () -> Unit) {
+private fun LabTab(
+    experiment: LabExperiment,
+    selected: Boolean,
+    onSelect: () -> Unit,
+) {
     val colors = cvColors
     val interaction = remember { MutableInteractionSource() }
     val shape = RoundedCornerShape(999.dp)
@@ -310,8 +328,7 @@ private fun LabTab(experiment: LabExperiment, selected: Boolean, onSelect: () ->
                     indication = null,
                     role = Role.RadioButton,
                     onClick = onSelect,
-                )
-                .padding(horizontal = 14.dp, vertical = 7.dp),
+                ).padding(horizontal = 14.dp, vertical = 7.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         BasicText(
@@ -387,7 +404,11 @@ private fun LabInstrument(
  * families cover Latin text only and an unvendored glyph renders as tofu on the wasm canvas.
  */
 @Composable
-private fun LabToggle(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+private fun LabToggle(
+    label: String,
+    checked: Boolean,
+    onChange: (Boolean) -> Unit,
+) {
     val colors = cvColors
     val interaction = remember { MutableInteractionSource() }
     Row(
@@ -399,8 +420,7 @@ private fun LabToggle(label: String, checked: Boolean, onChange: (Boolean) -> Un
                     indication = null,
                     role = Role.Checkbox,
                     onValueChange = onChange,
-                )
-                .padding(vertical = 2.dp),
+                ).padding(vertical = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Canvas(Modifier.size(13.dp)) {
@@ -433,7 +453,10 @@ private val LabWasteRed: Color = cvColor("#ff5c5c")
 
 /** A control-strip readout. Mono, tinted, and never a source of layout surprise. */
 @Composable
-private fun LabReadout(text: String, tint: Color? = null) {
+private fun LabReadout(
+    text: String,
+    tint: Color? = null,
+) {
     BasicText(text = text, style = cvType.metaMono.copy(color = tint ?: cvColors.muted))
 }
 
@@ -448,7 +471,10 @@ private const val RecomposeAmbientSeconds: Float = 1.4f
  * Which scope the ambient tap `n` hits. A stride of 37 over 40 cells is coprime with 40, so the
  * demo visits every recomposition scope in the grid before repeating instead of favouring a corner.
  */
-internal fun recomposeAmbientCell(tapIndex: Int): Int = (tapIndex * 37 + 11).mod(RecomposeCells)
+private const val AmbientStride = 37
+private const val AmbientOffset = 11
+
+internal fun recomposeAmbientCell(tapIndex: Int): Int = (tapIndex * AmbientStride + AmbientOffset).mod(RecomposeCells)
 
 /**
  * Rebuild-the-world versus one recomposing scope.
@@ -459,7 +485,10 @@ internal fun recomposeAmbientCell(tapIndex: Int): Int = (tapIndex * 37 + 11).mod
  * allowed to make.
  */
 @Composable
-private fun RecomposeInstrument(experiment: LabExperiment, seconds: State<Float>) {
+private fun RecomposeInstrument(
+    experiment: LabExperiment,
+    seconds: State<Float>,
+) {
     val colors = cvColors
     var stable by remember { mutableStateOf(false) }
     var needed by remember { mutableStateOf(0) }
@@ -508,7 +537,9 @@ private fun RecomposeInstrument(experiment: LabExperiment, seconds: State<Float>
                 val cellW = gridW / RecomposeGridW
                 val cellH = gridH / RecomposeGridH
                 val inset = 3.dp.toPx()
-                val corner = androidx.compose.ui.geometry.CornerRadius(6.dp.toPx())
+                val corner =
+                    androidx.compose.ui.geometry
+                        .CornerRadius(6.dp.toPx())
 
                 val t = seconds.value
                 val ambientN = (t / RecomposeAmbientSeconds).toInt()
@@ -559,8 +590,13 @@ private fun RecomposeInstrument(experiment: LabExperiment, seconds: State<Float>
 // Crash triage
 // ---------------------------------------------------------------------------------------------
 
-private fun crashBinCenterX(index: Int, width: Float): Float =
-    width * ((index + 0.5f) / crashCauses.size)
+/** A bar is drawn from the centre of its bin, not from its leading edge. */
+private const val BinCentre = 0.5f
+
+private fun crashBinCenterX(
+    index: Int,
+    width: Float,
+): Float = width * ((index + BinCentre) / crashCauses.size)
 
 /**
  * The crash feed, clustered or not.
@@ -574,7 +610,10 @@ private fun crashBinCenterX(index: Int, width: Float): Float =
  * which is the comparison the toggle exists to make.
  */
 @Composable
-private fun CrashInstrument(experiment: LabExperiment, seconds: State<Float>) {
+private fun CrashInstrument(
+    experiment: LabExperiment,
+    seconds: State<Float>,
+) {
     val colors = cvColors
     val reduced = LocalReducedMotion.current
     val feed = remember { CrashFeed() }
@@ -779,8 +818,22 @@ private fun ModuleGraphInstrument(experiment: LabExperiment) {
                         y = p.y + s * labelGap,
                         // Labels flow outward: away from the centre horizontally, and clear of the
                         // node vertically so a spoke never runs through the glyphs.
-                        anchorX = if (c > 0.3f) 0f else if (c < -0.3f) 1f else 0.5f,
-                        anchorY = if (s < -0.35f) 1f else if (s > 0.35f) 0f else 0.5f,
+                        anchorX =
+                            if (c > 0.3f) {
+                                0f
+                            } else if (c < -0.3f) {
+                                1f
+                            } else {
+                                0.5f
+                            },
+                        anchorY =
+                            if (s < -0.35f) {
+                                1f
+                            } else if (s > 0.35f) {
+                                0f
+                            } else {
+                                0.5f
+                            },
                     )
                 }
 
@@ -819,7 +872,10 @@ private fun ModuleGraphInstrument(experiment: LabExperiment) {
  * one — which is also why the result is reproducible enough to assert in `labsSelfCheck`.
  */
 @Composable
-private fun SearchTreeInstrument(experiment: LabExperiment, seconds: State<Float>) {
+private fun SearchTreeInstrument(
+    experiment: LabExperiment,
+    seconds: State<Float>,
+) {
     val reduced = LocalReducedMotion.current
     val gold = labAccent("kursi") // claim-audit:allow -- labAccent takes the stable slug
     val measurer = rememberTextMeasurer(cacheSize = 8)
@@ -941,8 +997,9 @@ private fun SearchTreeInstrument(experiment: LabExperiment, seconds: State<Float
             }
             TagChip(text = "run search", tint = gold, onClick = { rerun(tierIndex) })
             LabReadout(
-                text = "iterations: ${meta.iterationsAt(readoutSeconds)} / ${meta.iterations} · " +
-                    "difficulty: ${meta.tierLabel}",
+                text =
+                    "iterations: ${meta.iterationsAt(readoutSeconds)} / ${meta.iterations} · " +
+                        "difficulty: ${meta.tierLabel}",
             )
             LabReadout("persona: ${meta.role}", gold)
         },
@@ -962,7 +1019,10 @@ private fun SearchTreeInstrument(experiment: LabExperiment, seconds: State<Float
  * well — the still frame gets a genuinely different scan rather than nothing at all.
  */
 @Composable
-private fun FanoutInstrument(experiment: LabExperiment, seconds: State<Float>) {
+private fun FanoutInstrument(
+    experiment: LabExperiment,
+    seconds: State<Float>,
+) {
     val colors = cvColors
     val reduced = LocalReducedMotion.current
     val blue = labAccent("hiresignal") // claim-audit:allow -- labAccent takes the stable slug
@@ -1126,7 +1186,6 @@ private fun FanoutInstrument(experiment: LabExperiment, seconds: State<Float>) {
     )
 }
 
-
 // ---------------------------------------------------------------------------------------------
 // Payment gateways
 // ---------------------------------------------------------------------------------------------
@@ -1146,7 +1205,10 @@ private fun FanoutInstrument(experiment: LabExperiment, seconds: State<Float>) {
  * four plausible numbers.
  */
 @Composable
-private fun GatewayInstrument(experiment: LabExperiment, seconds: State<Float>) {
+private fun GatewayInstrument(
+    experiment: LabExperiment,
+    seconds: State<Float>,
+) {
     val colors = cvColors
     val reduced = LocalReducedMotion.current
     val violet = labAccent("paymentslab") // claim-audit:allow -- labAccent takes the stable slug
@@ -1178,8 +1240,7 @@ private fun GatewayInstrument(experiment: LabExperiment, seconds: State<Float>) 
                 drawLabel(measurer, "checkout", labelStyle, cx, 8f, anchorX = 0.5f)
 
                 // Where gateway `g` sits on the shelf. One tick per cataloged gateway.
-                fun shelfX(gateway: Int): Float =
-                    26f + (gateway + 0.5f) / gatewayCount * (size.width - 52f)
+                fun shelfX(gateway: Int): Float = 26f + (gateway + 0.5f) / gatewayCount * (size.width - 52f)
 
                 if (!routed) {
                     for (i in blocked until spawned) {
@@ -1318,7 +1379,10 @@ private fun GatewayInstrument(experiment: LabExperiment, seconds: State<Float>) 
  * because history here is a pure function of a 160-frame tape.
  */
 @Composable
-private fun ReplayInstrument(experiment: LabExperiment, seconds: State<Float>) {
+private fun ReplayInstrument(
+    experiment: LabExperiment,
+    seconds: State<Float>,
+) {
     val colors = cvColors
     val red = labAccent("deadlock") // claim-audit:allow -- labAccent takes the stable slug
     val log = remember { ReplayLog() }
@@ -1349,11 +1413,17 @@ private fun ReplayInstrument(experiment: LabExperiment, seconds: State<Float>) {
                 val clean = log.replay(log.frames, size.width, size.height)
                 val head = log.playheadAt(seconds.value)
 
-                fun pathOf(points: Pair<FloatArray, FloatArray>, from: Int): Path =
+                fun pathOf(
+                    points: Pair<FloatArray, FloatArray>,
+                    from: Int,
+                ): Path =
                     Path().apply {
                         for (i in from until ReplayLog.PathLength) {
-                            if (i == from) moveTo(points.first[i], points.second[i])
-                            else lineTo(points.first[i], points.second[i])
+                            if (i == from) {
+                                moveTo(points.first[i], points.second[i])
+                            } else {
+                                lineTo(points.first[i], points.second[i])
+                            }
                         }
                     }
 
@@ -1418,10 +1488,14 @@ private fun ReplayInstrument(experiment: LabExperiment, seconds: State<Float>) {
  * "0.000000" is a statement rather than a rounding. `toString()` on a Float would print `0.0` and
  * `0.1483...`, neither of which reads as a measurement.
  */
+private const val ZeroDriftPlaces = 6
+private const val DriftPlaces = 3
+private const val DecimalBase = 10f
+
 private fun driftText(drift: Float): String {
-    val places = if (drift == 0f) 6 else 3
+    val places = if (drift == 0f) ZeroDriftPlaces else DriftPlaces
     var scale = 1f
-    repeat(places) { scale *= 10f }
+    repeat(places) { scale *= DecimalBase }
     val scaled = (drift * scale).toLong()
     val whole = scaled / scale.toLong()
     val fraction = (scaled % scale.toLong()).toString().padStart(places, '0')
@@ -1442,7 +1516,10 @@ private fun driftText(drift: Float): String {
  * fixed-depth and costs a few hundred microseconds to twelve thousand nodes, so it runs inline.
  */
 @Composable
-private fun ChessSearchInstrument(experiment: LabExperiment, seconds: State<Float>) {
+private fun ChessSearchInstrument(
+    experiment: LabExperiment,
+    seconds: State<Float>,
+) {
     val colors = cvColors
     val reduced = LocalReducedMotion.current
     val measurer = rememberTextMeasurer(cacheSize = 8)
@@ -1457,7 +1534,10 @@ private fun ChessSearchInstrument(experiment: LabExperiment, seconds: State<Floa
             chessSearch(entry.fen, preset.depth, preset.noise, CHESS_SEARCH_SEED + positionIndex)
         }
 
-    fun rerun(nextPreset: Int, nextPosition: Int) {
+    fun rerun(
+        nextPreset: Int,
+        nextPosition: Int,
+    ) {
         presetIndex = nextPreset
         positionIndex = nextPosition
         // Under reduced motion the epoch stays put, so the frozen instant still lands on a finished
@@ -1494,7 +1574,14 @@ private fun ChessSearchInstrument(experiment: LabExperiment, seconds: State<Floa
                         color = color,
                         start = Offset(tree.x[edge.from], tree.y[edge.from]),
                         end = Offset(tree.x[edge.to], tree.y[edge.to]),
-                        strokeWidth = if (chosen && edge.depth == 0) 2.2f else if (chosen) 1f else 0.6f,
+                        strokeWidth =
+                            if (chosen && edge.depth == 0) {
+                                2.2f
+                            } else if (chosen) {
+                                1f
+                            } else {
+                                0.6f
+                            },
                     )
                 }
 
@@ -1581,6 +1668,7 @@ private fun ClockBurnInstrument(experiment: LabExperiment) {
                 if (plotW <= 0f || plotH <= 0f) return@Canvas
 
                 fun xAt(b: Int): Float = padLeft + ((b + 0.5f) / clockDeciles.size) * plotW
+
                 fun yAt(fraction: Double): Float = padTop + (1f - fraction.toFloat()) * plotH
 
                 listOf(0f, 0.25f, 0.5f, 0.75f, 1f).forEach { g ->
@@ -1696,6 +1784,10 @@ private fun ClockBurnInstrument(experiment: LabExperiment) {
  * than paint: the ambient-tap sequence, the data-driven accents, and the two "the frozen frame
  * lands somewhere worth looking at" claims that the drawing code relies on.
  */
+// MagicNumber: assertion fixtures. detekt excludes every test source set from this rule by
+// default; these are tests that live in main source only because composeMain is `internal`
+// and this project has no commonTest. SelfCheckTest.kt now runs them from `check`.
+@Suppress("MagicNumber")
 internal fun labScreenSelfCheck() {
     // Every experiment on the bench must have a drawing wired in LabScreen's `when`.
     cvLabs.forEach { check(it.id in labInstrumentIds) { "${it.id}: no instrument wired" } }
@@ -1712,9 +1804,9 @@ internal fun labScreenSelfCheck() {
     check(stillAge < RecomposeFlashSeconds) { "the still frame misses the flash by ${stillAge}s" }
 
     // Accents come from project data. A typo in a slug must be loud, not a quietly wrong hue.
-    check(labAccent("kursi") == cvColor("#E8C874")) { "Gaddi's gold moved or the slug is wrong" } // claim-audit:allow -- labAccent takes the stable slug
-    check(labAccent("hiresignal") == cvColor("#3B82F6")) { "Candidai's blue moved or the slug is wrong" } // claim-audit:allow -- labAccent takes the stable slug
-    check(labAccent("mileway") == cvColor("#5ee6ff")) { "Doori's cyan moved or the slug is wrong" } // claim-audit:allow -- labAccent takes the stable slug
+    check(labAccent("kursi") == cvColor("#E8C874")) { "Gaddi's gold moved or the slug is wrong" } // claim-audit:allow -- route slug
+    check(labAccent("hiresignal") == cvColor("#3B82F6")) { "Candidai's blue moved or the slug is wrong" } // claim-audit:allow -- route slug
+    check(labAccent("mileway") == cvColor("#5ee6ff")) { "Doori's cyan moved or the slug is wrong" }
     check(labAccent("no-such-project") == CvDarkColors.accent2) { "unknown slugs must fall back" }
 
     // The fan-out's still frame is claimed to be mid-flight through its third scan.

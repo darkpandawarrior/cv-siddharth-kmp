@@ -76,41 +76,42 @@ internal val resumePrintJobName: String
  *
  * Pure: same output for the same build, no ordering surprises, safe to call from anywhere.
  */
-fun buildResumeHtml(): String = buildString {
-    append("<!doctype html>\n<html lang=\"en\">\n<head>\n")
-    append("<meta charset=\"utf-8\">\n")
-    append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n")
-    // Names the file in the browser's Save-as-PDF dialog — Chrome and Safari both seed the
-    // filename from <title>, which is the only handle we get on it.
-    append("<title>").append(profile.name.esc()).append(" — ").append(profile.resumeTitle.esc())
-    append("</title>\n<style>\n").append(PrintCss).append("</style>\n</head>\n<body>\n")
-    append("<article class=\"resume\">\n")
+fun buildResumeHtml(): String =
+    buildString {
+        append("<!doctype html>\n<html lang=\"en\">\n<head>\n")
+        append("<meta charset=\"utf-8\">\n")
+        append("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n")
+        // Names the file in the browser's Save-as-PDF dialog — Chrome and Safari both seed the
+        // filename from <title>, which is the only handle we get on it.
+        append("<title>").append(profile.name.esc()).append(" — ").append(profile.resumeTitle.esc())
+        append("</title>\n<style>\n").append(PrintCss).append("</style>\n</head>\n<body>\n")
+        append("<article class=\"resume\">\n")
 
-    header()
-    section("Professional Summary", avoid = false) {
-        append("<p class=\"lede\">").append(profile.summary.esc()).append("</p>\n")
-    }
-    section("Core Competencies", avoid = true) {
-        append("<div class=\"chips\">")
-        competencies.forEach { append("<span class=\"chip\">").append(it.esc()).append("</span>") }
-        append("</div>\n")
-    }
-    section("Key Results", avoid = true) {
-        // Same join as ResumeView.tsx: value + label, no detail — the detail strings are
-        // hover copy on the site and would bloat the page here.
-        append("<p class=\"lede\">")
-        append(metrics.joinToString(" · ") { "${it.value} ${it.label}" }.esc())
-        append("</p>\n")
-    }
-    section("Experience", avoid = false) { experienceEntries() }
-    section("Projects &amp; Open Source", avoid = false) { projectEntries() }
-    section("Education", avoid = true) {
-        entryHead("${education.degree} · ${education.school}", education.period)
-    }
-    section("Technical Skills", avoid = true) { skillLines() }
+        header()
+        section("Professional Summary", avoid = false) {
+            append("<p class=\"lede\">").append(profile.summary.esc()).append("</p>\n")
+        }
+        section("Core Competencies", avoid = true) {
+            append("<div class=\"chips\">")
+            competencies.forEach { append("<span class=\"chip\">").append(it.esc()).append("</span>") }
+            append("</div>\n")
+        }
+        section("Key Results", avoid = true) {
+            // Same join as ResumeView.tsx: value + label, no detail — the detail strings are
+            // hover copy on the site and would bloat the page here.
+            append("<p class=\"lede\">")
+            append(metrics.joinToString(" · ") { "${it.value} ${it.label}" }.esc())
+            append("</p>\n")
+        }
+        section("Experience", avoid = false) { experienceEntries() }
+        section("Projects &amp; Open Source", avoid = false) { projectEntries() }
+        section("Education", avoid = true) {
+            entryHead("${education.degree} · ${education.school}", education.period)
+        }
+        section("Technical Skills", avoid = true) { skillLines() }
 
-    append("</article>\n</body>\n</html>")
-}
+        append("</article>\n</body>\n</html>")
+    }
 
 private fun StringBuilder.header() {
     append("<header class=\"rh\">\n")
@@ -118,14 +119,15 @@ private fun StringBuilder.header() {
     append("<p class=\"role\">").append(profile.resumeTitle.esc()).append("</p>\n")
     // `https://` stripped exactly as ResumeView.tsx does: the scheme costs a third of the line
     // and tells a reader nothing.
-    append("<p class=\"meta\">").append(
-        listOf(
-            profile.phone,
-            profile.email,
-            profile.linkedin.removePrefix("https://"),
-            profile.github.removePrefix("https://"),
-        ).joinToString(" · ").esc(),
-    ).append("</p>\n")
+    append("<p class=\"meta\">")
+        .append(
+            listOf(
+                profile.phone,
+                profile.email,
+                profile.linkedin.removePrefix("https://"),
+                profile.github.removePrefix("https://"),
+            ).joinToString(" · ").esc(),
+        ).append("</p>\n")
     append("<p class=\"meta\">")
     append("${profile.location} · ${profile.availability}".esc())
     append("</p>\n</header>\n")
@@ -148,12 +150,15 @@ private fun StringBuilder.experienceEntries() {
 /** Strips the conventional-commit prefix, e.g. `feat(providers): ` — same regex as ResumeView.tsx. */
 private val CommitPrefix = Regex("^(feat|fix)\\([^)]*\\): ")
 
+/** The stack line on a printed entry: three names read as a summary, six read as a list. */
+private const val StackChipsPrinted = 3
+
 private fun StringBuilder.projectEntries() {
     // break-inside:avoid lives on each entry, never on this section: the project list is taller
     // than a page, so avoiding a break on the whole thing would just push a page of white space.
     projects.forEach { p ->
         append("<div class=\"entry avoid\">\n")
-        entryHead(p.name, p.stack.take(3).joinToString(" · "))
+        entryHead(p.name, p.stack.take(StackChipsPrinted).joinToString(" · "))
         append("<p class=\"tight\">")
         append("${p.tagline} ${p.highlights.firstOrNull().orEmpty()}".trim().esc())
         append("</p>\n</div>\n")
@@ -165,7 +170,7 @@ private fun StringBuilder.projectEntries() {
         (
             "${openSource.size} merged PRs to career-ops (public OSS, 60k+ stars) — " +
                 openSource.joinToString("; ") { it.title.replace(CommitPrefix, "") } + "."
-            ).esc(),
+        ).esc(),
     )
     append("</p>\n")
 }
@@ -177,13 +182,19 @@ private fun StringBuilder.skillLines() {
     append("</div>\n")
 }
 
-private fun StringBuilder.skillLine(group: String, items: List<String>) {
+private fun StringBuilder.skillLine(
+    group: String,
+    items: List<String>,
+) {
     append("<p class=\"tight\"><strong>").append(group.esc()).append(":</strong> ")
     append(items.joinToString(", ").esc()).append("</p>\n")
 }
 
 /** `flex items-baseline justify-between` — title left, period right, period never wraps. */
-private fun StringBuilder.entryHead(left: String, right: String) {
+private fun StringBuilder.entryHead(
+    left: String,
+    right: String,
+) {
     append("<div class=\"head\"><h3>").append(left.esc()).append("</h3>")
     append("<span class=\"period\">").append(right.esc()).append("</span></div>\n")
 }
@@ -192,7 +203,11 @@ private fun StringBuilder.entryHead(left: String, right: String) {
  * `avoid` opts a section into `break-inside: avoid`. It is off for Experience and Projects on
  * purpose — see the note in [projectEntries].
  */
-private inline fun StringBuilder.section(title: String, avoid: Boolean, body: StringBuilder.() -> Unit) {
+private inline fun StringBuilder.section(
+    title: String,
+    avoid: Boolean,
+    body: StringBuilder.() -> Unit,
+) {
     append("<section").append(if (avoid) " class=\"avoid\"" else "").append(">\n")
     append("<h2>").append(title).append("</h2>\n")
     body()
@@ -220,7 +235,8 @@ private fun String.esc(): String = replace("&", "&amp;").replace("<", "&lt;").re
  * data URI would cost ~80 KB in the wasm binary and buy a nicer `h1`; upgrade path is
  * Res.font + a data-URI @font-face if the typography ever matters more than the payload.
  */
-private val PrintCss = """
+private val PrintCss =
+    """
 :root { color-scheme: light; }
 * { box-sizing: border-box; }
 body {
@@ -283,7 +299,7 @@ strong { color: #18181b; font-weight: 600; }
   .avoid { break-inside: avoid; page-break-inside: avoid; }
   h2, h3 { break-after: avoid; page-break-after: avoid; }
 }
-""".trimIndent()
+    """.trimIndent()
 
 // -------------------------------------------------------------------------------------------
 // Self-check
@@ -306,8 +322,13 @@ internal fun resumeHtmlSelfCheck() {
 
     // Every section the React résumé has, by heading.
     listOf(
-        "Professional Summary", "Core Competencies", "Key Results",
-        "Experience", "Projects &amp; Open Source", "Education", "Technical Skills",
+        "Professional Summary",
+        "Core Competencies",
+        "Key Results",
+        "Experience",
+        "Projects &amp; Open Source",
+        "Education",
+        "Technical Skills",
     ).forEach { check("<h2>$it</h2>" in html) { "missing section: $it" } }
 
     // Content actually rendered, not just chrome.

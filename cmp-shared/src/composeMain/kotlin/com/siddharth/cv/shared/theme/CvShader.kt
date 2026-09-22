@@ -13,4 +13,9 @@ import androidx.compose.ui.graphics.Brush
  *   `uniform float uTime;`, in that order.
  * @param timeSeconds animation clock, driven by the caller so reduced-motion can freeze it.
  */
-expect fun runtimeShaderBrush(sksl: String, widthPx: Float, heightPx: Float, timeSeconds: Float): Brush?
+expect fun runtimeShaderBrush(
+    sksl: String,
+    widthPx: Float,
+    heightPx: Float,
+    timeSeconds: Float,
+): Brush?

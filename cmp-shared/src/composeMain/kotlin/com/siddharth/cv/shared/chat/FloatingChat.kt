@@ -33,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
@@ -51,9 +52,9 @@ import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -63,10 +64,10 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.siddharth.cv.shared.LocalNav
 import com.siddharth.cv.shared.Route
-import com.siddharth.cv.shared.staticRoutes
 import com.siddharth.cv.shared.data.generated.printedPieces
 import com.siddharth.cv.shared.data.projectBySlug
 import com.siddharth.cv.shared.data.projectOrder
+import com.siddharth.cv.shared.staticRoutes
 import com.siddharth.cv.shared.theme.CvCard
 import com.siddharth.cv.shared.theme.CvMotion
 import com.siddharth.cv.shared.theme.GhostButton
@@ -80,7 +81,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
-import androidx.compose.runtime.rememberCoroutineScope
 
 /**
  * The console — Siddharth's AI assistant as a floating panel, ported from
@@ -164,45 +164,44 @@ private fun ChatLauncher(onOpen: () -> Unit) {
     )
 
     Box(
-        modifier = Modifier
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
-            .size(56.dp)
-            .background(colors.accent, CircleShape)
-            .clickable(
-                interactionSource = interaction,
-                indication = null,
-                onClick = onOpen,
-            )
-            .semantics { contentDescription = "Open chat with Panda, Siddharth's AI assistant" }
-            .drawBehind {
-                val ink = colors.ink
-                val w = size.width
-                val h = size.height
-                // Bubble body: a rounded rect inset from the circle, plus a tail notch.
-                drawRoundRect(
-                    color = ink,
-                    topLeft = Offset(w * 0.24f, h * 0.28f),
-                    size = Size(w * 0.52f, h * 0.34f),
-                    cornerRadius = CornerRadius(w * 0.10f),
-                    style = Stroke(width = w * 0.045f),
-                )
-                drawLine(
-                    color = ink,
-                    start = Offset(w * 0.36f, h * 0.62f),
-                    end = Offset(w * 0.32f, h * 0.74f),
-                    strokeWidth = w * 0.045f,
-                )
-                repeat(3) { i ->
-                    drawCircle(
+        modifier =
+            Modifier
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }.size(56.dp)
+                .background(colors.accent, CircleShape)
+                .clickable(
+                    interactionSource = interaction,
+                    indication = null,
+                    onClick = onOpen,
+                ).semantics { contentDescription = "Open chat with Panda, Siddharth's AI assistant" }
+                .drawBehind {
+                    val ink = colors.ink
+                    val w = size.width
+                    val h = size.height
+                    // Bubble body: a rounded rect inset from the circle, plus a tail notch.
+                    drawRoundRect(
                         color = ink,
-                        radius = w * 0.030f,
-                        center = Offset(w * (0.36f + i * 0.14f), h * 0.45f),
+                        topLeft = Offset(w * 0.24f, h * 0.28f),
+                        size = Size(w * 0.52f, h * 0.34f),
+                        cornerRadius = CornerRadius(w * 0.10f),
+                        style = Stroke(width = w * 0.045f),
                     )
-                }
-            },
+                    drawLine(
+                        color = ink,
+                        start = Offset(w * 0.36f, h * 0.62f),
+                        end = Offset(w * 0.32f, h * 0.74f),
+                        strokeWidth = w * 0.045f,
+                    )
+                    repeat(3) { i ->
+                        drawCircle(
+                            color = ink,
+                            radius = w * 0.030f,
+                            center = Offset(w * (0.36f + i * 0.14f), h * 0.45f),
+                        )
+                    }
+                },
     )
 }
 
@@ -248,39 +247,43 @@ private fun ChatPanel(onClose: () -> Unit) {
         messages.add(ChatMessage(ChatRole.User, trimmed.take(CHAT_MAX_USER_CHARS)))
         val placeholder = messages.size
         messages.add(ChatMessage(ChatRole.Assistant, "", streaming = true))
-        inFlight = scope.launch {
-            try {
-                streamReply(messages.toList(), route.toPath()).catch { e ->
-                    error = (e as? ChatUnavailable)?.message ?: CHAT_CONTACT_FALLBACK
-                }.collect { delta ->
-                    messages.appendDelta(placeholder, delta)
+        inFlight =
+            scope.launch {
+                try {
+                    streamReply(messages.toList(), route.toPath())
+                        .catch { e ->
+                            error = (e as? ChatUnavailable)?.message ?: CHAT_CONTACT_FALLBACK
+                        }.collect { delta ->
+                            messages.appendDelta(placeholder, delta)
+                        }
+                } finally {
+                    messages.settle(placeholder)
+                    inFlight = null
                 }
-            } finally {
-                messages.settle(placeholder)
-                inFlight = null
             }
-        }
     }
 
     Column(
-        modifier = Modifier
-            .widthIn(max = 400.dp)
-            .fillMaxWidth()
-            .heightIn(max = 560.dp)
-            .background(colors.card, PanelShape)
-            .border(1.dp, colors.line, PanelShape),
+        modifier =
+            Modifier
+                .widthIn(max = 400.dp)
+                .fillMaxWidth()
+                .heightIn(max = 560.dp)
+                .background(colors.card, PanelShape)
+                .border(1.dp, colors.line, PanelShape),
     ) {
         PanelHeader(onClose = onClose)
 
         LazyColumn(
             state = listState,
-            modifier = Modifier
-                .weight(1f, fill = false)
-                .fillMaxWidth()
-                .semantics {
-                    contentDescription = "Conversation transcript"
-                    liveRegion = LiveRegionMode.Polite
-                },
+            modifier =
+                Modifier
+                    .weight(1f, fill = false)
+                    .fillMaxWidth()
+                    .semantics {
+                        contentDescription = "Conversation transcript"
+                        liveRegion = LiveRegionMode.Polite
+                    },
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
@@ -324,10 +327,11 @@ private fun ChatPanel(onClose: () -> Unit) {
 private fun PanelHeader(onClose: () -> Unit) {
     val colors = cvColors
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(colors.surface, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(colors.surface, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
@@ -375,7 +379,10 @@ private fun UserBubble(text: String) {
  * EMPTY_STREAM_FALLBACK is all that arrived).
  */
 @Composable
-private fun AssistantBubble(text: String, streaming: Boolean) {
+private fun AssistantBubble(
+    text: String,
+    streaming: Boolean,
+) {
     val colors = cvColors
     val shape = RoundedCornerShape(16.dp, 16.dp, 16.dp, 4.dp)
     Row(Modifier.fillMaxWidth().padding(end = 32.dp)) {
@@ -433,7 +440,11 @@ private fun ErrorLine(text: String) {
 // ---------------------------------------------------------------------------------------------
 
 @Composable
-private fun QuickPrompts(prompts: List<String>, heading: String?, onPick: (String) -> Unit) {
+private fun QuickPrompts(
+    prompts: List<String>,
+    heading: String?,
+    onPick: (String) -> Unit,
+) {
     if (prompts.isEmpty()) return
     val colors = cvColors
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -475,10 +486,11 @@ private fun Composer(
     val colors = cvColors
     val shape = RoundedCornerShape(999.dp)
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(colors.surface, RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp))
-            .padding(12.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(colors.surface, RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp))
+                .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -498,21 +510,21 @@ private fun Composer(
                 singleLine = true,
                 textStyle = cvType.bodySmall.copy(color = colors.onBackground),
                 cursorBrush = SolidColor(colors.accent),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    // Enter submits, Shift+Enter doesn't — the field is single-line so Shift+Enter
-                    // is inert rather than a newline, but swallowing it here would make the two
-                    // keys behave identically and hide that.
-                    .onPreviewKeyEvent { e ->
-                        val enter = e.key == Key.Enter || e.key == Key.NumPadEnter
-                        if (e.type == KeyEventType.KeyDown && enter && !e.isShiftPressed) {
-                            onSubmit()
-                            true
-                        } else {
-                            false
-                        }
-                    }
-                    .semantics { contentDescription = "Ask Panda a question" },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        // Enter submits, Shift+Enter doesn't — the field is single-line so Shift+Enter
+                        // is inert rather than a newline, but swallowing it here would make the two
+                        // keys behave identically and hide that.
+                        .onPreviewKeyEvent { e ->
+                            val enter = e.key == Key.Enter || e.key == Key.NumPadEnter
+                            if (e.type == KeyEventType.KeyDown && enter && !e.isShiftPressed) {
+                                onSubmit()
+                                true
+                            } else {
+                                false
+                            }
+                        }.semantics { contentDescription = "Ask Panda a question" },
             )
         }
         if (busy) {
@@ -533,63 +545,79 @@ private fun Composer(
  * conversation. Mirrors `greetingFor` in `cv-siddharth/src/lib/chatContext.ts`.
  */
 @Suppress("CyclomaticComplexMethod") // A route table. See the note on Route.toPath() in Nav.kt.
-private fun greetingFor(route: Route): String = when (route) {
-    is Route.ProjectDetail -> {
-        val label = projectBySlug(route.slug)?.name?.substringBefore(" + ")?.trim()
-        if (label != null) {
-            "You're looking at **$label** — ask me anything about it, or ask me to show you " +
-                "somewhere else on the site."
-        } else {
-            HOME_GREETING
+private fun greetingFor(route: Route): String =
+    when (route) {
+        is Route.ProjectDetail -> {
+            val label = projectBySlug(route.slug)?.name?.substringBefore(" + ")?.trim()
+            if (label != null) {
+                "You're looking at **$label** — ask me anything about it, or ask me to show you " +
+                    "somewhere else on the site."
+            } else {
+                HOME_GREETING
+            }
         }
-    }
-    Route.Resume -> "You're on **the résumé** — ask me to walk you through any of it, or where the numbers come from."
-    Route.Terminal -> "You're in **the terminal** — `help` lists what it does. Or just ask me here."
-    Route.Lab -> "You're at **the lab bench** — each experiment is a real production problem, " +
-        "simulated. Ask me what any of them is actually demonstrating."
-    Route.Playground -> "You're in **the playground** — type Compose on the left, watch it render " +
-        "with real composables on the right. Ask me what the subset covers, or why there is no " +
-        "compile step."
-    Route.Forge -> "You're in **the forge** — a few thousand particles spring-tied to the wordmark. " +
-        "Ask me anything about the rest of the site while you play with it."
-    Route.Hire -> "You're on **the short version** — the claim, the number behind it, and the link " +
-        "that proves it. Ask me to expand any row, or paste a job description at me."
-    Route.Shipped -> "You're looking at **the fleet** — every Play Store listing his commits " +
-        "reached, live and pulled. Ask me what his hand actually did on any of them."
-    Route.Ops -> "You're at **the ops board** — what reports, what has gone stale, what is broken. " +
-        "Ask me what any row is measuring, or what happens when one goes red."
-    Route.Weeb -> "You're in **Weeb Central** — a hand-kept list read as evidence. Ask me what the " +
-        "findings are, or go back to the engineering."
-    Route.Loopdown -> "You're in **Loopdown** — the field notes. Ask me about any lesson, or about " +
-        "the bug it came out of."
-    Route.Ink -> "You're in **the Ink** — the writing that predates the code. Ask me about it, or " +
-        "ask me to take you back to the Android work."
-    is Route.Anthology -> "You're in **the anthology** — ask me anything about it, or ask me to " +
-        "show you somewhere else on the site."
-    Route.Canon -> "You're reading **the canon** — the laws and the count behind the anthology. " +
-        "Mind the spoiler gates; ask me about the open half freely."
-    Route.Making -> "You're on **the making-of** — the audit, the pipeline and the spend. Ask me " +
-        "how any of it was verified."
-    Route.Chess -> "You're at **the board** — seven years of games mined for what actually " +
-        "decides them. Ask me what the clock finding is, or take me back to the engineering."
-    Route.Map -> "You're on **the story map** — every room on this site and the links between " +
-        "them. Click a dot to travel, or ask me where to start."
-    is Route.Excelsior -> "You're in **Excelsior** — the institute magazine, scanned. Ask me " +
-        "about the pieces he wrote, or read any of them as prose instead of paper."
-    // Named, not generic, and the fallback is the piece's own 404 rather than the home greeting:
-    // a slug this build does not carry is still a real piece on the live site, and the screen
-    // under this bubble already says so.
-    is Route.Read -> {
-        val title = printedPieces.firstOrNull { it.slug == route.slug }?.title
-        if (title != null) {
-            "You're reading **$title** — ask me about it, about where it ran, or about anything " +
-                "else on this site."
-        } else {
-            HOME_GREETING
+        Route.Resume -> "You're on **the résumé** — ask me to walk you through any of it, or where the numbers come from."
+        Route.Terminal -> "You're in **the terminal** — `help` lists what it does. Or just ask me here."
+        Route.Lab ->
+            "You're at **the lab bench** — each experiment is a real production problem, " +
+                "simulated. Ask me what any of them is actually demonstrating."
+        Route.Playground ->
+            "You're in **the playground** — type Compose on the left, watch it render " +
+                "with real composables on the right. Ask me what the subset covers, or why there is no " +
+                "compile step."
+        Route.Forge ->
+            "You're in **the forge** — a few thousand particles spring-tied to the wordmark. " +
+                "Ask me anything about the rest of the site while you play with it."
+        Route.Hire ->
+            "You're on **the short version** — the claim, the number behind it, and the link " +
+                "that proves it. Ask me to expand any row, or paste a job description at me."
+        Route.Shipped ->
+            "You're looking at **the fleet** — every Play Store listing his commits " +
+                "reached, live and pulled. Ask me what his hand actually did on any of them."
+        Route.Ops ->
+            "You're at **the ops board** — what reports, what has gone stale, what is broken. " +
+                "Ask me what any row is measuring, or what happens when one goes red."
+        Route.Weeb ->
+            "You're in **Weeb Central** — a hand-kept list read as evidence. Ask me what the " +
+                "findings are, or go back to the engineering."
+        Route.Loopdown ->
+            "You're in **Loopdown** — the field notes. Ask me about any lesson, or about " +
+                "the bug it came out of."
+        Route.Ink ->
+            "You're in **the Ink** — the writing that predates the code. Ask me about it, or " +
+                "ask me to take you back to the Android work."
+        is Route.Anthology ->
+            "You're in **the anthology** — ask me anything about it, or ask me to " +
+                "show you somewhere else on the site."
+        Route.Canon ->
+            "You're reading **the canon** — the laws and the count behind the anthology. " +
+                "Mind the spoiler gates; ask me about the open half freely."
+        Route.Making ->
+            "You're on **the making-of** — the audit, the pipeline and the spend. Ask me " +
+                "how any of it was verified."
+        Route.Chess ->
+            "You're at **the board** — seven years of games mined for what actually " +
+                "decides them. Ask me what the clock finding is, or take me back to the engineering."
+        Route.Map ->
+            "You're on **the story map** — every room on this site and the links between " +
+                "them. Click a dot to travel, or ask me where to start."
+        is Route.Excelsior ->
+            "You're in **Excelsior** — the institute magazine, scanned. Ask me " +
+                "about the pieces he wrote, or read any of them as prose instead of paper."
+        // Named, not generic, and the fallback is the piece's own 404 rather than the home greeting:
+        // a slug this build does not carry is still a real piece on the live site, and the screen
+        // under this bubble already says so.
+        is Route.Read -> {
+            val title = printedPieces.firstOrNull { it.slug == route.slug }?.title
+            if (title != null) {
+                "You're reading **$title** — ask me about it, about where it ran, or about anything " +
+                    "else on this site."
+            } else {
+                HOME_GREETING
+            }
         }
+        Route.Home -> HOME_GREETING
     }
-    Route.Home -> HOME_GREETING
-}
 
 private const val HOME_GREETING =
     "Hi, I'm **Panda** — Siddharth's AI assistant. Ask me about his Android work: GPS engineering, " +
@@ -609,52 +637,57 @@ private fun quickPromptsFor(route: Route, asked: List<ChatMessage>): List<String
     // shipped in the second pass and every one of them silently inherited the home page's chips,
     // which read as a deliberate choice rather than a branch nobody wrote. The sealed interface
     // exists to make that a compile error, and an `else` is the one way to give it up.
-    val all = when (route) {
-        Route.Home -> HOME_PROMPTS
-        is Route.ProjectDetail ->
-            projectBySlug(route.slug)?.name?.substringBefore(" + ")?.trim()
-                ?.let { label ->
+    val all =
+        when (route) {
+            Route.Home -> HOME_PROMPTS
+            is Route.ProjectDetail ->
+                projectBySlug(route.slug)
+                    ?.name
+                    ?.substringBefore(" + ")
+                    ?.trim()
+                    ?.let { label ->
+                        listOf(
+                            "How did you build $label?",
+                            "What was the hardest part of $label?",
+                            "What's the stack behind $label?",
+                        )
+                    } ?: HOME_PROMPTS
+            // The one page whose questions are about a person rather than about a thing on a page, so
+            // no template produces them. chatContext.ts carries exactly this one exception, for
+            // exactly this reason.
+            Route.Resume ->
+                listOf(
+                    "Walk me through your experience",
+                    "What are you strongest at?",
+                    "Are you open to new roles?",
+                )
+            Route.Terminal -> roomPrompts("the terminal")
+            Route.Lab -> roomPrompts("the lab bench")
+            Route.Forge -> roomPrompts("the particle forge")
+            Route.Playground -> roomPrompts("the Compose playground")
+            Route.Hire -> roomPrompts("the short version")
+            Route.Shipped -> roomPrompts("the shipped fleet")
+            Route.Weeb -> roomPrompts("Weeb Central")
+            Route.Ops -> roomPrompts("the ops board")
+            Route.Loopdown -> roomPrompts("Loopdown")
+            Route.Ink -> roomPrompts("the Ink")
+            Route.Chess -> roomPrompts("the board")
+            Route.Map -> roomPrompts("the story map")
+            is Route.Excelsior -> roomPrompts("Excelsior")
+            is Route.Anthology -> roomPrompts("the anthology")
+            Route.Canon -> roomPrompts("the canon")
+            Route.Making -> roomPrompts("the making-of")
+            // A story is not a room: "how did you build it" is the wrong question about prose, and the
+            // endpoint would answer it about the page rather than about the writing.
+            is Route.Read ->
+                printedPieces.firstOrNull { it.slug == route.slug }?.title?.let { title ->
                     listOf(
-                        "How did you build $label?",
-                        "What was the hardest part of $label?",
-                        "What's the stack behind $label?",
+                        "What is $title about?",
+                        "Where did $title run?",
+                        "What else has he written?",
                     )
                 } ?: HOME_PROMPTS
-        // The one page whose questions are about a person rather than about a thing on a page, so
-        // no template produces them. chatContext.ts carries exactly this one exception, for
-        // exactly this reason.
-        Route.Resume -> listOf(
-            "Walk me through your experience",
-            "What are you strongest at?",
-            "Are you open to new roles?",
-        )
-        Route.Terminal -> roomPrompts("the terminal")
-        Route.Lab -> roomPrompts("the lab bench")
-        Route.Forge -> roomPrompts("the particle forge")
-        Route.Playground -> roomPrompts("the Compose playground")
-        Route.Hire -> roomPrompts("the short version")
-        Route.Shipped -> roomPrompts("the shipped fleet")
-        Route.Weeb -> roomPrompts("Weeb Central")
-        Route.Ops -> roomPrompts("the ops board")
-        Route.Loopdown -> roomPrompts("Loopdown")
-        Route.Ink -> roomPrompts("the Ink")
-        Route.Chess -> roomPrompts("the board")
-        Route.Map -> roomPrompts("the story map")
-        is Route.Excelsior -> roomPrompts("Excelsior")
-        is Route.Anthology -> roomPrompts("the anthology")
-        Route.Canon -> roomPrompts("the canon")
-        Route.Making -> roomPrompts("the making-of")
-        // A story is not a room: "how did you build it" is the wrong question about prose, and the
-        // endpoint would answer it about the page rather than about the writing.
-        is Route.Read ->
-            printedPieces.firstOrNull { it.slug == route.slug }?.title?.let { title ->
-                listOf(
-                    "What is $title about?",
-                    "Where did $title run?",
-                    "What else has he written?",
-                )
-            } ?: HOME_PROMPTS
-    }
+        }
     // Fewer follow-ups than opening prompts: the opening list is the menu, a follow-up list is a
     // nudge, and five nudges under a finished answer reads as a form.
     val room = if (asked.isEmpty()) 5 else 3
@@ -670,25 +703,30 @@ private fun quickPromptsFor(route: Route, asked: List<ChatMessage>): List<String
  * server builds its system prompt out of. These three are answerable about any room on the site by
  * construction, because the surface registry that names the rooms is part of that same prompt.
  */
-private fun roomPrompts(label: String): List<String> = listOf(
-    "What is $label?",
-    "How did you build $label?",
-    "What else can I do on this site?",
-)
+private fun roomPrompts(label: String): List<String> =
+    listOf(
+        "What is $label?",
+        "How did you build $label?",
+        "What else can I do on this site?",
+    )
 
 /**
  * The home set, mirroring `QUICK_PROMPTS` in chatContext.ts. The metric questions are the audited
  * numbers from `data/CvProfileData.kt` — "50% → 95%" and "~87% of UI-layer code" are claim-audit
  * claims, so the questions are phrased to ask about them rather than to assert them.
  */
-private val HOME_PROMPTS = listOf(
-    "What can I do on this site?",
-    "How did you get GPS accuracy to 95%?",
-    "Which project should I look at first?",
-    "Tell me about the Compose migration",
-    "How did you cut crashes by 80%?",
-    "What are you building in Kotlin Multiplatform?",
-)
+private val HOME_PROMPTS =
+    listOf(
+        "What can I do on this site?",
+        "How did you get GPS accuracy to 95%?",
+        "Which project should I look at first?",
+        "Tell me about the Compose migration",
+        "How did you cut crashes by 80%?",
+        "What are you building in Kotlin Multiplatform?",
+    )
+
+/** `[[` plus `]]`: a directive with nothing between the brackets is still four characters. */
+private const val DirectiveBrackets = 4
 
 /**
  * Removes the endpoint's generative-UI directives so they never reach the transcript as literal text.
@@ -706,12 +744,15 @@ private val HOME_PROMPTS = listOf(
  * delete. Until then, dropping is strictly better than showing.
  */
 internal fun stripDirectives(text: String): String =
-    text.lineSequence()
+    text
+        .lineSequence()
         .filterNot { line ->
             val t = line.trim()
-            t.length > 4 && t.startsWith("[[") && t.endsWith("]]") && !t.drop(2).dropLast(2).contains("[[")
-        }
-        .joinToString("\n")
+            t.length > DirectiveBrackets &&
+                t.startsWith("[[") &&
+                t.endsWith("]]") &&
+                !t.drop(2).dropLast(2).contains("[[")
+        }.joinToString("\n")
         .trim('\n')
 
 /**
@@ -722,39 +763,43 @@ internal fun stripDirectives(text: String): String =
  * ponytail: replace with a proper block parser the day the widget directives (`[[rooms]]`) port —
  * they need one anyway, and doing it twice is the waste.
  */
-private fun chatMarkdown(text: String, accent: Color): AnnotatedString = buildAnnotatedString {
-    var i = 0
-    while (i < text.length) {
-        val bold = text.indexOf("**", i)
-        val code = text.indexOf('`', i)
-        val next = listOf(bold, code).filter { it >= 0 }.minOrNull() ?: -1
-        if (next < 0) {
-            append(text.substring(i))
-            return@buildAnnotatedString
-        }
-        append(text.substring(i, next))
+private fun chatMarkdown(
+    text: String,
+    accent: Color,
+): AnnotatedString =
+    buildAnnotatedString {
+        var i = 0
+        while (i < text.length) {
+            val bold = text.indexOf("**", i)
+            val code = text.indexOf('`', i)
+            val next = listOf(bold, code).filter { it >= 0 }.minOrNull() ?: -1
+            if (next < 0) {
+                append(text.substring(i))
+                return@buildAnnotatedString
+            }
+            append(text.substring(i, next))
 
-        if (next == bold) {
-            val end = text.indexOf("**", next + 2)
-            if (end < 0) {
-                append(text.substring(next))
-                return@buildAnnotatedString
+            if (next == bold) {
+                val end = text.indexOf("**", next + 2)
+                if (end < 0) {
+                    append(text.substring(next))
+                    return@buildAnnotatedString
+                }
+                withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = accent)) {
+                    append(text.substring(next + 2, end))
+                }
+                i = end + 2
+            } else {
+                val end = text.indexOf('`', next + 1)
+                if (end < 0) {
+                    append(text.substring(next))
+                    return@buildAnnotatedString
+                }
+                withStyle(SpanStyle(color = accent)) { append(text.substring(next + 1, end)) }
+                i = end + 1
             }
-            withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = accent)) {
-                append(text.substring(next + 2, end))
-            }
-            i = end + 2
-        } else {
-            val end = text.indexOf('`', next + 1)
-            if (end < 0) {
-                append(text.substring(next))
-                return@buildAnnotatedString
-            }
-            withStyle(SpanStyle(color = accent)) { append(text.substring(next + 1, end)) }
-            i = end + 1
         }
     }
-}
 
 // ---------------------------------------------------------------------------------------------
 // Transcript mutation
@@ -767,7 +812,10 @@ private fun chatMarkdown(text: String, accent: Color): AnnotatedString = buildAn
  * that outlives nothing in particular, and a transcript reset while a reply is on the wire would
  * otherwise write a token into whatever now occupies that slot.
  */
-private fun SnapshotStateList<ChatMessage>.appendDelta(index: Int, delta: String) {
+private fun SnapshotStateList<ChatMessage>.appendDelta(
+    index: Int,
+    delta: String,
+) {
     val current = getOrNull(index) ?: return
     if (!current.streaming) return
     this[index] = current.copy(text = current.text + delta)

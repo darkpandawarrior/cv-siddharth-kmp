@@ -79,20 +79,25 @@ actual fun printResume(html: String) {
     // JS off on purpose: the document is static markup with no script, so enabling it would only
     // widen the attack surface of a WebView that renders app-generated HTML.
     webView.settings.javaScriptEnabled = false
-    webView.webViewClient = object : WebViewClient() {
-        override fun onPageFinished(view: WebView, url: String?) {
-            val name = resumePrintJobName
-            printManager.print(
-                name,
-                view.createPrintDocumentAdapter(name),
-                // A4 to match the document's own `@page { size: A4 }`. Left unset, the dialog
-                // defaults to the locale's paper size and silently rescales the layout.
-                PrintAttributes.Builder()
-                    .setMediaSize(PrintAttributes.MediaSize.ISO_A4)
-                    .build(),
-            )
+    webView.webViewClient =
+        object : WebViewClient() {
+            override fun onPageFinished(
+                view: WebView,
+                url: String?,
+            ) {
+                val name = resumePrintJobName
+                printManager.print(
+                    name,
+                    view.createPrintDocumentAdapter(name),
+                    // A4 to match the document's own `@page { size: A4 }`. Left unset, the dialog
+                    // defaults to the locale's paper size and silently rescales the layout.
+                    PrintAttributes
+                        .Builder()
+                        .setMediaSize(PrintAttributes.MediaSize.ISO_A4)
+                        .build(),
+                )
+            }
         }
-    }
 
     // `null` base URL is what makes this safe and offline: the document references no external
     // asset (`resumeHtmlSelfCheck` asserts it), so there is nothing to resolve and no network

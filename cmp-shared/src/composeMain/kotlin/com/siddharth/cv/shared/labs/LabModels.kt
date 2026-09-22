@@ -3,6 +3,8 @@ package com.siddharth.cv.shared.labs
 import androidx.compose.ui.graphics.Color
 import com.siddharth.cv.shared.data.generated.chess
 import com.siddharth.cv.shared.data.projects
+import com.siddharth.cv.shared.format.TenthsPerUnit
+import com.siddharth.cv.shared.format.tenthsToString
 import com.siddharth.cv.shared.theme.cvColor
 import kotlin.math.PI
 import kotlin.math.cos
@@ -44,10 +46,19 @@ import kotlin.random.Random
 // The bench
 // -------------------------------------------------------------------------------------------
 
-internal enum class LabGroup(val label: String) {
+internal enum class LabGroup(
+    val label: String,
+) {
     Production("Dice.tech — production"),
     Personal("Personal builds"),
 }
+
+/**
+ * How many instruments this build actually ships. Public because the homepage room wall's lab blurb
+ * reads it: the blurb used to state a count by hand and named neither this bench's size nor the
+ * React one's. A number in prose that nothing computes is a number that goes stale.
+ */
+val labCount: Int get() = cvLabs.size
 
 /**
  * One instrument on the bench.
@@ -56,13 +67,6 @@ internal enum class LabGroup(val label: String) {
  * [description] is the same content for a screen reader, because a Compose Canvas exposes exactly
  * zero text nodes — whatever isn't said here is not said at all.
  */
-/**
- * How many instruments this build actually ships. Public because the homepage room wall's lab blurb
- * reads it: the blurb used to state a count by hand and named neither this bench's size nor the
- * React one's. A number in prose that nothing computes is a number that goes stale.
- */
-val labCount: Int get() = cvLabs.size
-
 internal class LabExperiment(
     val id: String,
     val label: String,
@@ -120,137 +124,156 @@ internal val clockPeakGapPoints: String get() = oneDecimal(clockPeakDecile.gap *
  *   for a different reason nobody had written down — the React lab gets legal moves from `chess.js`
  *   — and the fix was a 0x88 move generator proved correct by perft. See `ChessEngine.kt`.
  */
-internal val cvLabs: List<LabExperiment> = listOf(
-    LabExperiment(
-        id = "recompose",
-        label = "Recomposition",
-        metric = "~87% Compose",
-        group = LabGroup.Production,
-        caption = "Tap any cell. In rebuild-the-world mode one state change repaints the whole " +
-            "screen — that is a legacy view tree, and at ~964k LOC it is molasses. Flip to stable " +
-            "state and only the touched cell recomposes. That is what the ~87% migration bought.",
-        description = "A grid of 40 cells standing in for recomposition scopes. Each tap flashes " +
-            "the scopes that repaint: all forty in rebuild-the-world mode, one in stable-state " +
-            "mode. The counters below tally wasted repaints against needed ones.",
-    ),
-    LabExperiment(
-        id = "crashes",
-        label = "Crash Triage",
-        metric = "-80%",
-        group = LabGroup.Production,
-        caption = "A production crash feed doesn't arrive labelled — it arrives as noise. Turn " +
-            "clustering on and the same feed sorts itself by root cause. The skew is the whole " +
-            "point: fix the top two clusters and most of the noise disappears.",
-        description = "Crash traces fall down the canvas as dots. Unclustered they pile into one " +
-            "undifferentiated slab. Clustered, each trace steers into one of five root-cause bins " +
-            "— main-thread I/O, coroutine race, lifecycle leak, bitmap OOM, OEM quirk — and the " +
-            "first two bins together hold about 80% of the feed.",
-    ),
-    LabExperiment(
-        id = "modules",
-        label = "Module Graph",
-        metric = "46 modules",
-        group = LabGroup.Personal,
-        caption = "Doori's 46-module Gradle graph: thirteen feature modules — tracking, " +
-            "logging, travel, approvals, payables, agent and seven more — that never depend on " +
-            "each other, wired together only at the :app composition root. Turn isolation off " +
-            "to see the alternative: every feature reaching into every other one.",
-        description = "A radial dependency graph. Thirteen feature modules sit on an inner ring, " +
-            "each joined by a single spoke to the :app composition root at the centre, with 33 " +
-            "further shared and composed modules as an outer ring of dots. Turning isolation off " +
-            "draws all 78 feature-to-feature edges the composition root replaces.",
-    ),
-    LabExperiment(
-        id = "gateways",
-        label = "Gateway Lab",
-        metric = "$gatewayCount gateways",
-        group = LabGroup.Personal,
-        caption = "Every payment provider ships its own SDK, and most of them are still " +
-            "Activity-callback era. Turn the contract off and each checkout call needs a bespoke " +
-            "integration written before it can go anywhere. Turn it on and the same call reaches " +
-            "any of $gatewayCount cataloged gateways without one line of gateway-specific code.",
-        description = "Checkout calls fall from the top of the canvas. Without the " +
-            "PaymentGateway contract they stop dead at a barrier and pile up as blocked work. " +
-            "With it they pass through a single contract node and fan out to a shelf of " +
-            "$gatewayCount gateway ticks along the bottom, lighting whichever one each call " +
-            "routed to.",
-    ),
-    LabExperiment(
-        id = "search",
-        label = "Search Tree",
-        metric = "10 personas",
-        group = LabGroup.Personal,
-        caption = "Gaddi's bots never see your hand — they play with Information Set Monte Carlo " +
-            "Tree Search, growing a tree of plausible futures over the hidden cards and picking " +
-            "the branch that wins most often. Harder tiers search deeper: 1,500 iterations on " +
-            "Easy, 16,000 on Grandmaster, still landing on one bot's actual move.",
-        description = "An ISMCTS search tree growing upward from a single root at the bottom of " +
-            "the canvas. Branches accumulate as the iteration counter climbs toward the selected " +
-            "difficulty tier's target, and when the search completes one root-to-leaf line is " +
-            "highlighted as the move chosen, labelled with the bot persona that played it.",
-    ),
-    LabExperiment(
-        id = "fanout",
-        label = "Provider Fan-out",
-        metric = "62 providers",
-        group = LabGroup.Personal,
-        caption = "62 ATS and job-board providers, one query. Greenhouse, Ashby and Lever are hit " +
-            "directly by structured APIs — zero LLM cost — while listings fan back in toward a " +
-            "collection zone. The same posting often comes back from more than one board; SimHash " +
-            "fingerprinting is what tells those apart from something actually new.",
-        description = "A ring of 62 provider dots around a central query point, three of them " +
-            "labelled Greenhouse, Ashby and Lever. Listings travel along curves from the ring " +
-            "into a collection zone at the bottom. With SimHash de-duplication on, a listing " +
-            "already seen from another board collapses into the existing one with a ring flash " +
-            "instead of adding a new dot.",
-    ),
-    LabExperiment(
-        id = "replay",
-        label = "Deterministic Replay",
-        metric = "0-tolerance",
-        group = LabGroup.Personal,
-        caption = "Stutter's determinism contract in one line: an input frame records intent — a " +
-            "move vector, a jump, a dash — and never a position. Replay the same log and you get " +
-            "the same path, to the float. Perturb one frame of the second log and the paths split " +
-            "from exactly that frame on, which is the whole reason the gate can be zero-tolerance.",
-        description = "Two replays of one recorded input log trace a wandering path across the " +
-            "canvas. Identical logs draw one line, because the second is exactly under the first. " +
-            "Perturbing a single frame of the second log splits it away in red from that frame " +
-            "onward, and the readout turns from PASS to a blocked gate with the measured drift.",
-    ),
-    LabExperiment(
-        id = "chess-search",
-        label = "Chess Search",
-        metric = "alpha-beta",
-        group = LabGroup.Personal,
-        caption = "The same picture as Gaddi's tree, a different algorithm — and this one is not a " +
-            "simulation either. Every line is a real edge from an alpha-beta search over a " +
-            "position from one of his own games, run here on a legal-move generator this port " +
-            "carries and a perft check proves correct. Two more ply is thousands more nodes, and " +
-            "still a small fraction of the legal tree: the pruning is the whole trick, and the " +
-            "readout counts what it cost.",
-        description = "An alpha-beta search tree fanning upward from a single root at the bottom " +
-            "of the canvas, replayed edge by edge after the search has already finished. The " +
-            "subtree under the move the search played is drawn brighter, and its root edge " +
-            "brightest of all. Switching between two and four ply runs a genuinely different " +
-            "search, and the readout reports the nodes visited, the move chosen, and which of " +
-            "his games the position came from.",
-    ),
-    LabExperiment(
-        id = "chess-clock",
-        label = "Clock Burn",
-        metric = "+$clockPeakGapPoints pts",
-        group = LabGroup.Personal,
-        caption = "Two curves, mean share of the starting clock still left, by decile of game " +
-            "progress. They sit on top of each other through the opening and come apart in the " +
-            "early middlegame. That gap is where the games go: the time is spent long before any " +
-            "late blunder, which is why the fix was never studying more endgames.",
-        description = "A line chart of mean clock remaining against game progress, in ten " +
-            "buckets. The won-games curve stays above the lost-games curve, the shaded band " +
-            "between them is the divergence, and a movable marker reads out both values and " +
-            "their gap at any bucket.",
-    ),
-)
+internal val cvLabs: List<LabExperiment> =
+    listOf(
+        LabExperiment(
+            id = "recompose",
+            label = "Recomposition",
+            metric = "~87% Compose",
+            group = LabGroup.Production,
+            caption =
+                "Tap any cell. In rebuild-the-world mode one state change repaints the whole " +
+                    "screen — that is a legacy view tree, and at ~964k LOC it is molasses. Flip to stable " +
+                    "state and only the touched cell recomposes. That is what the ~87% migration bought.",
+            description =
+                "A grid of 40 cells standing in for recomposition scopes. Each tap flashes " +
+                    "the scopes that repaint: all forty in rebuild-the-world mode, one in stable-state " +
+                    "mode. The counters below tally wasted repaints against needed ones.",
+        ),
+        LabExperiment(
+            id = "crashes",
+            label = "Crash Triage",
+            metric = "-80%",
+            group = LabGroup.Production,
+            caption =
+                "A production crash feed doesn't arrive labelled — it arrives as noise. Turn " +
+                    "clustering on and the same feed sorts itself by root cause. The skew is the whole " +
+                    "point: fix the top two clusters and most of the noise disappears.",
+            description =
+                "Crash traces fall down the canvas as dots. Unclustered they pile into one " +
+                    "undifferentiated slab. Clustered, each trace steers into one of five root-cause bins " +
+                    "— main-thread I/O, coroutine race, lifecycle leak, bitmap OOM, OEM quirk — and the " +
+                    "first two bins together hold about 80% of the feed.",
+        ),
+        LabExperiment(
+            id = "modules",
+            label = "Module Graph",
+            metric = "46 modules",
+            group = LabGroup.Personal,
+            caption =
+                "Doori's 46-module Gradle graph: thirteen feature modules — tracking, " +
+                    "logging, travel, approvals, payables, agent and seven more — that never depend on " +
+                    "each other, wired together only at the :app composition root. Turn isolation off " +
+                    "to see the alternative: every feature reaching into every other one.",
+            description =
+                "A radial dependency graph. Thirteen feature modules sit on an inner ring, " +
+                    "each joined by a single spoke to the :app composition root at the centre, with 33 " +
+                    "further shared and composed modules as an outer ring of dots. Turning isolation off " +
+                    "draws all 78 feature-to-feature edges the composition root replaces.",
+        ),
+        LabExperiment(
+            id = "gateways",
+            label = "Gateway Lab",
+            metric = "$gatewayCount gateways",
+            group = LabGroup.Personal,
+            caption =
+                "Every payment provider ships its own SDK, and most of them are still " +
+                    "Activity-callback era. Turn the contract off and each checkout call needs a bespoke " +
+                    "integration written before it can go anywhere. Turn it on and the same call reaches " +
+                    "any of $gatewayCount cataloged gateways without one line of gateway-specific code.",
+            description =
+                "Checkout calls fall from the top of the canvas. Without the " +
+                    "PaymentGateway contract they stop dead at a barrier and pile up as blocked work. " +
+                    "With it they pass through a single contract node and fan out to a shelf of " +
+                    "$gatewayCount gateway ticks along the bottom, lighting whichever one each call " +
+                    "routed to.",
+        ),
+        LabExperiment(
+            id = "search",
+            label = "Search Tree",
+            metric = "10 personas",
+            group = LabGroup.Personal,
+            caption =
+                "Gaddi's bots never see your hand — they play with Information Set Monte Carlo " +
+                    "Tree Search, growing a tree of plausible futures over the hidden cards and picking " +
+                    "the branch that wins most often. Harder tiers search deeper: 1,500 iterations on " +
+                    "Easy, 16,000 on Grandmaster, still landing on one bot's actual move.",
+            description =
+                "An ISMCTS search tree growing upward from a single root at the bottom of " +
+                    "the canvas. Branches accumulate as the iteration counter climbs toward the selected " +
+                    "difficulty tier's target, and when the search completes one root-to-leaf line is " +
+                    "highlighted as the move chosen, labelled with the bot persona that played it.",
+        ),
+        LabExperiment(
+            id = "fanout",
+            label = "Provider Fan-out",
+            metric = "62 providers",
+            group = LabGroup.Personal,
+            caption =
+                "62 ATS and job-board providers, one query. Greenhouse, Ashby and Lever are hit " +
+                    "directly by structured APIs — zero LLM cost — while listings fan back in toward a " +
+                    "collection zone. The same posting often comes back from more than one board; SimHash " +
+                    "fingerprinting is what tells those apart from something actually new.",
+            description =
+                "A ring of 62 provider dots around a central query point, three of them " +
+                    "labelled Greenhouse, Ashby and Lever. Listings travel along curves from the ring " +
+                    "into a collection zone at the bottom. With SimHash de-duplication on, a listing " +
+                    "already seen from another board collapses into the existing one with a ring flash " +
+                    "instead of adding a new dot.",
+        ),
+        LabExperiment(
+            id = "replay",
+            label = "Deterministic Replay",
+            metric = "0-tolerance",
+            group = LabGroup.Personal,
+            caption =
+                "Stutter's determinism contract in one line: an input frame records intent — a " +
+                    "move vector, a jump, a dash — and never a position. Replay the same log and you get " +
+                    "the same path, to the float. Perturb one frame of the second log and the paths split " +
+                    "from exactly that frame on, which is the whole reason the gate can be zero-tolerance.",
+            description =
+                "Two replays of one recorded input log trace a wandering path across the " +
+                    "canvas. Identical logs draw one line, because the second is exactly under the first. " +
+                    "Perturbing a single frame of the second log splits it away in red from that frame " +
+                    "onward, and the readout turns from PASS to a blocked gate with the measured drift.",
+        ),
+        LabExperiment(
+            id = "chess-search",
+            label = "Chess Search",
+            metric = "alpha-beta",
+            group = LabGroup.Personal,
+            caption =
+                "The same picture as Gaddi's tree, a different algorithm — and this one is not a " +
+                    "simulation either. Every line is a real edge from an alpha-beta search over a " +
+                    "position from one of his own games, run here on a legal-move generator this port " +
+                    "carries and a perft check proves correct. Two more ply is thousands more nodes, and " +
+                    "still a small fraction of the legal tree: the pruning is the whole trick, and the " +
+                    "readout counts what it cost.",
+            description =
+                "An alpha-beta search tree fanning upward from a single root at the bottom " +
+                    "of the canvas, replayed edge by edge after the search has already finished. The " +
+                    "subtree under the move the search played is drawn brighter, and its root edge " +
+                    "brightest of all. Switching between two and four ply runs a genuinely different " +
+                    "search, and the readout reports the nodes visited, the move chosen, and which of " +
+                    "his games the position came from.",
+        ),
+        LabExperiment(
+            id = "chess-clock",
+            label = "Clock Burn",
+            metric = "+$clockPeakGapPoints pts",
+            group = LabGroup.Personal,
+            caption =
+                "Two curves, mean share of the starting clock still left, by decile of game " +
+                    "progress. They sit on top of each other through the opening and come apart in the " +
+                    "early middlegame. That gap is where the games go: the time is spent long before any " +
+                    "late blunder, which is why the fix was never studying more endgames.",
+            description =
+                "A line chart of mean clock remaining against game progress, in ten " +
+                    "buckets. The won-games curve stays above the lost-games curve, the shaded band " +
+                    "between them is the divergence, and a movable marker reads out both values and " +
+                    "their gap at any bucket.",
+        ),
+    )
 
 /**
  * Where a frozen clock parks. Chosen so that *every* experiment reads well at this one instant:
@@ -260,16 +283,17 @@ internal val cvLabs: List<LabExperiment> = listOf(
 internal const val LabStillSeconds: Float = 11.5f
 
 /** `0.025f -> "2.5%"`. There is no `String.format` on wasmJs, and no Locale to get wrong. */
-internal fun pct1(fraction: Float): String {
-    val tenths = (fraction * 1000f).roundToInt()
-    return "${tenths / 10}.${tenths % 10}%"
-}
+internal fun pct1(fraction: Float): String = "${tenthsToString((fraction * 100f * TenthsPerUnit).roundToInt())}%"
 
 /** The cubic smoothstep the React labs use as their easing (`FanoutLab.tsx:25`). */
 internal fun smoothstep(t: Float): Float {
     val c = t.coerceIn(0f, 1f)
-    return c * c * (3f - 2f * c)
+    // 3t² - 2t³, Hermite's own coefficients.
+    return c * c * (SmoothstepA - SmoothstepB * c)
 }
+
+private const val SmoothstepA = 3f
+private const val SmoothstepB = 2f
 
 // -------------------------------------------------------------------------------------------
 // Recomposition
@@ -283,14 +307,23 @@ internal const val RecomposeCells: Int = RecomposeGridW * RecomposeGridH
 internal const val RecomposeFlashSeconds: Float = 0.55f
 
 /**
- * Which cell a pointer at [x],[y] hit inside a [w] by [h] grid, or -1 outside it. Lives here
+ * Which cell a pointer at [x], [y] hit inside a [w] by [h] grid, or -1 outside it. Lives here
  * rather than in the draw code because hit-testing is the one place that experiment can be wrong
  * in a way nobody notices — an off-by-one column reads as "the tap didn't register".
  */
-private fun isInsideGrid(x: Float, y: Float, w: Float, h: Float): Boolean =
-    w > 0f && h > 0f && x >= 0f && y >= 0f && x < w && y < h
+private fun isInsideGrid(
+    x: Float,
+    y: Float,
+    w: Float,
+    h: Float,
+): Boolean = w > 0f && h > 0f && x >= 0f && y >= 0f && x < w && y < h
 
-internal fun recomposeCellAt(x: Float, y: Float, w: Float, h: Float): Int {
+internal fun recomposeCellAt(
+    x: Float,
+    y: Float,
+    w: Float,
+    h: Float,
+): Int {
     if (!isInsideGrid(x, y, w, h)) return -1
     val col = (x / (w / RecomposeGridW)).toInt().coerceIn(0, RecomposeGridW - 1)
     val row = (y / (h / RecomposeGridH)).toInt().coerceIn(0, RecomposeGridH - 1)
@@ -306,7 +339,11 @@ internal fun recomposeCellAt(x: Float, y: Float, w: Float, h: Float): Int {
  * answer is within a slot or two of `cutoff / interval`, so a two-step scan from there beats walking
  * the history. Extracted the second time it was needed, not the first.
  */
-internal inline fun countSpawnedBy(cutoff: Float, interval: Float, spawnAt: (Int) -> Float): Int {
+internal inline fun countSpawnedBy(
+    cutoff: Float,
+    interval: Float,
+    spawnAt: (Int) -> Float,
+): Int {
     if (cutoff < 0f) return 0
     var i = (cutoff / interval).toInt() + 2
     if (i < 0) return 0 // guards a cutoff large enough to overflow the Int cast
@@ -319,15 +356,19 @@ internal inline fun countSpawnedBy(cutoff: Float, interval: Float, spawnAt: (Int
 // Crash triage
 // -------------------------------------------------------------------------------------------
 
-internal class CrashCause(val id: String, val color: Color)
-
-internal val crashCauses: List<CrashCause> = listOf(
-    CrashCause("main-thread I/O", cvColor("#f0883e")),
-    CrashCause("coroutine race", cvColor("#ff5c5c")),
-    CrashCause("lifecycle leak", cvColor("#db61ff")),
-    CrashCause("bitmap OOM", cvColor("#5ee6ff")),
-    CrashCause("OEM quirk", cvColor("#8ff0b4")),
+internal class CrashCause(
+    val id: String,
+    val color: Color,
 )
+
+internal val crashCauses: List<CrashCause> =
+    listOf(
+        CrashCause("main-thread I/O", cvColor("#f0883e")),
+        CrashCause("coroutine race", cvColor("#ff5c5c")),
+        CrashCause("lifecycle leak", cvColor("#db61ff")),
+        CrashCause("bitmap OOM", cvColor("#5ee6ff")),
+        CrashCause("OEM quirk", cvColor("#8ff0b4")),
+    )
 
 /**
  * The crash feed, as a closed-form function of elapsed seconds.
@@ -340,7 +381,9 @@ internal val crashCauses: List<CrashCause> = listOf(
  * lookup. Both are O(1) at any `t`, which is what makes a per-frame recomputation cheaper than the
  * bookkeeping it replaces.
  */
-internal class CrashFeed(seed: Int = 20260729) {
+internal class CrashFeed(
+    seed: Int = 20260729,
+) {
     private val cause = IntArray(Ring)
     private val xFrac = FloatArray(Ring)
 
@@ -376,7 +419,10 @@ internal class CrashFeed(seed: Int = 20260729) {
     /** Traces that exist at all. `landedCount until this` is the in-flight window. */
     fun spawnedCount(seconds: Float): Int = countSpawnedBy(seconds)
 
-    fun binCount(causeIndex: Int, landed: Int): Int {
+    fun binCount(
+        causeIndex: Int,
+        landed: Int,
+    ): Int {
         if (landed <= 0) return 0
         val row = prefix[causeIndex]
         return (landed / Ring) * row[Ring] + row[landed % Ring]
@@ -388,8 +434,7 @@ internal class CrashFeed(seed: Int = 20260729) {
         return ((binCount(0, landed) + binCount(1, landed)) * 100f / landed).roundToInt()
     }
 
-    private fun countSpawnedBy(cutoff: Float): Int =
-        countSpawnedBy(cutoff, SpawnInterval, ::spawnSeconds)
+    private fun countSpawnedBy(cutoff: Float): Int = countSpawnedBy(cutoff, SpawnInterval, ::spawnSeconds)
 
     companion object {
         /** One trace every 140ms, matching `CrashLab.tsx`'s spawn accumulator. */
@@ -405,17 +450,23 @@ internal class CrashFeed(seed: Int = 20260729) {
         private const val Ring = 2048
 
         /**
+         * Cumulative, not per-cause: main-thread I/O takes everything below 0.50 and the coroutine
+         * race everything up to 0.80, so the top two sum to exactly 80% — which is how the -80%
+         * actually happened once those two clusters were fixed. Do not smooth this out; the skew
+         * *is* the lesson. One entry shorter than [crashCauses]: the long tail is whatever is left.
+         */
+        private val CumulativeCauseShares = floatArrayOf(0.50f, 0.80f, 0.92f, 0.98f)
+
+        /**
          * Real feeds are two bugs and a long tail. The top two — main-thread I/O and coroutine race
          * — sum to exactly 80%, which is how -80% actually happened once those two clusters got
          * fixed. Do not smooth this out; the skew *is* the lesson.
          */
-        fun pickCause(roll: Float): Int = when {
-            roll < 0.50f -> 0
-            roll < 0.80f -> 1
-            roll < 0.92f -> 2
-            roll < 0.98f -> 3
-            else -> 4
-        }
+        fun pickCause(roll: Float): Int =
+            CumulativeCauseShares
+                .indexOfFirst { roll < it }
+                .takeIf { it >= 0 }
+                ?: CumulativeCauseShares.size
     }
 }
 
@@ -447,6 +498,13 @@ internal class FanoutPulse(
     val landsAt: Float get() = waitSeconds + flightSeconds
 }
 
+/** Twenty to twenty-five clusters: enough for the fan-out to read as a scan, few enough to count. */
+private const val MinClusters = 20
+private const val ClusterSpread = 6
+
+/** How far a pulse may drift from its cluster's x, and the margin it must stay inside. */
+private const val ClusterJitter = 0.03f
+
 /**
  * One scan of Candidai's 62 providers, generated from [seed] so scan *n* is always scan *n*.
  *
@@ -455,7 +513,9 @@ internal class FanoutPulse(
  * *landing* order rather than dispatch order, so it can only be decided after generation — hence
  * the sort.
  */
-internal class FanoutScan(seed: Int) {
+internal class FanoutScan(
+    seed: Int,
+) {
     val pulses: List<FanoutPulse>
     val clusterCount: Int
 
@@ -464,32 +524,44 @@ internal class FanoutScan(seed: Int) {
 
     init {
         val rng = Random(seed * 7919 + 13)
-        clusterCount = 20 + rng.nextInt(6)
+        clusterCount = MinClusters + rng.nextInt(ClusterSpread)
         val raw = ArrayList<FanoutPulse>()
         var order = 0
         for (c in 0 until clusterCount) {
             val roll = rng.nextFloat()
-            val size = if (roll < 0.60f) 1 else if (roll < 0.86f) 2 else 3
+            val size =
+                if (roll < 0.60f) {
+                    1
+                } else if (roll < 0.86f) {
+                    2
+                } else {
+                    3
+                }
             val bx = 0.05f + rng.nextFloat() * 0.90f
             for (k in 0 until size) {
-                raw += FanoutPulse(
-                    provider = rng.nextInt(FanoutProviders),
-                    cluster = c,
-                    tx = (bx + (rng.nextFloat() - 0.5f) * 0.03f).coerceIn(0.03f, 0.97f),
-                    ty = 0.5f + (rng.nextFloat() - 0.5f) * 0.55f,
-                    waitSeconds = order * (0.030f + rng.nextFloat() * 0.020f),
-                    flightSeconds = 0.9f + rng.nextFloat() * 0.6f,
-                    first = true,
-                )
+                raw +=
+                    FanoutPulse(
+                        provider = rng.nextInt(FanoutProviders),
+                        cluster = c,
+                        tx =
+                            (bx + (rng.nextFloat() - 0.5f) * ClusterJitter)
+                                .coerceIn(ClusterJitter, 1f - ClusterJitter),
+                        ty = 0.5f + (rng.nextFloat() - 0.5f) * 0.55f,
+                        waitSeconds = order * (0.030f + rng.nextFloat() * 0.020f),
+                        flightSeconds = 0.9f + rng.nextFloat() * 0.6f,
+                        first = true,
+                    )
                 order++
             }
         }
         val seen = HashSet<Int>()
-        pulses = raw.sortedBy { it.landsAt }
-            .map { p ->
-                // `add` returns true only for a cluster's first arrival — that's the keeper.
-                FanoutPulse(p.provider, p.cluster, p.tx, p.ty, p.waitSeconds, p.flightSeconds, seen.add(p.cluster))
-            }
+        pulses =
+            raw
+                .sortedBy { it.landsAt }
+                .map { p ->
+                    // `add` returns true only for a cluster's first arrival — that's the keeper.
+                    FanoutPulse(p.provider, p.cluster, p.tx, p.ty, p.waitSeconds, p.flightSeconds, seen.add(p.cluster))
+                }
         spanSeconds = pulses.lastOrNull()?.landsAt ?: 0f
     }
 
@@ -502,29 +574,34 @@ internal class FanoutScan(seed: Int) {
 // ISMCTS search tree
 // -------------------------------------------------------------------------------------------
 
-internal class SearchTier(val label: String, val iterations: Int)
-
-/** The real tiers from the `kursi` profile entry: 1.5k on Easy to 16k on Grandmaster. */ // claim-audit:allow -- backtick-quoted slug identifier
-internal val searchTiers: List<SearchTier> = listOf(
-    SearchTier("Easy", 1500),
-    SearchTier("Normal", 4000),
-    SearchTier("Hard", 8000),
-    SearchTier("Expert", 12000),
-    SearchTier("Grandmaster", 16000),
+internal class SearchTier(
+    val label: String,
+    val iterations: Int,
 )
+
+/** The real tiers from the Gaddi profile entry: 1.5k on Easy to 16k on Grandmaster. */
+internal val searchTiers: List<SearchTier> =
+    listOf(
+        SearchTier("Easy", 1500),
+        SearchTier("Normal", 4000),
+        SearchTier("Hard", 8000),
+        SearchTier("Expert", 12000),
+        SearchTier("Grandmaster", 16000),
+    )
 
 /**
  * The six bot personas the source data actually names. The card says ten; the other four aren't
  * enumerated anywhere, and inventing names to fill a ring would be fabrication.
  */
-internal val gaddiRoles: List<String> = listOf(
-    "Netaji Vachan",
-    "Bhai Teja",
-    "Babu Filewala",
-    "Jugaadu Chhotu",
-    "Vakil Loophole",
-    "Patrakaar",
-)
+internal val gaddiRoles: List<String> =
+    listOf(
+        "Netaji Vachan",
+        "Bhai Teja",
+        "Babu Filewala",
+        "Jugaadu Chhotu",
+        "Vakil Loophole",
+        "Patrakaar",
+    )
 
 internal class SearchNode(
     val x: Float,
@@ -569,6 +646,15 @@ internal class SearchTreeRun(
     }
 }
 
+/** The root sits one node-height above the bottom edge, so its stem is visible. */
+private const val RootLift = 20f
+
+/** Odds a parent leaves the frontier once it has a child, i.e. how bushy the tree draws. */
+private const val FrontierPruneOdds = 0.35f
+
+/** Odds of preferring a later node when two share the deepest depth — breaks the left-edge bias. */
+private const val DepthTieOdds = 0.4f
+
 /**
  * Grows the whole tree up front from a seed, then [SearchTreeRun.revealedAt] animates the reveal.
  *
@@ -589,7 +675,7 @@ internal fun buildSearchTreeRun(
     val h = maxOf(heightPx, margin * 4f)
 
     val nodes = ArrayList<SearchNode>()
-    nodes += SearchNode(w / 2f, h - 20f, -PI.toFloat() / 2f, 0, -1)
+    nodes += SearchNode(w / 2f, h - RootLift, -PI.toFloat() / 2f, 0, -1)
     val frontier = ArrayList<Int>()
     frontier += 0
 
@@ -612,7 +698,7 @@ internal fun buildSearchTreeRun(
         nodes += SearchNode(nx, maxOf(margin, ny), angle, parent.depth + 1, parentIdx)
         val childIdx = nodes.lastIndex
         if (!reachedTop) frontier += childIdx
-        if (rng.nextFloat() < 0.35f) {
+        if (rng.nextFloat() < FrontierPruneOdds) {
             // `remove(Int)` on a MutableList<Int> is the classic index-vs-element trap. Explicit.
             val pos = frontier.indexOf(parentIdx)
             if (pos != -1) frontier.removeAt(pos)
@@ -623,7 +709,7 @@ internal fun buildSearchTreeRun(
     var chosen = 0
     var bestDepth = -1
     nodes.forEachIndexed { i, n ->
-        if (n.depth > bestDepth || (n.depth == bestDepth && rng.nextFloat() < 0.4f)) {
+        if (n.depth > bestDepth || (n.depth == bestDepth && rng.nextFloat() < DepthTieOdds)) {
             bestDepth = n.depth
             chosen = i
         }
@@ -652,28 +738,45 @@ internal const val ModuleOtherCount: Int = ModuleTotal - ModuleFeatureCount
  * of the circle. The other seven feature modules are real; their names are not in the source data,
  * so they stay generic rather than invented.
  */
-private val moduleFeatureLabels = listOf(
-    "tracking", "feature", "logging", "feature", "travel", "feature",
-    "approvals", "feature", "payables", "feature", "agent", "feature", "feature",
+private val moduleFeatureLabels =
+    listOf(
+        "tracking",
+        "feature",
+        "logging",
+        "feature",
+        "travel",
+        "feature",
+        "approvals",
+        "feature",
+        "payables",
+        "feature",
+        "agent",
+        "feature",
+        "feature",
+    )
+
+internal class ModuleFeature(
+    val label: String,
+    val named: Boolean,
+    val angle: Float,
 )
 
-internal class ModuleFeature(val label: String, val named: Boolean, val angle: Float)
-
-internal val moduleFeatures: List<ModuleFeature> = moduleFeatureLabels.mapIndexed { i, label ->
-    ModuleFeature(
-        label = label,
-        named = label != "feature",
-        angle = 2f * PI.toFloat() * i / ModuleFeatureCount - PI.toFloat() / 2f,
-    )
-}
+internal val moduleFeatures: List<ModuleFeature> =
+    moduleFeatureLabels.mapIndexed { i, label ->
+        ModuleFeature(
+            label = label,
+            named = label != "feature",
+            angle = 2f * PI.toFloat() * i / ModuleFeatureCount - PI.toFloat() / 2f,
+        )
+    }
 
 /** All 78 feature-to-feature pairs — the tangle the `:app` composition root replaces. */
-internal val moduleCrossEdges: List<Pair<Int, Int>> = buildList {
-    for (i in 0 until ModuleFeatureCount) {
-        for (j in i + 1 until ModuleFeatureCount) add(i to j)
+internal val moduleCrossEdges: List<Pair<Int, Int>> =
+    buildList {
+        for (i in 0 until ModuleFeatureCount) {
+            for (j in i + 1 until ModuleFeatureCount) add(i to j)
+        }
     }
-}
-
 
 // -------------------------------------------------------------------------------------------
 // Payment gateways
@@ -690,7 +793,9 @@ internal val moduleCrossEdges: List<Pair<Int, Int>> = buildList {
  * on this bench: the reduced-motion still frame is the frozen clock, and the arithmetic is checkable
  * off-screen.
  */
-internal class GatewayFeed(seed: Int = 20260812) {
+internal class GatewayFeed(
+    seed: Int = 20260812,
+) {
     private val gateway = IntArray(Ring)
     private val xFrac = FloatArray(Ring)
     private val slot = FloatArray(Ring)
@@ -711,14 +816,12 @@ internal class GatewayFeed(seed: Int = 20260812) {
 
     fun spawnSeconds(index: Int): Float = (index + slot[index.mod(Ring)]) * SpawnInterval
 
-    fun landedCount(seconds: Float): Int =
-        countSpawnedBy(seconds - FallSeconds, SpawnInterval, ::spawnSeconds)
+    fun landedCount(seconds: Float): Int = countSpawnedBy(seconds - FallSeconds, SpawnInterval, ::spawnSeconds)
 
     fun spawnedCount(seconds: Float): Int = countSpawnedBy(seconds, SpawnInterval, ::spawnSeconds)
 
     /** Calls stopped at the barrier. Same feed, shorter fall — they never reach the shelf. */
-    fun blockedCount(seconds: Float): Int =
-        countSpawnedBy(seconds - BarrierSeconds, SpawnInterval, ::spawnSeconds)
+    fun blockedCount(seconds: Float): Int = countSpawnedBy(seconds - BarrierSeconds, SpawnInterval, ::spawnSeconds)
 
     companion object {
         /** One checkout every 160ms, matching `GatewayLab.tsx`'s spawn accumulator. */
@@ -746,7 +849,15 @@ internal class GatewayFeed(seed: Int = 20260812) {
 // -------------------------------------------------------------------------------------------
 
 /** One recorded frame of *intent*. Never a position — that is the entire contract. */
-internal class InputFrame(val mx: Float, val my: Float, val jump: Boolean, val dash: Boolean)
+internal class InputFrame(
+    val mx: Float,
+    val my: Float,
+    val jump: Boolean,
+    val dash: Boolean,
+)
+
+/** The drift readout is in thousands of pixels, the way the React lab prints it. */
+private const val PixelsPerReadoutUnit = 1000f
 
 /**
  * Stutter's determinism contract, ported whole.
@@ -759,7 +870,9 @@ internal class InputFrame(val mx: Float, val my: Float, val jump: Boolean, val d
  * ponytail: the path is recomputed per draw rather than cached against canvas size. It is 160
  * multiply-adds; a cache invalidated on resize would be more code than the work it saves.
  */
-internal class ReplayLog(seed: Int = 20260724) {
+internal class ReplayLog(
+    seed: Int = 20260724,
+) {
     val frames: List<InputFrame>
 
     init {
@@ -779,7 +892,11 @@ internal class ReplayLog(seed: Int = 20260724) {
         }
 
     /** `x[i]`, `y[i]` is the state after `i` frames. Index 0 is the starting state. */
-    fun replay(tape: List<InputFrame>, widthPx: Float, heightPx: Float): Pair<FloatArray, FloatArray> {
+    fun replay(
+        tape: List<InputFrame>,
+        widthPx: Float,
+        heightPx: Float,
+    ): Pair<FloatArray, FloatArray> {
         val cx = widthPx * 0.5f
         val cy = heightPx * 0.5f
         val x = FloatArray(PathLength)
@@ -801,19 +918,21 @@ internal class ReplayLog(seed: Int = 20260724) {
      * thousands of pixels the way the React readout does. Zero to the float when the tapes match —
      * which is the assertion, not a tolerance.
      */
-    fun driftFrom(a: Pair<FloatArray, FloatArray>, b: Pair<FloatArray, FloatArray>): Float {
+    fun driftFrom(
+        a: Pair<FloatArray, FloatArray>,
+        b: Pair<FloatArray, FloatArray>,
+    ): Float {
         var sum = 0f
         var n = 0
         for (i in DivergeAt until PathLength) {
             sum += hypot(a.first[i] - b.first[i], a.second[i] - b.second[i])
             n++
         }
-        return if (n == 0) 0f else sum / n / 1000f
+        return if (n == 0) 0f else sum / n / PixelsPerReadoutUnit
     }
 
     /** Which path point the playhead is on at [seconds]. Loops, like the React lab's. */
-    fun playheadAt(seconds: Float): Int =
-        (seconds / FrameSeconds).toInt().mod(PathLength)
+    fun playheadAt(seconds: Float): Int = (seconds / FrameSeconds).toInt().mod(PathLength)
 
     /**
      * The tape's shape and the physics constants, in the companion rather than at file scope: this
@@ -868,10 +987,7 @@ internal fun clockBandLabel(bucket: Int): String {
 }
 
 /** `0.0835 -> "8.4"`. There is no `String.format` on wasmJs. */
-internal fun oneDecimal(value: Double): String {
-    val tenths = (value * 10).roundToInt()
-    return "${tenths / 10}.${(if (tenths < 0) -tenths else tenths) % 10}"
-}
+internal fun oneDecimal(value: Double): String = tenthsToString((value * TenthsPerUnit).roundToInt())
 
 /** `0.083 -> "8.3%"`, for a corpus figure that arrives as a Double rather than a Float. */
 internal fun pctOf(fraction: Double): String = "${oneDecimal(fraction * 100)}%"
@@ -903,6 +1019,13 @@ internal fun labsSelfCheck() {
 }
 
 /** The bench itself, plus the two formatting helpers every readout on it goes through. */
+// MagicNumber: assertion fixtures. detekt excludes every test source set from this rule by
+// default and these functions are tests — they live in main source because composeMain is
+// `internal` and this project has no commonTest, not because they are production code. `800f` in
+// `recomposeCellAt(1f, 1f, 800f, 500f)` is the grid being asserted against; naming it would add a
+// constant that means "the number in this one assertion".
+// The real end state is these moving to jvmTest, which SelfCheckTest.kt now makes possible.
+@Suppress("MagicNumber")
 private fun checkBench() {
     check(cvLabs.size == 9) { "nine of the React bench's eleven instruments, was ${cvLabs.size}" }
     check(cvLabs.map { it.id }.toSet().size == cvLabs.size) { "lab ids are unique — the picker keys on them" }
@@ -914,10 +1037,11 @@ private fun checkBench() {
     check(pct1(1f / RecomposeCells) == "2.5%") { "one cell of forty" }
     check(pct1(1f) == "100.0%") { "whole" }
     check(smoothstep(0f) == 0f && smoothstep(1f) == 1f) { "easing spans its range" }
-
 }
 
 /** Recomposition hit-testing: the corners, the centre, and everything off-grid. */
+// MagicNumber: assertion fixtures — see the note on the first self-check in this file.
+@Suppress("MagicNumber")
 private fun checkRecomposeHitTesting() {
     check(recomposeCellAt(1f, 1f, 800f, 500f) == 0) { "top-left cell" }
     check(recomposeCellAt(799f, 499f, 800f, 500f) == RecomposeCells - 1) { "bottom-right cell" }
@@ -926,10 +1050,11 @@ private fun checkRecomposeHitTesting() {
         check(recomposeCellAt(x, y, 800f, 500f) == -1) { "off-grid tap at $x,$y must miss" }
     }
     check(recomposeCellAt(10f, 10f, 0f, 0f) == -1) { "a zero-size grid can't be hit" }
-
 }
 
 /** Crash feed: monotone, conserved, and skewed the way the story claims. */
+// MagicNumber: assertion fixtures — see the note on the first self-check in this file.
+@Suppress("MagicNumber")
 private fun checkCrashFeed() {
     val feed = CrashFeed()
     check(feed.landedCount(0f) == 0) { "nothing has landed before the first trace falls" }
@@ -960,10 +1085,11 @@ private fun checkCrashFeed() {
     check(CrashFeed.pickCause(0f) == 0 && CrashFeed.pickCause(0.99f) == crashCauses.lastIndex) {
         "the skew covers both ends"
     }
-
 }
 
 /** Fan-out: de-dup keeps exactly one arrival per cluster, and only ever fewer than it saw. */
+// MagicNumber: assertion fixtures — see the note on the first self-check in this file.
+@Suppress("MagicNumber")
 private fun checkFanout() {
     for (seed in 0 until 6) {
         val scan = FanoutScan(seed)
@@ -985,10 +1111,11 @@ private fun checkFanout() {
         check(prevUnique == scan.clusterCount) { "exactly one survivor per cluster" }
         check(prevUnique < prevTotal) { "there were duplicates to collapse in the first place" }
     }
-
 }
 
 /** Search tree: a well-formed tree that reveals monotonically and can always walk to its root. */
+// MagicNumber: assertion fixtures — see the note on the first self-check in this file.
+@Suppress("MagicNumber")
 private fun checkSearchTree() {
     searchTiers.indices.forEach { tier ->
         val run = buildSearchTreeRun(tier, tier, 640f, 340f)
@@ -1013,25 +1140,29 @@ private fun checkSearchTree() {
     val a = buildSearchTreeRun(2, 3, 640f, 340f)
     val b = buildSearchTreeRun(2, 3, 640f, 340f)
     check(a.nodes.size == b.nodes.size && a.chosen == b.chosen && a.role == b.role) { "runs reproduce" }
-
 }
 
 /** Module graph. */
+// MagicNumber: assertion fixtures — see the note on the first self-check in this file.
+@Suppress("MagicNumber")
 private fun checkModuleGraph() {
     check(moduleFeatures.size == ModuleFeatureCount) { "thirteen feature modules" }
     check(moduleFeatures.count { it.named } == 6) { "six confirmed names, seven honest placeholders" }
     check(moduleCrossEdges.size == 78) { "13 choose 2 — the tangle isolation removes" }
     check(moduleCrossEdges.toSet().size == 78) { "no duplicated pair" }
     check(ModuleOtherCount == 33) { "46 total minus 13 features" }
-
 }
 
 /**
  * Gateways: the count is read out of project data, so the failure mode is a silent 0 — and a
  * renamed metric label. Cross-checked against the badge list, which states it independently.
  */
+// MagicNumber: assertion fixtures — see the note on the first self-check in this file.
+@Suppress("MagicNumber")
 private fun checkGatewayFeed() {
-    check(gatewayCount > 0) { "the paymentslab gateway metric no longer parses as a number" } // claim-audit:allow -- quoting the stable slug, not display copy
+    check(gatewayCount > 0) {
+        "the paymentslab gateway metric no longer parses as a number" // claim-audit:allow -- stable slug
+    }
     val paymentsLabProject = projects.first { it.slug == "paymentslab" } // claim-audit:allow -- stable route slug, not display copy
     check(paymentsLabProject.badges.any { it == "$gatewayCount gateways" }) {
         "the metric says $gatewayCount gateways but the badges disagree: ${paymentsLabProject.badges}"
@@ -1060,7 +1191,6 @@ private fun checkGatewayFeed() {
     }
     val wrapped = gateways.landedCount(20_000f)
     check(wrapped > 2048) { "a long run wraps the gateway ring" }
-
 }
 
 /**
@@ -1094,10 +1224,11 @@ private fun checkReplayLog() {
     check(log.playheadAt(LabStillSeconds) > ReplayLog.DivergeAt) {
         "the still frame should sit past the split, where both paths are visible"
     }
-
 }
 
 /** Clock burn: the corpus decides the shape, so the checks are on properties, not on values. */
+// MagicNumber: assertion fixtures — see the note on the first self-check in this file.
+@Suppress("MagicNumber")
 private fun checkClockBurn() {
     check(clockDeciles.size == 10) { "the clock thesis is bucketed by decile" }
     clockDeciles.forEachIndexed { i, d ->

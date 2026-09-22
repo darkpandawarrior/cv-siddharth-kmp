@@ -2,6 +2,7 @@
 
 package com.siddharth.cv.shared.hire
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,7 +18,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.background
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
@@ -90,8 +90,7 @@ fun HireScreen(modifier: Modifier = Modifier) {
 }
 
 /** `mx-auto max-w-4xl px-6`, the measure every block on this page shares. */
-private fun Modifier.pageMeasure(): Modifier =
-    this.widthIn(max = CvContentMaxWidth).fillMaxWidth().padding(horizontal = CvGutter)
+private fun Modifier.pageMeasure(): Modifier = this.widthIn(max = CvContentMaxWidth).fillMaxWidth().padding(horizontal = CvGutter)
 
 private const val HEADLINE_COUNT = 3
 
@@ -185,7 +184,10 @@ private fun MetricRow(headline: List<Metric>) {
 // -------------------------------------------------------------------------------------------
 
 @Composable
-private fun WorkBehindTheNumbers(featured: List<CaseStudy>, nav: CvNavState) {
+private fun WorkBehindTheNumbers(
+    featured: List<CaseStudy>,
+    nav: CvNavState,
+) {
     Reveal {
         Column(Modifier.pageMeasure().padding(top = CvSectionGap)) {
             SectionEyebrow("// the work behind the numbers")
@@ -198,7 +200,10 @@ private fun WorkBehindTheNumbers(featured: List<CaseStudy>, nav: CvNavState) {
 }
 
 @Composable
-private fun CaseStudyRow(study: CaseStudy, nav: CvNavState) {
+private fun CaseStudyRow(
+    study: CaseStudy,
+    nav: CvNavState,
+) {
     val colors = cvColors
     // A case study is not always a project. `mileway` is both and has a detail page; `gps-accuracy` // claim-audit:allow -- backtick-quoted slug identifier
     // and `crash-reduction` exist only in `caseStudies`, and routing them to ProjectDetail would
@@ -270,7 +275,10 @@ private fun TheOtherHalf(uri: UriHandler) {
 // -------------------------------------------------------------------------------------------
 
 @Composable
-private fun HireFooter(nav: CvNavState, uri: UriHandler) {
+private fun HireFooter(
+    nav: CvNavState,
+    uri: UriHandler,
+) {
     Column(
         modifier = Modifier.pageMeasure().padding(top = CvSectionGap, bottom = 120.dp),
     ) {

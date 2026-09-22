@@ -40,6 +40,9 @@ import androidx.compose.ui.unit.dp
 import com.siddharth.cv.shared.data.generated.WeebBucket
 import com.siddharth.cv.shared.data.generated.WeebStale
 import com.siddharth.cv.shared.data.generated.weeb
+import com.siddharth.cv.shared.format.TenthsPerUnit
+import com.siddharth.cv.shared.format.grouped
+import com.siddharth.cv.shared.format.tenthsToString
 import com.siddharth.cv.shared.theme.CvCard
 import com.siddharth.cv.shared.theme.CvContentMaxWidth
 import com.siddharth.cv.shared.theme.CvGutter
@@ -89,10 +92,14 @@ import kotlin.math.sin
 // or spends a 1, the copy below changes with it instead of going quietly wrong.
 // ---------------------------------------------------------------------------------------------
 
-private val statuses = weeb.anime.byWatch.entries.sortedByDescending { it.value }
+private val statuses =
+    weeb.anime.byWatch.entries
+        .sortedByDescending { it.value }
 private val hasDropped = statuses.any { it.key.contains("drop", ignoreCase = true) }
 private val maxStatus = statuses.maxOfOrNull { it.value } ?: 1
-private val scores = weeb.anime.scoreDist.entries.sortedBy { it.key }
+private val scores =
+    weeb.anime.scoreDist.entries
+        .sortedBy { it.key }
 private val lowestUsed = scores.firstOrNull()?.key ?: 0
 private val topShare =
     scores.lastOrNull()?.let { it.value.toDouble() / weeb.anime.scored * 100 } ?: 0.0
@@ -104,14 +111,8 @@ private const val StaleVisible = 8
 /** The full width of the score scale. Not `scores.size`: the point is which end is missing. */
 private const val ScoreScale = 5
 
-/** `1924` to `"1,924"`. Kotlin common has no `toLocaleString`, and this corpus has no negatives. */
-private fun num(n: Int): String = n.toString().reversed().chunked(3).joinToString(",").reversed()
-
-/** `toFixed(1)`, which common Kotlin also lacks. `97.55` becomes `"97.6%"`. */
-private fun pct(x: Double): String {
-    val tenths = (x * 10).roundToInt()
-    return "${tenths / 10}.${tenths % 10}%"
-}
+/** `toFixed(1)`, which common Kotlin lacks. `97.55` becomes `"97.6%"`. */
+private fun pct(x: Double): String = "${tenthsToString((x * TenthsPerUnit).roundToInt())}%"
 
 @Composable
 fun WeebScreen(modifier: Modifier = Modifier) {
@@ -135,10 +136,11 @@ fun WeebScreen(modifier: Modifier = Modifier) {
                     SectionHeading("A hand-kept list, read as evidence")
                     Spacer(Modifier.height(14.dp))
                     BasicText(
-                        text = "${num(anime.total)} anime and ${num(manga.total)} manga, kept by " +
-                            "hand in Notion for years before anyone asked to see them. The " +
-                            "interesting part isn't the titles. It's that the table admits three " +
-                            "things its rows never say out loud.",
+                        text =
+                            "${anime.total.grouped()} anime and ${manga.total.grouped()} manga, kept by " +
+                                "hand in Notion for years before anyone asked to see them. The " +
+                                "interesting part isn't the titles. It's that the table admits three " +
+                                "things its rows never say out loud.",
                         modifier = Modifier.widthIn(max = ProseMeasure),
                         style = cvType.body,
                     )
@@ -153,18 +155,19 @@ fun WeebScreen(modifier: Modifier = Modifier) {
                 title = if (hasDropped) "Quitting is recorded" else "There is no word for quitting",
             ) {
                 BasicText(
-                    text = buildString {
-                        if (hasDropped) {
-                            append("A \"dropped\" status exists in this export, so the schema does ")
-                            append("let him admit it.")
-                        } else {
-                            append("The status column has ${statuses.size} values and not one of ")
-                            append("them is \"dropped\". ${num(anime.byWatch["Paused"] ?: 0)} ")
-                            append("titles sit in \"Paused\" instead.")
-                        }
-                        append(" Paused is supposed to mean later. Set against how many are ")
-                        append("actually caught up, it mostly means no.")
-                    },
+                    text =
+                        buildString {
+                            if (hasDropped) {
+                                append("A \"dropped\" status exists in this export, so the schema does ")
+                                append("let him admit it.")
+                            } else {
+                                append("The status column has ${statuses.size} values and not one of ")
+                                append("them is \"dropped\". ${(anime.byWatch["Paused"] ?: 0).grouped()} ")
+                                append("titles sit in \"Paused\" instead.")
+                            }
+                            append(" Paused is supposed to mean later. Set against how many are ")
+                            append("actually caught up, it mostly means no.")
+                        },
                     modifier = Modifier.widthIn(max = ProseMeasure),
                     style = cvType.bodySmall,
                 )
@@ -184,14 +187,15 @@ fun WeebScreen(modifier: Modifier = Modifier) {
 
                 Spacer(Modifier.height(22.dp))
                 BasicText(
-                    text = buildString {
-                        append("${num(anime.unwatchedSeasons)} seasons sit unwatched across ")
-                        append("${num(anime.behindCount)} shows.")
-                        if (biggestGap != null) {
-                            append(" The deepest single hole is ${biggestGap.name}, ")
-                            append("${biggestGap.gap} seasons behind.")
-                        }
-                    },
+                    text =
+                        buildString {
+                            append("${anime.unwatchedSeasons.grouped()} seasons sit unwatched across ")
+                            append("${anime.behindCount.grouped()} shows.")
+                            if (biggestGap != null) {
+                                append(" The deepest single hole is ${biggestGap.name}, ")
+                                append("${biggestGap.gap} seasons behind.")
+                            }
+                        },
                     modifier = Modifier.widthIn(max = ProseMeasure),
                     style = cvType.bodySmall,
                 )
@@ -205,11 +209,12 @@ fun WeebScreen(modifier: Modifier = Modifier) {
                 title = "The bottom of the scale has never been used",
             ) {
                 BasicText(
-                    text = "${num(anime.scored)} of ${num(anime.total)} titles carry a score, and " +
-                        "every one of them is a $lowestUsed or higher out of $ScoreScale. The " +
-                        "lower ${lowestUsed - 1} points of his own scale have never once been " +
-                        "spent. The shows that would have earned them are the ones sitting in " +
-                        "\"Paused\", unscored.",
+                    text =
+                        "${anime.scored.grouped()} of ${anime.total.grouped()} titles carry a score, and " +
+                            "every one of them is a $lowestUsed or higher out of $ScoreScale. The " +
+                            "lower ${lowestUsed - 1} points of his own scale have never once been " +
+                            "spent. The shows that would have earned them are the ones sitting in " +
+                            "\"Paused\", unscored.",
                     modifier = Modifier.widthIn(max = ProseMeasure),
                     style = cvType.bodySmall,
                 )
@@ -234,11 +239,12 @@ fun WeebScreen(modifier: Modifier = Modifier) {
                 title = "A hand-kept list cannot see the present",
             ) {
                 BasicText(
-                    text = "Every title here was matched against AniList when the corpus was " +
-                        "generated. ${num(weeb.stale.size)} rows say \"caught up\" while a sequel " +
-                        "has already aired. That gap is not carelessness. It is what a snapshot " +
-                        "does the moment it is written, and the only fix is to ask something " +
-                        "outside the list.",
+                    text =
+                        "Every title here was matched against AniList when the corpus was " +
+                            "generated. ${weeb.stale.size.grouped()} rows say \"caught up\" while a sequel " +
+                            "has already aired. That gap is not carelessness. It is what a snapshot " +
+                            "does the moment it is written, and the only fix is to ask something " +
+                            "outside the list.",
                     modifier = Modifier.widthIn(max = ProseMeasure),
                     style = cvType.bodySmall,
                 )
@@ -255,11 +261,12 @@ fun WeebScreen(modifier: Modifier = Modifier) {
             Column(Modifier.pageMeasure().padding(top = 18.dp)) {
                 if (weeb.stale.size > StaleVisible) {
                     GhostButton(
-                        text = if (showAllStale) {
-                            "Show the first $StaleVisible"
-                        } else {
-                            "Show all ${weeb.stale.size}"
-                        },
+                        text =
+                            if (showAllStale) {
+                                "Show the first $StaleVisible"
+                            } else {
+                                "Show all ${weeb.stale.size}"
+                            },
                         onClick = { showAllStale = !showAllStale },
                     )
                     Spacer(Modifier.height(18.dp))
@@ -280,10 +287,11 @@ fun WeebScreen(modifier: Modifier = Modifier) {
                     MonoMeta("THE MANGA HALF")
                     Spacer(Modifier.height(12.dp))
                     BasicText(
-                        text = "${num(manga.total)} titles and ${num(manga.chaptersRead)} chapters " +
-                            "logged. Too small a corpus to carry a finding, and saying so is " +
-                            "better than dressing it up. ${manga.byRead["Reading"] ?: 0} of them " +
-                            "are still open.",
+                        text =
+                            "${manga.total.grouped()} titles and ${manga.chaptersRead.grouped()} chapters " +
+                                "logged. Too small a corpus to carry a finding, and saying so is " +
+                                "better than dressing it up. ${manga.byRead["Reading"] ?: 0} of them " +
+                                "are still open.",
                         modifier = Modifier.widthIn(max = ProseMeasure),
                         style = cvType.bodySmall,
                     )
@@ -303,14 +311,17 @@ fun WeebScreen(modifier: Modifier = Modifier) {
 // ---------------------------------------------------------------------------------------------
 
 /** `mx-auto max-w-4xl px-6`, the measure every section on this page shares. */
-private fun Modifier.pageMeasure(): Modifier =
-    this.widthIn(max = CvContentMaxWidth).fillMaxWidth().padding(horizontal = CvGutter)
+private fun Modifier.pageMeasure(): Modifier = this.widthIn(max = CvContentMaxWidth).fillMaxWidth().padding(horizontal = CvGutter)
 
 /** `max-w-2xl`. Prose stays narrower than the page so a paragraph never runs the full measure. */
 private val ProseMeasure = 680.dp
 
 @Composable
-private fun Finding(eyebrow: String, title: String, content: @Composable () -> Unit) {
+private fun Finding(
+    eyebrow: String,
+    title: String,
+    content: @Composable () -> Unit,
+) {
     Reveal {
         Column(Modifier.pageMeasure().padding(top = CvSectionGap)) {
             SectionEyebrow(eyebrow)
@@ -363,14 +374,17 @@ private fun StatusChart() {
                     )
                 }
                 Spacer(Modifier.width(12.dp))
-                BasicText(text = num(n), modifier = Modifier.width(44.dp), style = cvType.metaMono)
+                BasicText(text = n.grouped(), modifier = Modifier.width(44.dp), style = cvType.metaMono)
             }
         }
     }
 }
 
 @Composable
-private fun CaughtUpCard(label: String, bucket: WeebBucket) {
+private fun CaughtUpCard(
+    label: String,
+    bucket: WeebBucket,
+) {
     CvCard(modifier = Modifier.widthIn(min = 240.dp, max = 340.dp)) {
         MonoMeta(label.uppercase())
         Spacer(Modifier.height(10.dp))
@@ -399,10 +413,11 @@ private fun ScoreLadder() {
             val row = scores.firstOrNull { it.key == s }
             val lit = row != null
             Column(
-                modifier = Modifier
-                    .widthIn(min = 96.dp)
-                    .background(colors.card, RoundedCornerShape(10.dp))
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                modifier =
+                    Modifier
+                        .widthIn(min = 96.dp)
+                        .background(colors.card, RoundedCornerShape(10.dp))
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 StarRow(count = s, lit = lit)
@@ -410,11 +425,12 @@ private fun ScoreLadder() {
                 BasicText(
                     // "never" rather than the web's placeholder glyph. The unused rungs are the
                     // finding, so the word for them should be a word.
-                    text = row?.let { num(it.value) } ?: "never",
-                    style = cvType.cardTitle.copy(
-                        color = if (lit) colors.onBackground else colors.muted,
-                        fontWeight = FontWeight.Bold,
-                    ),
+                    text = row?.let { it.value.grouped() } ?: "never",
+                    style =
+                        cvType.cardTitle.copy(
+                            color = if (lit) colors.onBackground else colors.muted,
+                            fontWeight = FontWeight.Bold,
+                        ),
                 )
             }
         }
@@ -428,7 +444,10 @@ private const val StarInnerRatio = 0.45f
  * unvendored glyph is tofu on the wasm canvas, the same reason ExpanderSection draws its chevron.
  */
 @Composable
-private fun StarRow(count: Int, lit: Boolean) {
+private fun StarRow(
+    count: Int,
+    lit: Boolean,
+) {
     val colors = cvColors
     val tint = if (lit) colors.accent else colors.muted.copy(alpha = 0.45f)
     Row(
@@ -441,6 +460,9 @@ private fun StarRow(count: Int, lit: Boolean) {
     }
 }
 
+/** A five-pointed star is ten vertices: an outer and an inner per point. */
+private const val StarVertices = 10
+
 private fun starPath(size: Size): Path {
     val path = Path()
     val cx = size.width / 2f
@@ -448,7 +470,7 @@ private fun starPath(size: Size): Path {
     val outer = min(cx, cy)
     val inner = outer * StarInnerRatio
     // Ten vertices, alternating outer and inner, starting at twelve o'clock.
-    repeat(10) { i ->
+    repeat(StarVertices) { i ->
         val radius = if (i % 2 == 0) outer else inner
         val angle = (-PI / 2 + i * PI / ScoreScale).toFloat()
         val x = cx + radius * cos(angle)

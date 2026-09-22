@@ -200,7 +200,10 @@ private fun Header() {
 // -------------------------------------------------------------------------------------------
 
 @Composable
-private fun Section(title: String, content: @Composable () -> Unit) {
+private fun Section(
+    title: String,
+    content: @Composable () -> Unit,
+) {
     val colors = cvColors
     Column(Modifier.fillMaxWidth().padding(top = 20.dp)) {
         BasicText(
@@ -251,7 +254,10 @@ private fun Job(job: Experience) {
 
 /** `flex items-baseline justify-between` — title left, period right, period never wraps. */
 @Composable
-private fun LabeledRow(left: String, right: String) {
+private fun LabeledRow(
+    left: String,
+    right: String,
+) {
     val colors = cvColors
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -326,7 +332,10 @@ private fun ProjectsAndOpenSource() {
 // -------------------------------------------------------------------------------------------
 
 @Composable
-private fun SkillLine(group: String, items: String) {
+private fun SkillLine(
+    group: String,
+    items: String,
+) {
     val colors = cvColors
     BasicText(
         text =

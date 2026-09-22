@@ -128,7 +128,10 @@ private fun emphasise(raw: String): Pair<String, List<IntRange>> {
  * in the corpus sits between two of them. Stopping at the break is what keeps one stray asterisk
  * from italicising the paragraph under it.
  */
-private fun closingStar(raw: String, open: Int): Int {
+private fun closingStar(
+    raw: String,
+    open: Int,
+): Int {
     val at = raw.indexOf('*', open + 1)
     if (at < 0) return -1
     val brk = raw.indexOf('\n', open + 1)
@@ -147,16 +150,17 @@ internal fun unsupportedMarkdown(body: String): String? {
     for (raw in body.split('\n')) {
         val line = raw.trimStart().removePrefix(">").trim()
         if (line.isEmpty()) continue
-        val kind = when {
-            "**" in line -> "bold"
-            line.startsWith("#") && line.trimStart('#').startsWith(" ") -> "heading"
-            ListItem.containsMatchIn(line) -> "list item"
-            ThematicBreak.matches(line) -> "thematic break"
-            "](" in line -> "link"
-            '`' in line -> "code"
-            line.startsWith("|") -> "table row"
-            else -> null
-        }
+        val kind =
+            when {
+                "**" in line -> "bold"
+                line.startsWith("#") && line.trimStart('#').startsWith(" ") -> "heading"
+                ListItem.containsMatchIn(line) -> "list item"
+                ThematicBreak.matches(line) -> "thematic break"
+                "](" in line -> "link"
+                '`' in line -> "code"
+                line.startsWith("|") -> "table row"
+                else -> null
+            }
         if (kind != null) return "$kind in: ${line.take(UnsupportedExcerpt)}"
     }
     return null
@@ -180,6 +184,10 @@ private val ThematicBreak = Regex("""^(-{3,}|\*{3,}|_{3,})$""")
  * an unclosed marker that eats the rest of the piece, a quote that never closes and swallows the
  * prose under it, and a corpus that grows a construct the renderer was never told about.
  */
+// MagicNumber: assertion fixtures. detekt excludes every test source set from this rule by
+// default; these are tests that live in main source only because composeMain is `internal`
+// and this project has no commonTest. SelfCheckTest.kt now runs them from `check`.
+@Suppress("MagicNumber")
 internal fun readParseSelfCheck() {
     // Emphasis lands on the exact characters, and the markers are gone from the text.
     val mid = parsePiece("a *b c* d").single()

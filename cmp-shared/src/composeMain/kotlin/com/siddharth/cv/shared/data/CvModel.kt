@@ -10,7 +10,6 @@ package com.siddharth.cv.shared.data
  * Colours stay #RRGGBB strings here — converting to Compose Color is the theme
  * layer's job, so this file has zero imports.
  */
-
 data class Profile(
     val name: String,
     val title: String,

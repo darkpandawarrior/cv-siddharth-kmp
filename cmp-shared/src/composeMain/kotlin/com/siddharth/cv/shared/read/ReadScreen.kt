@@ -41,10 +41,10 @@ import androidx.compose.ui.unit.sp
 import com.siddharth.cv.shared.LocalNav
 import com.siddharth.cv.shared.Route
 import com.siddharth.cv.shared.anthology.InkColors
-import com.siddharth.cv.shared.anthology.grouped
 import com.siddharth.cv.shared.data.generated.PrintedPiece
 import com.siddharth.cv.shared.data.generated.printedPieces
 import com.siddharth.cv.shared.data.profile
+import com.siddharth.cv.shared.format.grouped
 import com.siddharth.cv.shared.theme.CvGutter
 import com.siddharth.cv.shared.theme.CvTheme
 import com.siddharth.cv.shared.theme.GhostButton
@@ -119,8 +119,7 @@ fun ReadScreen(
  */
 private val ReadMeasure: Dp = 672.dp
 
-private fun Modifier.readMeasure(): Modifier =
-    this.widthIn(max = ReadMeasure).fillMaxWidth().padding(horizontal = CvGutter)
+private fun Modifier.readMeasure(): Modifier = this.widthIn(max = ReadMeasure).fillMaxWidth().padding(horizontal = CvGutter)
 
 /** `.piece-body`: `1.0625rem` on `1.75`. */
 private val ProseSize = 17.sp
@@ -186,7 +185,10 @@ private fun Piece(
 }
 
 @Composable
-private fun Head(piece: PrintedPiece, onSeeInPrint: (year: Int, page: Int) -> Unit) {
+private fun Head(
+    piece: PrintedPiece,
+    onSeeInPrint: (year: Int, page: Int) -> Unit,
+) {
     val colors = cvColors
     val nav = LocalNav.current
     val uri = LocalUriHandler.current
@@ -263,15 +265,18 @@ private fun kickerOf(piece: PrintedPiece): String =
         piece.note,
     ).filter { it.isNotEmpty() }.joinToString(" · ")
 
-private fun survivedPercent(piece: PrintedPiece): Int =
-    (piece.printWords.toDouble() / piece.words * PERCENT).roundToInt()
+private fun survivedPercent(piece: PrintedPiece): Int = (piece.printWords.toDouble() / piece.words * PERCENT).roundToInt()
 
 // ---------------------------------------------------------------------------------------------
 // The prose
 // ---------------------------------------------------------------------------------------------
 
 @Composable
-private fun Paragraph(block: ProseBlock, style: TextStyle, emphasis: SpanStyle) {
+private fun Paragraph(
+    block: ProseBlock,
+    style: TextStyle,
+    emphasis: SpanStyle,
+) {
     Column(Modifier.readMeasure().padding(bottom = ParagraphGap)) {
         BasicText(text = annotate(block, emphasis), style = style)
     }
@@ -286,7 +291,10 @@ private fun Paragraph(block: ProseBlock, style: TextStyle, emphasis: SpanStyle) 
  * the same weight of attention. Quiet, not neon.
  */
 @Composable
-private fun Epigraph(block: ProseBlock, emphasis: SpanStyle) {
+private fun Epigraph(
+    block: ProseBlock,
+    emphasis: SpanStyle,
+) {
     val colors = cvColors
     Column(Modifier.readMeasure().padding(bottom = QuoteGap)) {
         Ruled(colors.accent) {
@@ -307,7 +315,10 @@ private fun Callout(text: String) {
 
 /** The left rule shared by the epigraph and the two callouts: `border-left: 2px` and its gutter. */
 @Composable
-private fun Ruled(rule: Color, content: @Composable () -> Unit) {
+private fun Ruled(
+    rule: Color,
+    content: @Composable () -> Unit,
+) {
     Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
         Box(Modifier.width(2.dp).fillMaxHeight().background(rule))
         Spacer(Modifier.width(18.dp))
@@ -319,7 +330,10 @@ private fun Ruled(rule: Color, content: @Composable () -> Unit) {
  * The parse's index ranges become real spans here and nowhere else. [ProseBlock.italics] are
  * inclusive at both ends; `addStyle` wants an exclusive end.
  */
-private fun annotate(block: ProseBlock, emphasis: SpanStyle): AnnotatedString =
+private fun annotate(
+    block: ProseBlock,
+    emphasis: SpanStyle,
+): AnnotatedString =
     if (block.italics.isEmpty()) {
         AnnotatedString(block.text)
     } else {
@@ -334,7 +348,10 @@ private fun annotate(block: ProseBlock, emphasis: SpanStyle): AnnotatedString =
 // ---------------------------------------------------------------------------------------------
 
 @Composable
-private fun MoreFromTheArchive(piece: PrintedPiece, onOpenPiece: (String) -> Unit) {
+private fun MoreFromTheArchive(
+    piece: PrintedPiece,
+    onOpenPiece: (String) -> Unit,
+) {
     val colors = cvColors
     Reveal {
         Column(Modifier.readMeasure().padding(top = 40.dp)) {
@@ -350,16 +367,20 @@ private fun MoreFromTheArchive(piece: PrintedPiece, onOpenPiece: (String) -> Uni
 }
 
 @Composable
-private fun ArchiveRow(piece: PrintedPiece, onOpenPiece: (String) -> Unit) {
+private fun ArchiveRow(
+    piece: PrintedPiece,
+    onOpenPiece: (String) -> Unit,
+) {
     val colors = cvColors
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(role = Role.Button) { onOpenPiece(piece.slug) }
-            // `divide-y`: the hairline is drawn on top of each row, so the last one has none under
-            // it and the block ends on prose rather than on a line.
-            .drawBehind { drawRect(colors.line, size = Size(size.width, 1.dp.toPx())) }
-            .padding(vertical = 14.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(role = Role.Button) { onOpenPiece(piece.slug) }
+                // `divide-y`: the hairline is drawn on top of each row, so the last one has none under
+                // it and the block ends on prose rather than on a line.
+                .drawBehind { drawRect(colors.line, size = Size(size.width, 1.dp.toPx())) }
+                .padding(vertical = 14.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.Bottom,
     ) {
@@ -391,7 +412,10 @@ private fun rowMeta(piece: PrintedPiece): String =
  * handed the live site instead of a blank page or an invented one.
  */
 @Composable
-private fun OutOfPrint(slug: String, modifier: Modifier = Modifier) {
+private fun OutOfPrint(
+    slug: String,
+    modifier: Modifier = Modifier,
+) {
     val colors = cvColors
     val nav = LocalNav.current
     val uri = LocalUriHandler.current
@@ -408,9 +432,10 @@ private fun OutOfPrint(slug: String, modifier: Modifier = Modifier) {
             BasicText(text = "unknown piece: $slug", style = cvType.mono.copy(color = colors.muted))
             Spacer(Modifier.height(12.dp))
             BasicText(
-                text = "This reader carries the ${printedPieces.size} pieces of the printed " +
-                    "archive. The anthology entries have bodies too, and they are on the live site " +
-                    "rather than in this build.",
+                text =
+                    "This reader carries the ${printedPieces.size} pieces of the printed " +
+                        "archive. The anthology entries have bodies too, and they are on the live site " +
+                        "rather than in this build.",
                 style = cvType.bodySmall,
             )
             Spacer(Modifier.height(24.dp))

@@ -42,10 +42,10 @@ import com.siddharth.cv.shared.LocalNav
 import com.siddharth.cv.shared.Route
 import com.siddharth.cv.shared.data.metrics
 import com.siddharth.cv.shared.data.profile
-import com.siddharth.cv.shared.playground.ThemeLabSection
 import com.siddharth.cv.shared.data.projectBySlug
 import com.siddharth.cv.shared.data.projectOrder
 import com.siddharth.cv.shared.fit.FitCheckScreen
+import com.siddharth.cv.shared.playground.ThemeLabSection
 import com.siddharth.cv.shared.theme.CircuitDivider
 import com.siddharth.cv.shared.theme.CvContentMaxWidth
 import com.siddharth.cv.shared.theme.CvGutter
@@ -74,7 +74,11 @@ import kotlinx.coroutines.delay
  * the item order cannot drift apart. Adding a section means adding one row to [homeSections] and one
  * branch to the `when` — nothing else.
  */
-data class HomeSection(val id: String, val label: String, val index: Int)
+data class HomeSection(
+    val id: String,
+    val label: String,
+    val index: Int,
+)
 
 val homeSections: List<HomeSection> =
     listOf(
@@ -94,7 +98,10 @@ val homeSections: List<HomeSection> =
     )
 
 @Composable
-fun HomeScreen(listState: LazyListState, modifier: Modifier = Modifier) {
+fun HomeScreen(
+    listState: LazyListState,
+    modifier: Modifier = Modifier,
+) {
     val nav = LocalNav.current
 
     // The `goToSection` / hash-scroll equivalent. `pendingSection` is a one-shot request the nav
@@ -138,7 +145,10 @@ fun HomeScreen(listState: LazyListState, modifier: Modifier = Modifier) {
  * break the scroll-spy contract above.
  */
 @Composable
-private fun SectionSlot(last: Boolean, content: @Composable () -> Unit) {
+private fun SectionSlot(
+    last: Boolean,
+    content: @Composable () -> Unit,
+) {
     Column(Modifier.fillMaxWidth()) {
         Box(
             Modifier
@@ -305,8 +315,7 @@ private fun TiltPhone(modifier: Modifier = Modifier) {
                             ),
                     ),
                     PhoneScreenShape,
-                )
-                .border(1.dp, colors.line.copy(alpha = 0.6f), PhoneScreenShape)
+                ).border(1.dp, colors.line.copy(alpha = 0.6f), PhoneScreenShape)
                 .padding(horizontal = 18.dp, vertical = 22.dp),
         ) {
             MonoMeta("sid.android")

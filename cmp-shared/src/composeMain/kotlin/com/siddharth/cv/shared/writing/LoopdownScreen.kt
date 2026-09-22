@@ -69,7 +69,10 @@ import com.siddharth.cv.shared.theme.cvType
  * second launcher would be a duplicate control rather than a ported one).
  */
 @Composable
-fun LoopdownScreen(onOpenInk: () -> Unit, modifier: Modifier = Modifier) {
+fun LoopdownScreen(
+    onOpenInk: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val colors = cvColors
     val nav = LocalNav.current
     val uri = LocalUriHandler.current
@@ -172,7 +175,10 @@ fun LoopdownScreen(onOpenInk: () -> Unit, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun LoopdownHero(nav: CvNavState, uri: UriHandler) {
+private fun LoopdownHero(
+    nav: CvNavState,
+    uri: UriHandler,
+) {
     Reveal {
         Column(Modifier.writingMeasure().padding(top = 40.dp)) {
             TagChip(text = "The Loopdown", selected = true)
@@ -212,7 +218,11 @@ private fun LoopdownHero(nav: CvNavState, uri: UriHandler) {
  * instead, which the web card also tints, so the colour still says the same thing.
  */
 @Composable
-private fun LessonCard(lesson: WritingLesson, nav: CvNavState, uri: UriHandler) {
+private fun LessonCard(
+    lesson: WritingLesson,
+    nav: CvNavState,
+    uri: UriHandler,
+) {
     val accent = accentOf(lesson.series)
     val live = lesson.status == "published"
     val links = lesson.links.published()
@@ -309,8 +319,7 @@ private val AutoSeriesColor: Map<String, Color> =
         .mapIndexed { i, id -> id to AutoPalette[i % AutoPalette.size] }
         .toMap()
 
-private fun accentOf(id: String?): Color =
-    id?.let { SeriesColor[it] ?: AutoSeriesColor[it] } ?: NeutralSeries
+private fun accentOf(id: String?): Color = id?.let { SeriesColor[it] ?: AutoSeriesColor[it] } ?: NeutralSeries
 
 /** Cast accents cycle through the series palette: the characters roam between series. */
 private val CastColors: List<Color> =
@@ -336,20 +345,25 @@ private fun PostLinks.published(): List<Pair<String, String>> =
  */
 private val SeriesProject: Map<String, NamedLink> =
     mapOf(
-        "sensors-who-lie" to NamedLink("Built in: Doori's location engine", "#project/mileway"), // claim-audit:allow -- internal route fragment keyed on the stable slug
+        "sensors-who-lie" to
+            NamedLink("Built in: Doori's location engine", "#project/mileway"), // claim-audit:allow -- route fragment
         "the-coroutine-court" to NamedLink("From: the -80% crashes work", "#work"),
         "the-night-shift" to NamedLink("From: the 50%→95% GPS work", "#work"),
         "ghosts-in-the-recomposition" to NamedLink("From: the ~87% Compose migration", "#work"),
         "one-brain-two-bodies" to
-            NamedLink("Built in: PaymentsLab-KMP's expect/actual split", "#project/paymentslab"), // claim-audit:allow -- internal route fragment keyed on the stable slug
-        "chain-of-custody" to NamedLink("Built in: Doori's trip data model", "#project/mileway"), // claim-audit:allow -- internal route fragment keyed on the stable slug
-        "crossing-the-schema" to NamedLink("Built in: Doori's Room migrations", "#project/mileway"), // claim-audit:allow -- internal route fragment keyed on the stable slug
+            NamedLink(
+                "Built in: PaymentsLab-KMP's expect/actual split",
+                "#project/paymentslab", // claim-audit:allow -- route fragment, stable slug
+            ),
+        "chain-of-custody" to
+            NamedLink("Built in: Doori's trip data model", "#project/mileway"), // claim-audit:allow -- route fragment
+        "crossing-the-schema" to
+            NamedLink("Built in: Doori's Room migrations", "#project/mileway"), // claim-audit:allow -- route fragment
         "notes-from-the-loop" to NamedLink("Built in: The Loopdown itself", "#project/the-loopdown"),
     )
 
 /** `"sensors-who-lie"` -> `"Sensors Who Lie"`. Locale-independent, like the JS it ports. */
-internal fun titleize(id: String?): String =
-    id.orEmpty().split("-").joinToString(" ") { it.replaceFirstChar(Char::uppercaseChar) }
+internal fun titleize(id: String?): String = id.orEmpty().split("-").joinToString(" ") { it.replaceFirstChar(Char::uppercaseChar) }
 
 // ---------------------------------------------------------------------------------------------
 // Shared with InkScreen
@@ -359,11 +373,13 @@ internal fun titleize(id: String?): String =
 // ---------------------------------------------------------------------------------------------
 
 /** `mx-auto max-w-5xl px-6`, the measure both writing routes share. */
-internal fun Modifier.writingMeasure(): Modifier =
-    this.widthIn(max = CvContentMaxWidth).fillMaxWidth().padding(horizontal = CvGutter)
+internal fun Modifier.writingMeasure(): Modifier = this.widthIn(max = CvContentMaxWidth).fillMaxWidth().padding(horizontal = CvGutter)
 
 @Composable
-internal fun WritingSectionHead(eyebrow: String, title: String) {
+internal fun WritingSectionHead(
+    eyebrow: String,
+    title: String,
+) {
     SectionEyebrow(eyebrow)
     Spacer(Modifier.height(10.dp))
     SectionHeading(title)
@@ -378,7 +394,11 @@ internal fun WritingSectionHead(eyebrow: String, title: String) {
  * touch, so the link is lifted out to a real control under the sentence. The words are unchanged.
  */
 @Composable
-internal fun CrossWorldNote(body: String, linkLabel: String, onClick: () -> Unit) {
+internal fun CrossWorldNote(
+    body: String,
+    linkLabel: String,
+    onClick: () -> Unit,
+) {
     Column {
         BasicText(
             text = body,
@@ -397,7 +417,11 @@ internal fun CrossWorldNote(body: String, linkLabel: String, onClick: () -> Unit
  * in-app destination, and a site path this build does not serve (`/excelsior`, `/feed.xml`)
  * resolves against the live React site rather than silently doing nothing.
  */
-internal fun openWritingLink(url: String, nav: CvNavState, uri: UriHandler) {
+internal fun openWritingLink(
+    url: String,
+    nav: CvNavState,
+    uri: UriHandler,
+) {
     when {
         url.startsWith("#project/") -> nav.go(Route.ProjectDetail(url.removePrefix("#project/")))
         url.startsWith("#") -> nav.goSection(url.removePrefix("#"))

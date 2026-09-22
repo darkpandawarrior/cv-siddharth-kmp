@@ -22,12 +22,13 @@ import platform.UIKit.UIPrintInteractionController
 actual fun printResume(html: String) {
     val controller = UIPrintInteractionController.sharedPrintController()
 
-    controller.printInfo = UIPrintInfo.printInfo().apply {
-        // General, not Photo/Grayscale: the résumé is text with a couple of hairline rules, and
-        // Photo would ask the driver for a colour-managed raster of a page of type.
-        outputType = UIPrintInfoOutputType.UIPrintInfoOutputGeneral
-        jobName = resumePrintJobName
-    }
+    controller.printInfo =
+        UIPrintInfo.printInfo().apply {
+            // General, not Photo/Grayscale: the résumé is text with a couple of hairline rules, and
+            // Photo would ask the driver for a colour-managed raster of a page of type.
+            outputType = UIPrintInfoOutputType.UIPrintInfoOutputGeneral
+            jobName = resumePrintJobName
+        }
     controller.printFormatter = UIMarkupTextPrintFormatter(markupText = html)
 
     // ponytail: `presentAnimated` presents from the key window and needs no view controller,

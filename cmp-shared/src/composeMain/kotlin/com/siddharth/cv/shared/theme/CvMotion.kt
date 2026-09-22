@@ -128,7 +128,10 @@ fun Modifier.fadeMask(stops: List<Pair<Float, Float>>): Modifier =
  * deliberately no visibility-tracking system here.
  */
 @Composable
-fun Reveal(delayMillis: Int = 0, content: @Composable () -> Unit) {
+fun Reveal(
+    delayMillis: Int = 0,
+    content: @Composable () -> Unit,
+) {
     val reduced = LocalReducedMotion.current
     if (reduced) {
         // The CSS forces `.reveal` straight to its revealed state under reduced motion.
@@ -164,7 +167,10 @@ fun Reveal(delayMillis: Int = 0, content: @Composable () -> Unit) {
  * this is inert on Android/iOS by construction — which is correct, the effect is desktop/web only.
  */
 @Composable
-fun Modifier.tiltOnHover(maxDegrees: Float = 6f, spotlight: Color? = null): Modifier {
+fun Modifier.tiltOnHover(
+    maxDegrees: Float = 6f,
+    spotlight: Color? = null,
+): Modifier {
     if (LocalReducedMotion.current) return this
     var pointer by remember { mutableStateOf<Offset?>(null) }
     var box by remember { mutableStateOf(Size.Zero) }
@@ -188,13 +194,11 @@ fun Modifier.tiltOnHover(maxDegrees: Float = 6f, spotlight: Color? = null): Modi
                     }
                 }
             }
-        }
-        .graphicsLayer {
+        }.graphicsLayer {
             rotationX = rotX
             rotationY = rotY
             cameraDistance = 12f * density
-        }
-        .then(
+        }.then(
             if (spotlight == null) {
                 Modifier
             } else {

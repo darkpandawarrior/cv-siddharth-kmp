@@ -129,17 +129,19 @@ val LocalCvType: ProvidableCompositionLocal<CvTypography> =
 val LocalReducedMotion: ProvidableCompositionLocal<Boolean> = staticCompositionLocalOf { false }
 
 val cvColors: CvColors
-    @Composable @ReadOnlyComposable get() = LocalCvColors.current
+    @Composable @ReadOnlyComposable
+    get() = LocalCvColors.current
 
 val cvType: CvTypography
-    @Composable @ReadOnlyComposable get() = LocalCvType.current
+    @Composable @ReadOnlyComposable
+    get() = LocalCvType.current
 
-/** `"#3ddc84"` -> opaque [Color]. Accepts a leading `#` or not. */
 /** `#RRGGBB` carries no alpha channel, so every parsed colour is forced fully opaque. */
 private const val OpaqueAlpha = 0xFF000000
 
 private const val HexRadix = 16
 
+/** `"#3ddc84"` -> opaque [Color]. Accepts a leading `#` or not. */
 fun cvColor(hex: String): Color = Color(hex.removePrefix("#").toLong(HexRadix) or OpaqueAlpha)
 
 /**
@@ -166,7 +168,11 @@ fun projectColors(theme: ProjectTheme?): CvColors {
  * `widthDp` of 0 is treated as 375 — on wasmJs `LocalWindowInfo.containerSize` legitimately reports
  * 0 during the first composition and every fluid size would otherwise collapse to its minimum.
  */
-fun fluidSp(minSp: Float, maxSp: Float, widthDp: Float): TextUnit {
+fun fluidSp(
+    minSp: Float,
+    maxSp: Float,
+    widthDp: Float,
+): TextUnit {
     val w = if (widthDp <= 0f) 375f else widthDp
     val t = ((w - 375f) / (1920f - 375f)).coerceIn(0f, 1f)
     return (minSp + (maxSp - minSp) * t).sp
@@ -184,22 +190,24 @@ fun fluidSp(minSp: Float, maxSp: Float, widthDp: Float): TextUnit {
  * the whole reason `compose.components.resources` is a dependency.
  */
 @Composable
-private fun rememberDisplayFamily(): FontFamily = FontFamily(
-    Font(Res.font.space_grotesk_regular, FontWeight.Normal),
-    Font(Res.font.space_grotesk_medium, FontWeight.Medium),
-    Font(Res.font.space_grotesk_semibold, FontWeight.SemiBold),
-    Font(Res.font.space_grotesk_bold, FontWeight.Bold),
-    // No Black cut is vendored; ghostNumeral asks for W900 and Skia synthesises it from Bold.
-    // ponytail: add space_grotesk_black.ttf if the synthesised weight ever reads wrong.
-    Font(Res.font.space_grotesk_bold, FontWeight.Black),
-)
+private fun rememberDisplayFamily(): FontFamily =
+    FontFamily(
+        Font(Res.font.space_grotesk_regular, FontWeight.Normal),
+        Font(Res.font.space_grotesk_medium, FontWeight.Medium),
+        Font(Res.font.space_grotesk_semibold, FontWeight.SemiBold),
+        Font(Res.font.space_grotesk_bold, FontWeight.Bold),
+        // No Black cut is vendored; ghostNumeral asks for W900 and Skia synthesises it from Bold.
+        // ponytail: add space_grotesk_black.ttf if the synthesised weight ever reads wrong.
+        Font(Res.font.space_grotesk_bold, FontWeight.Black),
+    )
 
 /** DM Mono stands in for JetBrains Mono — same monospace feel, one weight, far fewer bytes. */
 @Composable
-private fun rememberMonoFamily(): FontFamily = FontFamily(
-    Font(Res.font.dm_mono_medium, FontWeight.Normal),
-    Font(Res.font.dm_mono_medium, FontWeight.Medium),
-)
+private fun rememberMonoFamily(): FontFamily =
+    FontFamily(
+        Font(Res.font.dm_mono_medium, FontWeight.Normal),
+        Font(Res.font.dm_mono_medium, FontWeight.Medium),
+    )
 
 @Composable
 private fun rememberCvTypography(
@@ -316,7 +324,12 @@ fun CvTheme(
     reducedMotion: Boolean = LocalReducedMotion.current,
     content: @Composable () -> Unit,
 ) {
-    val widthDp = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp().value }
+    val widthDp =
+        with(LocalDensity.current) {
+            LocalWindowInfo.current.containerSize.width
+                .toDp()
+                .value
+        }
     val typography =
         rememberCvTypography(colors, widthDp, rememberDisplayFamily(), rememberMonoFamily())
     CompositionLocalProvider(

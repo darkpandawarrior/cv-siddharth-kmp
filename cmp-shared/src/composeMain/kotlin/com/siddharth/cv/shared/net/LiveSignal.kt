@@ -41,10 +41,11 @@ const val GITHUB_ACTIVITY_ENDPOINT: String = "$SIGNAL_ORIGIN/api/github-activity
  * `type` all arrive on the wire and are dropped here on purpose.
  */
 @PublishedApi
-internal val signalJson: Json = Json {
-    ignoreUnknownKeys = true
-    isLenient = true
-}
+internal val signalJson: Json =
+    Json {
+        ignoreUnknownKeys = true
+        isLenient = true
+    }
 
 /**
  * One client for every live signal, built the same way and for the same reason
@@ -167,18 +168,20 @@ fun SpotifyNow.nowOrLast(): SpotifyTrack? {
 // reductions, and both have a way of going wrong that a compiler cannot see (a repo listed twice,
 // a placeholder track surfacing while Spotify is disconnected). Call from any target's main().
 internal fun liveSignalSelfCheck() {
-    val feed = GithubActivity(
-        connected = true,
-        items = listOf(
-            GithubActivityItem("a/one", "u1"),
-            GithubActivityItem("a/one", "u2"),
-            GithubActivityItem("b/two", "u3", upstream = true),
-            GithubActivityItem("c/three", "u4"),
-            GithubActivityItem("d/four", "u5"),
-            GithubActivityItem("e/five", "u6"),
-            GithubActivityItem("f/six", "u7"),
-        ),
-    )
+    val feed =
+        GithubActivity(
+            connected = true,
+            items =
+                listOf(
+                    GithubActivityItem("a/one", "u1"),
+                    GithubActivityItem("a/one", "u2"),
+                    GithubActivityItem("b/two", "u3", upstream = true),
+                    GithubActivityItem("c/three", "u4"),
+                    GithubActivityItem("d/four", "u5"),
+                    GithubActivityItem("e/five", "u6"),
+                    GithubActivityItem("f/six", "u7"),
+                ),
+        )
     val repos = feed.byRepo()
     check(repos.map { it.repo }.distinct().size == repos.size) { "one row per repository" }
     check(repos.size == ACTIVITY_REPOS_SHOWN) { "capped at the same five the web shows" }
@@ -201,22 +204,24 @@ internal fun liveSignalSelfCheck() {
     // and trimmed only in the number of items. This is the half that can be silently wrong: a
     // renamed or mistyped field decodes to a default, the strip shows nothing, and "nothing" is
     // also exactly what a browser CORS rejection looks like. Nobody would ever find it by looking.
-    val liveSpotify = signalJson.decodeFromString<SpotifyNow>(
-        """{"connected":false,"isPlaying":false,"recent":[]}""",
-    )
+    val liveSpotify =
+        signalJson.decodeFromString<SpotifyNow>(
+            """{"connected":false,"isPlaying":false,"recent":[]}""",
+        )
     check(!liveSpotify.connected && liveSpotify.nowOrLast() == null) {
         "the live Spotify endpoint is not connected yet, and that is a strip with no music half"
     }
 
-    val liveGithub = signalJson.decodeFromString<GithubActivity>(
-        """{"connected":true,"items":[""" +
-            """{"repo":"darkpandawarrior/cv-siddharth-kmp","type":"create","message":"created branch",""" +
-            """"url":"https://github.com/darkpandawarrior/cv-siddharth-kmp","at":"2026-08-31T10:49:04Z",""" +
-            """"upstream":false},""" +
-            """{"repo":"darkpandawarrior/cv-siddharth","type":"pr","message":"opened a PR",""" +
-            """"url":"https://github.com/darkpandawarrior/cv-siddharth","at":"2026-08-31T10:49:14Z",""" +
-            """"upstream":false}]}""",
-    )
+    val liveGithub =
+        signalJson.decodeFromString<GithubActivity>(
+            """{"connected":true,"items":[""" +
+                """{"repo":"darkpandawarrior/cv-siddharth-kmp","type":"create","message":"created branch",""" +
+                """"url":"https://github.com/darkpandawarrior/cv-siddharth-kmp","at":"2026-08-31T10:49:04Z",""" +
+                """"upstream":false},""" +
+                """{"repo":"darkpandawarrior/cv-siddharth","type":"pr","message":"opened a PR",""" +
+                """"url":"https://github.com/darkpandawarrior/cv-siddharth","at":"2026-08-31T10:49:14Z",""" +
+                """"upstream":false}]}""",
+        )
     check(liveGithub.byRepo().map { it.repo.substringAfterLast('/') } == listOf("cv-siddharth-kmp", "cv-siddharth")) {
         "the real feed decodes into the two repo words the strip renders, in the order it returned them"
     }

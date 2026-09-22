@@ -183,12 +183,12 @@ internal fun forgeStep(
                 // because every later step reads its own previous output.
                 val ux: Float
                 val uy: Float
-                if (d > 1e-4f) {
+                if (d > PointerHitEpsilon) {
                     ux = dx / d
                     uy = dy / d
                 } else {
-                    ux = 0.70710678f
-                    uy = 0.70710678f
+                    ux = DiagonalUnit
+                    uy = DiagonalUnit
                 }
                 val falloff = 1f - d / radius // 1 at the centre, 0 at the edge
                 vxi += ux * falloff * repelAccel * h
@@ -220,14 +220,18 @@ private const val ForgeLetterSpacing: Float = 0.06f
  */
 private const val ForgeFallbackAdvance: Float = 0.52f
 
-private fun glyphAdvance(ch: Char): Float = when (ch) {
-    'i' -> 0.26f
-    'r', 't' -> 0.46f
-    's', 'a' -> 0.60f
-    'h' -> 0.64f
-    'd' -> 0.66f
-    else -> ForgeFallbackAdvance
-}
+// MagicNumber: the advance-width table, in em. Same argument as [appendGlyph] — the letter IS
+// the name of the number.
+@Suppress("MagicNumber")
+private fun glyphAdvance(ch: Char): Float =
+    when (ch) {
+        'i' -> 0.26f
+        'r', 't' -> 0.46f
+        's', 'a' -> 0.60f
+        'h' -> 0.64f
+        'd' -> 0.66f
+        else -> ForgeFallbackAdvance
+    }
 
 /**
  * One glyph's centre-line strokes, appended to [out] as separate single-contour [Path]s.
@@ -240,9 +244,24 @@ private fun glyphAdvance(ch: Char): Float = when (ch) {
  * Coordinates are em-relative with y = 0 at the ascender top, 0.44 at x-height and 1.0 at the
  * baseline — the same axis a font uses, so the numbers are readable as letterforms.
  */
-private fun appendGlyph(ch: Char, originX: Float, originY: Float, em: Float, out: MutableList<Path>) {
+// MagicNumber: this function IS the font. Every literal below is a point on a letterform in em
+// units — 0.08 is where the bowl of the `s` turns, 0.44 is the x-height the `i` dot sits above.
+// There is no name for "the y of the second control point of the shoulder of the h" that is not
+// just the number spelled out, and 76 such constants would bury the eleven outlines they describe.
+// The axis itself is documented on the KDoc above, which is the information a reader actually
+// needs; the same argument applies to [glyphAdvance], the per-letter width table.
+@Suppress("MagicNumber")
+private fun appendGlyph(
+    ch: Char,
+    originX: Float,
+    originY: Float,
+    em: Float,
+    out: MutableList<Path>,
+) {
     fun x(u: Float): Float = originX + u * em
+
     fun y(v: Float): Float = originY + v * em
+
     fun stroke(block: Path.() -> Unit) {
         val p = Path()
         p.block()
@@ -250,12 +269,13 @@ private fun appendGlyph(ch: Char, originX: Float, originY: Float, em: Float, out
     }
 
     when (ch) {
-        's' -> stroke {
-            moveTo(x(0.52f), y(0.52f))
-            cubicTo(x(0.46f), y(0.40f), x(0.08f), y(0.38f), x(0.08f), y(0.57f))
-            cubicTo(x(0.08f), y(0.70f), x(0.50f), y(0.72f), x(0.50f), y(0.86f))
-            cubicTo(x(0.50f), y(1.02f), x(0.14f), y(1.02f), x(0.06f), y(0.92f))
-        }
+        's' ->
+            stroke {
+                moveTo(x(0.52f), y(0.52f))
+                cubicTo(x(0.46f), y(0.40f), x(0.08f), y(0.38f), x(0.08f), y(0.57f))
+                cubicTo(x(0.08f), y(0.70f), x(0.50f), y(0.72f), x(0.50f), y(0.86f))
+                cubicTo(x(0.50f), y(1.02f), x(0.14f), y(1.02f), x(0.06f), y(0.92f))
+            }
 
         'i' -> {
             stroke {
@@ -330,7 +350,12 @@ private fun wordAdvance(word: String): Float {
 }
 
 /** The whole mark, laid out centred in a [width] by [height] box at [em] px per em. */
-private fun wordmarkStrokes(word: String, width: Float, height: Float, em: Float): List<Path> {
+private fun wordmarkStrokes(
+    word: String,
+    width: Float,
+    height: Float,
+    em: Float,
+): List<Path> {
     val out = ArrayList<Path>(word.length * 3)
     var penX = (width - wordAdvance(word) * em) / 2f
     // Visible ink spans y = 0.06em (ascender) to 1.0em (baseline); centre that band, not the em box.
@@ -359,6 +384,23 @@ private class Forge(
     val markRight: Float,
 )
 
+/** Below this the pointer is on top of the particle and there is no direction for it to flee. */
+private const val PointerHitEpsilon: Float = 1e-4f
+
+/** 1/sqrt(2): the fixed diagonal a particle under the pointer takes instead of dividing by zero. */
+private const val DiagonalUnit: Float = 0.70710678f
+
+/** Under 24px per em the mark is a smudge; better to draw nothing than an illegible wordmark. */
+private const val ForgeMinEm: Float = 24f
+
+private const val ForgeMinWidth: Float = 80f
+private const val ForgeMinHeight: Float = 60f
+
+/**
+ * The floor below which a forge is noise rather than a mark: the first layout pass reports 0 on
+ * wasm, and a 20px-tall swarm reads as a smudge.
+ */
+
 /**
  * Samples the wordmark into a [Forge], or returns null when the canvas is too small to hold a
  * legible mark (first layout pass reports 0 on wasm, and a 20px-tall forge is noise, not a mark).
@@ -367,15 +409,11 @@ private class Forge(
  * reduced-motion still frame and what a resize wants — a resize re-lays-out the same mark, it does
  * not re-run the assembly reveal.
  */
-/**
- * The floor below which a forge is noise rather than a mark: the first layout pass reports 0 on
- * wasm, and a 20px-tall swarm reads as a smudge.
- */
-private const val ForgeMinWidth: Float = 80f
-private const val ForgeMinHeight: Float = 60f
-
-private fun canHoldMark(width: Float, height: Float, spacingPx: Float): Boolean =
-    width >= ForgeMinWidth && height >= ForgeMinHeight && spacingPx > 0f
+private fun canHoldMark(
+    width: Float,
+    height: Float,
+    spacingPx: Float,
+): Boolean = width >= ForgeMinWidth && height >= ForgeMinHeight && spacingPx > 0f
 
 private fun buildForge(
     width: Float,
@@ -387,7 +425,7 @@ private fun buildForge(
     if (advance <= 0f || !canHoldMark(width, height, spacingPx)) return null
     // Width-limited on a wide canvas, height-limited on a squat one.
     val em = min(width * 0.92f / advance, height / 1.30f)
-    if (em < 24f) return null
+    if (em < ForgeMinEm) return null
 
     val strokes = wordmarkStrokes(ForgeWord, width, height, em)
     val measure = PathMeasure()
@@ -478,6 +516,19 @@ private class ForgePointer {
 // The composable
 // ---------------------------------------------------------------------------------------------
 
+/** A backgrounded tab hands back one frame with a multi-second delta; never integrate that. */
+private const val MaxFrameSeconds = 0.25f
+
+private const val NanosPerSecond = 1_000_000_000f
+
+/**
+ * Runs whole [ForgeMaxStepSeconds] steps out of [carry] and returns what is left over.
+ *
+ * Lifted out of the frame loop: with the pointer-to-field mapping and the substep loop inline, the
+ * composable measured cyclomatic complexity 22, and none of that complexity was about composition.
+ * Returning the remainder rather than mutating a captured var is what makes it testable at all.
+ */
+
 /**
  * The forge. Sizes itself to a sensible default; any size in [modifier] wins, since [modifier] is
  * applied after the defaults.
@@ -485,6 +536,43 @@ private class ForgePointer {
  * Under reduced motion there is no frame loop and no pointer handler at all — the settled wordmark
  * is drawn once and stays put. A slowed-down swarm would still be a swarm.
  */
+private fun Forge.advance(
+    carry: Float,
+    pointer: ForgePointer,
+    repelPx: Float,
+): Float {
+    val radius =
+        when {
+            !pointer.active -> 0f
+            pointer.pressed -> repelPx * ForgePressRadiusScale
+            else -> repelPx
+        }
+    val accel = if (pointer.pressed) ForgeRepelAccel * ForgePressAccelScale else ForgeRepelAccel
+
+    var left = carry
+    var steps = 0
+    while (left >= ForgeMaxStepSeconds && steps < ForgeMaxSubsteps) {
+        forgeStep(
+            px = px,
+            py = py,
+            vx = vx,
+            vy = vy,
+            tx = tx,
+            ty = ty,
+            count = count,
+            dtSeconds = ForgeMaxStepSeconds,
+            pointerX = pointer.x,
+            pointerY = pointer.y,
+            repelRadius = radius,
+            repelAccel = accel,
+        )
+        left -= ForgeMaxStepSeconds
+        steps++
+    }
+    // Drop the backlog, never chase it.
+    return if (steps == ForgeMaxSubsteps) 0f else left
+}
+
 @Composable
 fun ParticleForge(modifier: Modifier = Modifier) {
     val colors = cvColors
@@ -524,38 +612,12 @@ fun ParticleForge(modifier: Modifier = Modifier) {
         var carry = 0f
         while (true) {
             withInfiniteAnimationFrameNanos { now ->
-                val raw = (now - last) / 1_000_000_000f
+                val raw = (now - last) / NanosPerSecond
                 last = now
                 // Clamp the frame delta *and* cap the substep count: a tab returning from the
                 // background must not be simulated forward by the ten seconds it was away.
-                carry += raw.coerceIn(0f, 0.25f)
-                val radius =
-                    when {
-                        !pointer.active -> 0f
-                        pointer.pressed -> repelPx * ForgePressRadiusScale
-                        else -> repelPx
-                    }
-                val accel = if (pointer.pressed) ForgeRepelAccel * ForgePressAccelScale else ForgeRepelAccel
-                var steps = 0
-                while (carry >= ForgeMaxStepSeconds && steps < ForgeMaxSubsteps) {
-                    forgeStep(
-                        px = forge.px,
-                        py = forge.py,
-                        vx = forge.vx,
-                        vy = forge.vy,
-                        tx = forge.tx,
-                        ty = forge.ty,
-                        count = forge.count,
-                        dtSeconds = ForgeMaxStepSeconds,
-                        pointerX = pointer.x,
-                        pointerY = pointer.y,
-                        repelRadius = radius,
-                        repelAccel = accel,
-                    )
-                    carry -= ForgeMaxStepSeconds
-                    steps++
-                }
-                if (steps == ForgeMaxSubsteps) carry = 0f // drop the backlog, never chase it
+                carry += raw.coerceIn(0f, MaxFrameSeconds)
+                carry = forge.advance(carry, pointer, repelPx)
                 tick.floatValue += 1f
             }
         }
@@ -589,7 +651,14 @@ fun ParticleForge(modifier: Modifier = Modifier) {
         for (i in 0 until f.count) {
             val speed = abs(f.vx[i]) + abs(f.vy[i])
             // Fast particles read brighter: the motion is the highlight, as in the original.
-            val bucket = if (speed < 30f) 0 else if (speed < 220f) 1 else 2
+            val bucket =
+                if (speed < 30f) {
+                    0
+                } else if (speed < 220f) {
+                    1
+                } else {
+                    2
+                }
             batches[bucket] += Offset(f.px[i], f.py[i])
         }
         drawBatch(batches[0], brush, dotPx, 0.45f)
@@ -598,7 +667,12 @@ fun ParticleForge(modifier: Modifier = Modifier) {
     }
 }
 
-private fun DrawScope.drawBatch(points: List<Offset>, brush: Brush, dot: Float, alpha: Float) {
+private fun DrawScope.drawBatch(
+    points: List<Offset>,
+    brush: Brush,
+    dot: Float,
+    alpha: Float,
+) {
     if (points.isEmpty()) return
     drawPoints(
         points = points,
@@ -669,15 +743,36 @@ private suspend fun PointerInputScope.trackForgePointer(pointer: ForgePointer) {
  * Only [forgeStep] and the glyph table are covered: those are the parts that can be silently wrong.
  * The sampling pass needs a real [Path] and is therefore Compose's problem, not arithmetic's.
  */
+// MagicNumber: assertion fixtures. detekt excludes every test source set from this rule by
+// default and these functions are tests — they live in main source because composeMain is
+// `internal` and this project has no commonTest, not because they are production code. `800f` in
+// `recomposeCellAt(1f, 1f, 800f, 500f)` is the grid being asserted against; naming it would add a
+// constant that means "the number in this one assertion".
+// The real end state is these moving to jvmTest, which SelfCheckTest.kt now makes possible.
+@Suppress("MagicNumber")
 internal fun forgeSelfCheck() {
-    fun arrays(x: Float, y: Float, tx: Float, ty: Float): Array<FloatArray> =
+    fun arrays(
+        x: Float,
+        y: Float,
+        tx: Float,
+        ty: Float,
+    ): Array<FloatArray> =
         arrayOf(
-            floatArrayOf(x), floatArrayOf(y),
-            floatArrayOf(0f), floatArrayOf(0f),
-            floatArrayOf(tx), floatArrayOf(ty),
+            floatArrayOf(x),
+            floatArrayOf(y),
+            floatArrayOf(0f),
+            floatArrayOf(0f),
+            floatArrayOf(tx),
+            floatArrayOf(ty),
         )
 
-    fun step(a: Array<FloatArray>, dt: Float, pxr: Float = 0f, pyr: Float = 0f, radius: Float = 0f) {
+    fun step(
+        a: Array<FloatArray>,
+        dt: Float,
+        pxr: Float = 0f,
+        pyr: Float = 0f,
+        radius: Float = 0f,
+    ) {
         forgeStep(a[0], a[1], a[2], a[3], a[4], a[5], 1, dt, pxr, pyr, radius, ForgeRepelAccel)
     }
 

@@ -33,7 +33,11 @@ enum class FlowDirection { TopDown, LeftRight }
 /** Only [Box] appears in the real data; the rest exist so a new diagram doesn't hit the fallback. */
 enum class NodeShape { Box, Round, Stadium, Diamond, Subroutine }
 
-data class FlowNode(val id: String, val label: String, val shape: NodeShape)
+data class FlowNode(
+    val id: String,
+    val label: String,
+    val shape: NodeShape,
+)
 
 data class FlowEdge(
     val from: String,
@@ -54,6 +58,9 @@ data class FlowGraph(
     val byId: Map<String, FlowNode> = nodes.associateBy { it.id }
 }
 
+/** The shortest arrow Mermaid has is `-->`; anything shorter is not an edge token. */
+private const val MinArrowChars = 3
+
 /**
  * Parse [source] or return `null`. `null` means "render the raw source" — never "render nothing".
  */
@@ -63,7 +70,12 @@ fun parseMermaidFlow(source: String): FlowGraph? {
     val edges = mutableListOf<FlowEdge>()
 
     for (rawLine in source.lineSequence()) {
-        val line = rawLine.substringBefore("%%").trim().trimEnd(';').trim()
+        val line =
+            rawLine
+                .substringBefore("%%")
+                .trim()
+                .trimEnd(';')
+                .trim()
         if (line.isEmpty()) continue
 
         if (direction == null) {
@@ -212,7 +224,10 @@ private fun FlowGraph.longestPathRanks(forward: Array<MutableList<Int>>): IntArr
  * band and doesn't count as crossing the rank-1 band it flies over. Real diagrams are 3-7 nodes
  * wide; add the dummy chain if one ever grows enough for that flyover to read as a crossing.
  */
-private fun barycenterOrder(graph: FlowGraph, seed: List<List<String>>): List<List<String>> {
+private fun barycenterOrder(
+    graph: FlowGraph,
+    seed: List<List<String>>,
+): List<List<String>> {
     if (seed.size < 2 || seed.all { it.size < 2 }) return seed
 
     val rank = HashMap<String, Int>()
@@ -269,11 +284,15 @@ private fun barycenterPass(
         out[r].forEachIndexed { i, id -> here[id] = i }
         // sortedBy is stable, so equal barycenters keep the previous order — the tie-break that
         // makes this reproducible.
-        out[r] = out[r].sortedBy { id ->
-            val positions = neighbours[id]?.mapNotNull { refPos[it] } ?: emptyList()
-            if (positions.isEmpty()) here.getValue(id).toFloat()
-            else positions.sum().toFloat() / positions.size
-        }
+        out[r] =
+            out[r].sortedBy { id ->
+                val positions = neighbours[id]?.mapNotNull { refPos[it] } ?: emptyList()
+                if (positions.isEmpty()) {
+                    here.getValue(id).toFloat()
+                } else {
+                    positions.sum().toFloat() / positions.size
+                }
+            }
     }
     return out
 }
@@ -285,7 +304,10 @@ private fun barycenterPass(
  * Only edges between adjacent ranks are counted, matching what [barycenterOrder] can actually
  * influence — back edges are drawn as bows outside the content and can't cross a rank boundary.
  */
-fun crossings(graph: FlowGraph, ordering: List<List<String>>): Int {
+fun crossings(
+    graph: FlowGraph,
+    ordering: List<List<String>>,
+): Int {
     val rank = HashMap<String, Int>()
     val pos = HashMap<String, Int>()
     ordering.forEachIndexed { r, group ->
@@ -317,12 +339,13 @@ fun crossings(graph: FlowGraph, ordering: List<List<String>>): Int {
 /** One flat line of prose for the screen-reader description of a canvas that has no text nodes. */
 fun FlowGraph.describe(): String {
     val flat = { s: String -> s.replace('\n', ' ') }
-    val links = edges.joinToString("; ") { e ->
-        val from = flat(byId[e.from]?.label ?: e.from)
-        val to = flat(byId[e.to]?.label ?: e.to)
-        val via = e.label?.let { " (${flat(it)})" }.orEmpty()
-        if (e.arrow) "$from to $to$via" else "$from and $to$via"
-    }
+    val links =
+        edges.joinToString("; ") { e ->
+            val from = flat(byId[e.from]?.label ?: e.from)
+            val to = flat(byId[e.to]?.label ?: e.to)
+            val via = e.label?.let { " (${flat(it)})" }.orEmpty()
+            if (e.arrow) "$from to $to$via" else "$from and $to$via"
+        }
     return if (links.isEmpty()) {
         "Diagram of ${nodes.size} steps: " + nodes.joinToString(", ") { flat(it.label) }
     } else {
@@ -337,22 +360,24 @@ fun FlowGraph.describe(): String {
 private val IGNORED_PREFIXES = listOf("classDef", "class ", "style ", "linkStyle", "click ")
 
 /** Longest opener first — `[[` must beat `[`, `((` must beat `(`. */
-private val SHAPES: List<Triple<String, String, NodeShape>> = listOf(
-    Triple("[[", "]]", NodeShape.Subroutine),
-    Triple("([", "])", NodeShape.Stadium),
-    Triple("((", "))", NodeShape.Round),
-    Triple("{{", "}}", NodeShape.Diamond),
-    Triple("[", "]", NodeShape.Box),
-    Triple("(", ")", NodeShape.Round),
-    Triple("{", "}", NodeShape.Diamond),
-)
+private val SHAPES: List<Triple<String, String, NodeShape>> =
+    listOf(
+        Triple("[[", "]]", NodeShape.Subroutine),
+        Triple("([", "])", NodeShape.Stadium),
+        Triple("((", "))", NodeShape.Round),
+        Triple("{{", "}}", NodeShape.Diamond),
+        Triple("[", "]", NodeShape.Box),
+        Triple("(", ")", NodeShape.Round),
+        Triple("{", "}", NodeShape.Diamond),
+    )
 
 private fun parseHeader(line: String): FlowDirection? {
-    val rest = when {
-        line.startsWith("graph") -> line.removePrefix("graph")
-        line.startsWith("flowchart") -> line.removePrefix("flowchart")
-        else -> return null
-    }.trim()
+    val rest =
+        when {
+            line.startsWith("graph") -> line.removePrefix("graph")
+            line.startsWith("flowchart") -> line.removePrefix("flowchart")
+            else -> return null
+        }.trim()
     return when (rest.uppercase()) {
         "TD", "TB", "BT", "" -> FlowDirection.TopDown
         "LR", "RL" -> FlowDirection.LeftRight
@@ -386,9 +411,15 @@ private fun parseStatement(
     return true
 }
 
-private class Conn(val dashed: Boolean, val thick: Boolean, val arrow: Boolean)
+private class Conn(
+    val dashed: Boolean,
+    val thick: Boolean,
+    val arrow: Boolean,
+)
 
-private class Scan(private val s: String) {
+private class Scan(
+    private val s: String,
+) {
     private var i = 0
 
     fun atEnd(): Boolean {
@@ -425,8 +456,11 @@ private class Scan(private val s: String) {
             }
             // A bare reference never overwrites an earlier declaration; the label can appear on any
             // one mention, and in Doori's module graph it appears on a line of its own.
-            if (declared != null) nodes[id] = declared
-            else if (id !in nodes) nodes[id] = FlowNode(id, id, NodeShape.Box)
+            if (declared != null) {
+                nodes[id] = declared
+            } else if (id !in nodes) {
+                nodes[id] = FlowNode(id, id, NodeShape.Box)
+            }
 
             ids += id
             ws()
@@ -465,7 +499,7 @@ private class Scan(private val s: String) {
         val start = i
         while (i < s.length && s[i] in "-.=>") i++
         val tok = s.substring(start, i)
-        if (tok.length < 3 || tok.trimEnd('>').isEmpty()) {
+        if (tok.length < MinArrowChars || tok.trimEnd('>').isEmpty()) {
             i = start
             return null
         }
@@ -485,7 +519,8 @@ private class Scan(private val s: String) {
 
 /** `<br/>` is the only markup the real labels carry. Everything else is literal text. */
 private fun normalizeLabel(raw: String): String =
-    raw.replace("<br />", "\n")
+    raw
+        .replace("<br />", "\n")
         .replace("<br/>", "\n")
         .replace("<br>", "\n")
         .lines()
@@ -501,13 +536,18 @@ private fun normalizeLabel(raw: String): String =
  * The inputs are copied verbatim from CvProjectData.kt, because the only thing this parser has to
  * be right about is the strings the site actually ships.
  */
+// MagicNumber: assertion fixtures. detekt excludes every test source set from this rule by
+// default; these are tests that live in main source only because composeMain is `internal`
+// and this project has no commonTest. SelfCheckTest.kt now runs them from `check`.
+@Suppress("MagicNumber")
 internal fun mermaidParseSelfCheck() {
     // Gaddi — chained edge, edge labels, parens inside a quoted label, and a genuine cycle.
-    val gaddi = parseMermaidFlow(
-        """graph LR
+    val gaddi =
+        parseMermaidFlow(
+            """graph LR
   s["GameState"] -->|"+ Intent"| r["reduce()<br/>pure · RNG in state"] --> s2["GameState'"]
   s2 -.->|"byte-for-byte replay"| s""",
-    )
+        )
     checkNotNull(gaddi) { "the Gaddi replay diagram must parse" }
     check(gaddi.direction == FlowDirection.LeftRight) { "graph LR" }
     check(gaddi.nodes.map { it.id } == listOf("s", "r", "s2")) { "declaration order preserved" }
@@ -522,15 +562,16 @@ internal fun mermaidParseSelfCheck() {
     }
 
     // Doori — standalone declarations, then `&` groups on both sides of a link.
-    val doori = parseMermaidFlow(
-        """graph TD
+    val doori =
+        parseMermaidFlow(
+            """graph TD
   app[":app composition root"]
   t["feature: tracking"]
   s["feature: logging"]
   core["core: common · data · ui<br/>design system · Room(KMP)"]
   app --> t & s
   t & s --> core""",
-    )
+        )
     checkNotNull(doori) { "the Doori module diagram must parse" }
     check(doori.direction == FlowDirection.TopDown) { "graph TD" }
     check(doori.byId["app"]!!.label == ":app composition root") { "a colon-leading label is not a shape" }
@@ -560,15 +601,15 @@ internal fun mermaidParseSelfCheck() {
 }
 
 /**
- * Phase three's contract. Kept separate from [mermaidParseSelfCheck] because it checks the layout,
- * not the scanner — but called from it, so it needs no extra wiring in `Prerender.kt`.
- */
-/**
  * How many diagrams `projects` ships. Hardcoded on purpose: the per-diagram checks below prove each
  * one is well-formed, and only a count catches a diagram that quietly disappeared.
  */
 private const val SHIPPED_DIAGRAMS = 13
 
+/**
+ * Phase three's contract. Kept separate from [mermaidParseSelfCheck] because it checks the layout,
+ * not the scanner — but called from it, so it needs no extra wiring in `Prerender.kt`.
+ */
 internal fun mermaidLayoutSelfCheck() {
     // Hand-built so declaration order is the point rather than an accident of the parser: rank 1 is
     // declared in the reverse of the order its edges want, which is exactly one crossing.
@@ -658,7 +699,11 @@ internal fun mermaidLayoutSelfCheck() {
  * The widest shipped rank is 6, so the worst diagram here costs 720 arrangements; [cap] is the guard
  * for the day someone adds a 9-wide rank and would otherwise turn the build into a factorial.
  */
-private fun optimalCrossings(graph: FlowGraph, ranks: List<List<String>>, cap: Int = 50_000): Int? {
+private fun optimalCrossings(
+    graph: FlowGraph,
+    ranks: List<List<String>>,
+    cap: Int = 50_000,
+): Int? {
     var arrangements = 1L
     for (group in ranks) {
         for (i in 2..group.size) arrangements *= i

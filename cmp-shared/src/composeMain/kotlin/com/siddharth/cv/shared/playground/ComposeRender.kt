@@ -60,12 +60,18 @@ import com.siddharth.cv.shared.theme.cvType
  * author typed would be a lie about what the subset supports.
  */
 @Composable
-fun RenderTree(nodes: List<Node>, state: ComposeState) {
+fun RenderTree(
+    nodes: List<Node>,
+    state: ComposeState,
+) {
     nodes.forEach { RenderNode(it, state) }
 }
 
 @Composable
-fun RenderNode(node: Node, state: ComposeState) {
+fun RenderNode(
+    node: Node,
+    state: ComposeState,
+) {
     when (node) {
         is Node.Container -> RenderContainer(node, state)
         is Node.Text -> RenderText(node, state)
@@ -78,7 +84,10 @@ fun RenderNode(node: Node, state: ComposeState) {
 }
 
 @Composable
-private fun RenderContainer(node: Node.Container, state: ComposeState) {
+private fun RenderContainer(
+    node: Node.Container,
+    state: ComposeState,
+) {
     val modifier = node.modifiers.toComposeModifier(state)
     when (node.name) {
         ContainerKind.Column ->
@@ -117,7 +126,10 @@ private fun RenderContainer(node: Node.Container, state: ComposeState) {
 }
 
 @Composable
-private fun RenderText(node: Node.Text, state: ComposeState) {
+private fun RenderText(
+    node: Node.Text,
+    state: ComposeState,
+) {
     val colors = cvColors
     BasicText(
         text = resolveText(node.value, state),
@@ -125,8 +137,9 @@ private fun RenderText(node: Node.Text, state: ComposeState) {
         style =
             cvType.body.copy(
                 color = node.named["color"].toColor(colors.onBackground),
-                fontSize = node.named["fontSize"]?.let { resolveNum(it, state, 16.0).sp }
-                    ?: cvType.body.fontSize,
+                fontSize =
+                    node.named["fontSize"]?.let { resolveNum(it, state, 16.0).sp }
+                        ?: cvType.body.fontSize,
                 fontWeight = node.named["fontWeight"].toFontWeight(),
                 textAlign = node.named["textAlign"].toTextAlign(),
             ),
@@ -134,7 +147,10 @@ private fun RenderText(node: Node.Text, state: ComposeState) {
 }
 
 @Composable
-private fun RenderButton(node: Node.Button, state: ComposeState) {
+private fun RenderButton(
+    node: Node.Button,
+    state: ComposeState,
+) {
     val colors = cvColors
     Button(
         onClick = { applyActions(node.onClick, state) },
@@ -156,7 +172,10 @@ private fun RenderButton(node: Node.Button, state: ComposeState) {
 }
 
 @Composable
-private fun RenderAnimated(node: Node.Animated, state: ComposeState) {
+private fun RenderAnimated(
+    node: Node.Animated,
+    state: ComposeState,
+) {
     // AnimatedVisibility, not an if — the enter/exit transition is the thing the snippet is asking
     // for, and the React version can only approximate it with a CSS opacity transition.
     AnimatedVisibility(visible = resolveBool(node.visible, state)) {
@@ -165,7 +184,10 @@ private fun RenderAnimated(node: Node.Animated, state: ComposeState) {
 }
 
 @Composable
-private fun RenderTextField(node: Node.TextField, state: ComposeState) {
+private fun RenderTextField(
+    node: Node.TextField,
+    state: ComposeState,
+) {
     val colors = cvColors
     val text = resolveText(node.value, state)
     BasicTextField(
@@ -191,7 +213,8 @@ private fun RenderUnknown(name: String) {
     BasicText(
         text = "$name() — not in the supported subset",
         modifier =
-            Modifier.padding(vertical = 4.dp)
+            Modifier
+                .padding(vertical = 4.dp)
                 .background(colors.card, RoundedCornerShape(6.dp))
                 .padding(horizontal = 8.dp, vertical = 6.dp),
         style = cvType.metaMono.copy(color = colors.muted),
@@ -218,18 +241,19 @@ private fun List<ModifierCall>.toComposeModifier(state: ComposeState): Modifier 
     var m: Modifier = Modifier
     forEach { call ->
         val n = call.args.firstOrNull()
-        m = when (call.name) {
-            "fillMaxSize" -> m.fillMaxSize()
-            "fillMaxWidth" -> m.fillMaxWidth()
-            "fillMaxHeight" -> m.fillMaxHeight()
-            "padding" -> m.then(paddingFor(call, state))
-            "height" -> m.height(resolveNum(n, state, 0.0).dp)
-            "width" -> m.width(resolveNum(n, state, 0.0).dp)
-            "size" -> m.size(resolveNum(n, state, 0.0).dp)
-            "background" -> m.background(n.toColor(cvColors.card), shapeFor(call))
-            "clip" -> m.clip(shapeFor(call))
-            else -> m
-        }
+        m =
+            when (call.name) {
+                "fillMaxSize" -> m.fillMaxSize()
+                "fillMaxWidth" -> m.fillMaxWidth()
+                "fillMaxHeight" -> m.fillMaxHeight()
+                "padding" -> m.then(paddingFor(call, state))
+                "height" -> m.height(resolveNum(n, state, 0.0).dp)
+                "width" -> m.width(resolveNum(n, state, 0.0).dp)
+                "size" -> m.size(resolveNum(n, state, 0.0).dp)
+                "background" -> m.background(n.toColor(cvColors.card), shapeFor(call))
+                "clip" -> m.clip(shapeFor(call))
+                else -> m
+            }
     }
     return m
 }
@@ -240,7 +264,10 @@ private fun List<ModifierCall>.toComposeModifier(state: ComposeState): Modifier 
  * vertical) — the same reading the TS renderer applies.
  */
 @Composable
-private fun paddingFor(call: ModifierCall, state: ComposeState): Modifier {
+private fun paddingFor(
+    call: ModifierCall,
+    state: ComposeState,
+): Modifier {
     val a = call.args
     return when {
         a.isEmpty() -> Modifier
@@ -255,11 +282,14 @@ private fun paddingFor(call: ModifierCall, state: ComposeState): Modifier {
     }
 }
 
+/** What `clip(...)` falls back to when the argument is a shape this subset does not model. */
+private const val FallbackCornerDp = 12.0
+
 /** `clip(CircleShape)` / `clip(RoundedCornerShape(16.dp))`; anything else falls back to 12.dp. */
 private fun shapeFor(call: ModifierCall): androidx.compose.ui.graphics.Shape {
-    val path = (call.args.firstOrNull() as? Expr.Member)?.path ?: return RoundedCornerShape(12.dp)
+    val path = (call.args.firstOrNull() as? Expr.Member)?.path ?: return RoundedCornerShape(FallbackCornerDp.dp)
     if (memberBase(path).contains("Circle")) return CircleShape
-    return RoundedCornerShape((memberArg(path) ?: 12.0).dp)
+    return RoundedCornerShape((memberArg(path) ?: FallbackCornerDp).dp)
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -380,15 +410,16 @@ internal val previewTextStyle: TextStyle
 
 /** A prose summary of a rendered tree, for the `semantics` on a canvas that exposes no text. */
 fun describeTree(program: Program): String {
-    fun label(n: Node): String = when (n) {
-        is Node.Container -> n.name.name.lowercase() + " of " + n.children.size
-        is Node.Text -> "text"
-        is Node.Button -> "button"
-        is Node.Spacer -> "spacer"
-        is Node.Animated -> "animated block"
-        is Node.TextField -> "text field"
-        is Node.Unknown -> "unsupported " + n.name
-    }
+    fun label(n: Node): String =
+        when (n) {
+            is Node.Container -> n.name.name.lowercase() + " of " + n.children.size
+            is Node.Text -> "text"
+            is Node.Button -> "button"
+            is Node.Spacer -> "spacer"
+            is Node.Animated -> "animated block"
+            is Node.TextField -> "text field"
+            is Node.Unknown -> "unsupported " + n.name
+        }
     val kinds = program.tree.joinToString(", ") { label(it) }
     val vars = program.state.joinToString(", ") { it.name }
     return buildString {

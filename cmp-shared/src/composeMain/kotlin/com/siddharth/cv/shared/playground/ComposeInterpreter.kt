@@ -48,13 +48,21 @@ import androidx.compose.runtime.mutableStateMapOf
 private sealed interface Tok {
     val v: String
 
-    data class Id(override val v: String) : Tok
+    data class Id(
+        override val v: String,
+    ) : Tok
 
-    data class Num(override val v: String) : Tok
+    data class Num(
+        override val v: String,
+    ) : Tok
 
-    data class Str(override val v: String) : Tok
+    data class Str(
+        override val v: String,
+    ) : Tok
 
-    data class Punc(override val v: String) : Tok
+    data class Punc(
+        override val v: String,
+    ) : Tok
 }
 
 /** ASCII-only, matching the TS character classes — a unicode letter is skipped there, so it is here. */
@@ -70,8 +78,11 @@ private fun isHexDigit(c: Char): Boolean = isDigit(c) || c in 'a'..'f' || c in '
 private fun isHexMarker(c: Char): Boolean = c == 'x' || c == 'X'
 
 /** `*` followed by `/`, i.e. the end of a block comment starting at [i]. */
-private fun closesBlockComment(src: String, i: Int, n: Int): Boolean =
-    src[i] == '*' && i + 1 < n && src[i + 1] == '/'
+private fun closesBlockComment(
+    src: String,
+    i: Int,
+    n: Int,
+): Boolean = src[i] == '*' && i + 1 < n && src[i + 1] == '/'
 
 private val twoCharPunc = setOf("++", "--", "+=", "-=", "==", "!=", "->", "||", "&&")
 
@@ -85,7 +96,9 @@ private const val SINGLE_PUNC = "{}()[].,=!+-*/:<>"
  * token that starts here", and splitting on that seam is what makes each reader a named,
  * separately-readable rule instead of a branch in a chain.
  */
-private class Lexer(private val src: String) {
+private class Lexer(
+    private val src: String,
+) {
     private val n = src.length
     private var i = 0
 
@@ -196,7 +209,9 @@ private fun tokenize(src: String): List<Tok> = Lexer(src).tokenize()
  * a `RuntimeException` rather than a bespoke hierarchy so the catch there also nets the
  * unexpected: in a wasm canvas app an exception out of the parser blanks the page.
  */
-private class ParseError(message: String) : RuntimeException(message)
+private class ParseError(
+    message: String,
+) : RuntimeException(message)
 
 private val emptyStr: Expr = Expr.Str(listOf(StrPart.Literal("")))
 
@@ -216,19 +231,27 @@ private class Args {
 // productions harder, not easier, to follow. Narrow and named, not a config-level surrender: an
 // ordinary class past twenty methods in this repo still fires.
 @Suppress("TooManyFunctions")
-private class Parser(private val toks: List<Tok>) {
+private class Parser(
+    private val toks: List<Tok>,
+) {
     private var p = 0
 
     private fun peek(o: Int = 0): Tok? = toks.getOrNull(p + o)
 
     private fun next(): Tok? = toks.getOrNull(p++)
 
-    private fun atPunc(v: String, o: Int = 0): Boolean {
+    private fun atPunc(
+        v: String,
+        o: Int = 0,
+    ): Boolean {
         val t = peek(o)
         return t is Tok.Punc && t.v == v
     }
 
-    private fun atId(v: String, o: Int = 0): Boolean {
+    private fun atId(
+        v: String,
+        o: Int = 0,
+    ): Boolean {
         val t = peek(o)
         return t is Tok.Id && t.v == v
     }
@@ -241,7 +264,10 @@ private class Parser(private val toks: List<Tok>) {
     private fun describe(): String = peek()?.let { "\"${it.v}\"" } ?: "end of code"
 
     /** The parser's `require`. One throw site instead of one per precondition. */
-    private fun expect(condition: Boolean, message: () -> String) {
+    private fun expect(
+        condition: Boolean,
+        message: () -> String,
+    ) {
         if (!condition) throw ParseError(message())
     }
 
@@ -250,21 +276,27 @@ private class Parser(private val toks: List<Tok>) {
         val tree = ArrayList<Node>()
         while (peek() != null) {
             val before = p
-            val progressed = try {
-                if (atId("var") || atId("val")) {
-                    state.add(parseStateDecl())
-                    true
-                } else {
-                    val node = parseNode()
-                    if (node == null) false else { tree.add(node); true }
+            val progressed =
+                try {
+                    if (atId("var") || atId("val")) {
+                        state.add(parseStateDecl())
+                        true
+                    } else {
+                        val node = parseNode()
+                        if (node == null) {
+                            false
+                        } else {
+                            tree.add(node)
+                            true
+                        }
+                    }
+                } catch (ignored: ParseError) {
+                    // Divergence #3: keep what parsed instead of losing the whole tree. Narrowed from
+                    // `RuntimeException` — ParseError is the only thing the productions throw, and
+                    // catching the supertype meant an IndexOutOfBounds or a StackOverflow inside the
+                    // parser would also have been silently turned into "stop here, tree is fine".
+                    false
                 }
-            } catch (ignored: ParseError) {
-                // Divergence #3: keep what parsed instead of losing the whole tree. Narrowed from
-                // `RuntimeException` — ParseError is the only thing the productions throw, and
-                // catching the supertype meant an IndexOutOfBounds or a StackOverflow inside the
-                // parser would also have been silently turned into "stop here, tree is fine".
-                false
-            }
             if (!progressed || p == before) break
         }
         return Program(state, tree)
@@ -287,18 +319,20 @@ private class Parser(private val toks: List<Tok>) {
         val init = parseExpr()
         eatPunc(")")
         eatPunc("}")
-        val value: StateValue = when (init) {
-            // The AST pins state numbers to Int; the TS keeps a double. `mutableStateOf(0.5)`
-            // therefore truncates here. ponytail: nothing in the subset animates a fractional
-            // state var — widen StateValue if that ever stops being true.
-            is Expr.Num -> StateValue.IntValue(init.value.toInt())
-            is Expr.Bool -> StateValue.BoolValue(init.value)
-            // Interpolations in an initialiser have nothing to read yet, so refs contribute "".
-            is Expr.Str -> StateValue.StringValue(
-                init.parts.filterIsInstance<StrPart.Literal>().joinToString("") { it.text },
-            )
-            else -> StateValue.IntValue(0)
-        }
+        val value: StateValue =
+            when (init) {
+                // The AST pins state numbers to Int; the TS keeps a double. `mutableStateOf(0.5)`
+                // therefore truncates here. ponytail: nothing in the subset animates a fractional
+                // state var — widen StateValue if that ever stops being true.
+                is Expr.Num -> StateValue.IntValue(init.value.toInt())
+                is Expr.Bool -> StateValue.BoolValue(init.value)
+                // Interpolations in an initialiser have nothing to read yet, so refs contribute "".
+                is Expr.Str ->
+                    StateValue.StringValue(
+                        init.parts.filterIsInstance<StrPart.Literal>().joinToString("") { it.text },
+                    )
+                else -> StateValue.IntValue(0)
+            }
         return StateDecl(name, value)
     }
 
@@ -470,8 +504,14 @@ private class Parser(private val toks: List<Tok>) {
                 val name = head.v
                 next()
                 when {
-                    atPunc("++") -> { next(); actions.add(Action.Inc(name)) }
-                    atPunc("--") -> { next(); actions.add(Action.Dec(name)) }
+                    atPunc("++") -> {
+                        next()
+                        actions.add(Action.Inc(name))
+                    }
+                    atPunc("--") -> {
+                        next()
+                        actions.add(Action.Dec(name))
+                    }
                     atPunc("+=") -> {
                         next()
                         val e = parseExpr()
@@ -617,9 +657,13 @@ private class Parser(private val toks: List<Tok>) {
         var firstNum: String? = null
         do {
             val t = next() ?: break
-            if (t is Tok.Punc && t.v == "(") depth++
-            else if (t is Tok.Punc && t.v == ")") depth--
-            else if (t is Tok.Num && firstNum == null) firstNum = t.v
+            if (t is Tok.Punc && t.v == "(") {
+                depth++
+            } else if (t is Tok.Punc && t.v == ")") {
+                depth--
+            } else if (t is Tok.Num && firstNum == null) {
+                firstNum = t.v
+            }
         } while (depth > 0 && peek() != null)
         return firstNum
     }
@@ -629,8 +673,11 @@ private class Parser(private val toks: List<Tok>) {
         var depth = 0
         do {
             val t = next() ?: break
-            if (t is Tok.Punc && t.v == "{") depth++
-            else if (t is Tok.Punc && t.v == "}") depth--
+            if (t is Tok.Punc && t.v == "{") {
+                depth++
+            } else if (t is Tok.Punc && t.v == "}") {
+                depth--
+            }
         } while (depth > 0 && peek() != null)
     }
 }
@@ -641,8 +688,7 @@ private class Parser(private val toks: List<Tok>) {
  * outside `Color(…)`, where the value is meaningless anyway; the digits survive on the
  * `ColorHex:` path.
  */
-private fun parseNumber(text: String): Double =
-    if (text.startsWith("0x") || text.startsWith("0X")) 0.0 else text.toDoubleOrNull() ?: 0.0
+private fun parseNumber(text: String): Double = if (text.startsWith("0x") || text.startsWith("0X")) 0.0 else text.toDoubleOrNull() ?: 0.0
 
 /** Splits `"Count: $count times ${n}"` into literal + reference parts. */
 private fun parseInterpolation(raw: String): List<StrPart> {
@@ -650,6 +696,7 @@ private fun parseInterpolation(raw: String): List<StrPart> {
     val s = raw.replace("\\\"", "\"").replace("\\n", "\n").replace("\\t", "\t")
     val parts = ArrayList<StrPart>()
     val buf = StringBuilder()
+
     fun flush() {
         if (buf.isNotEmpty()) {
             parts.add(StrPart.Literal(buf.toString()))
@@ -723,7 +770,9 @@ fun memberArg(path: String): Double? {
  * version rebuilds an immutable map and re-renders from the root; this is the thing that version
  * is simulating.
  */
-class ComposeState(decls: List<StateDecl> = emptyList()) {
+class ComposeState(
+    decls: List<StateDecl> = emptyList(),
+) {
     private val values = mutableStateMapOf<String, StateValue>()
 
     init {
@@ -738,7 +787,10 @@ class ComposeState(decls: List<StateDecl> = emptyList()) {
 
     operator fun get(name: String): StateValue? = values[name]
 
-    operator fun set(name: String, value: StateValue) {
+    operator fun set(
+        name: String,
+        value: StateValue,
+    ) {
         values[name] = value
     }
 
@@ -746,32 +798,42 @@ class ComposeState(decls: List<StateDecl> = emptyList()) {
     fun number(name: String): Double? = (values[name] as? StateValue.IntValue)?.value?.toDouble()
 
     /** Display form, `""` for an undeclared var — matching the TS `String(state[x] ?? "")`. */
-    fun text(name: String): String = when (val v = values[name]) {
-        null -> ""
-        is StateValue.IntValue -> v.value.toString()
-        is StateValue.BoolValue -> v.value.toString()
-        is StateValue.StringValue -> v.value
-    }
+    fun text(name: String): String =
+        when (val v = values[name]) {
+            null -> ""
+            is StateValue.IntValue -> v.value.toString()
+            is StateValue.BoolValue -> v.value.toString()
+            is StateValue.StringValue -> v.value
+        }
 
     /** JS truthiness, which is what the reference implementation's `!!state[x]` means: 0 and "" are false. */
-    fun truthy(name: String): Boolean = when (val v = values[name]) {
-        null -> false
-        is StateValue.IntValue -> v.value != 0
-        is StateValue.BoolValue -> v.value
-        is StateValue.StringValue -> v.value.isNotEmpty()
-    }
+    fun truthy(name: String): Boolean =
+        when (val v = values[name]) {
+            null -> false
+            is StateValue.IntValue -> v.value != 0
+            is StateValue.BoolValue -> v.value
+            is StateValue.StringValue -> v.value.isNotEmpty()
+        }
 
     /** For a TextField's `onValueChange` binding. */
-    fun setText(name: String, value: String) {
+    fun setText(
+        name: String,
+        value: String,
+    ) {
         values[name] = StateValue.StringValue(value)
     }
 }
 
-private fun intOf(state: ComposeState, name: String): Int =
-    (state[name] as? StateValue.IntValue)?.value ?: 0
+private fun intOf(
+    state: ComposeState,
+    name: String,
+): Int = (state[name] as? StateValue.IntValue)?.value ?: 0
 
 /** Applies one `onClick` action. Mutates [state], which is what makes the tree recompose. */
-fun applyAction(action: Action, state: ComposeState) {
+fun applyAction(
+    action: Action,
+    state: ComposeState,
+) {
     when (action) {
         is Action.Inc -> state[action.name] = StateValue.IntValue(intOf(state, action.name) + 1)
         is Action.Dec -> state[action.name] = StateValue.IntValue(intOf(state, action.name) - 1)
@@ -780,28 +842,34 @@ fun applyAction(action: Action, state: ComposeState) {
         is Action.SubAssign ->
             state[action.name] = StateValue.IntValue(intOf(state, action.name) - action.value.toInt())
         is Action.Toggle -> state[action.name] = StateValue.BoolValue(!state.truthy(action.name))
-        is Action.Set -> state[action.name] = when (val v = action.value) {
-            is Expr.Num -> StateValue.IntValue(resolveNum(v, state, v.value).toInt())
-            is Expr.Bool -> StateValue.BoolValue(v.value)
-            else -> StateValue.StringValue(resolveText(v, state))
-        }
+        is Action.Set ->
+            state[action.name] =
+                when (val v = action.value) {
+                    is Expr.Num -> StateValue.IntValue(resolveNum(v, state, v.value).toInt())
+                    is Expr.Bool -> StateValue.BoolValue(v.value)
+                    else -> StateValue.StringValue(resolveText(v, state))
+                }
     }
 }
 
 /** Every action of one click, in source order. */
-fun applyActions(actions: List<Action>, state: ComposeState) = actions.forEach { applyAction(it, state) }
+fun applyActions(
+    actions: List<Action>,
+    state: ComposeState,
+) = actions.forEach { applyAction(it, state) }
 
 /**
  * A signature of the *declarations*. Editing the UI around a counter must not reset the counter,
  * so the renderer re-seeds [ComposeState] only when this string changes.
  */
-fun stateSignature(program: Program): String = program.state.joinToString("|") { d ->
-    when (val v = d.init) {
-        is StateValue.IntValue -> "${d.name}:int:${v.value}"
-        is StateValue.BoolValue -> "${d.name}:bool:${v.value}"
-        is StateValue.StringValue -> "${d.name}:string:${v.value}"
+fun stateSignature(program: Program): String =
+    program.state.joinToString("|") { d ->
+        when (val v = d.init) {
+            is StateValue.IntValue -> "${d.name}:int:${v.value}"
+            is StateValue.BoolValue -> "${d.name}:bool:${v.value}"
+            is StateValue.StringValue -> "${d.name}:string:${v.value}"
+        }
     }
-}
 
 // -------------------------------------------------------------------------------------------------
 // Expression evaluation
@@ -813,45 +881,59 @@ fun stateSignature(program: Program): String = program.state.joinToString("|") {
  * [resolveText], [resolveNum], [resolveBool] — because each call site already knows which kind it
  * needs; this exists for the ones that don't.
  */
-fun evalExpr(expr: Expr, state: ComposeState): Any? = when (expr) {
-    is Expr.Str -> resolveText(expr, state)
-    is Expr.Num -> resolveNum(expr, state, expr.value)
-    is Expr.Bool -> expr.value
-    is Expr.Ident -> state[expr.name]?.let {
-        when (it) {
-            is StateValue.IntValue -> it.value.toDouble()
-            is StateValue.BoolValue -> it.value
-            is StateValue.StringValue -> it.value
-        }
-    } ?: expr.name
-    is Expr.Logic -> resolveBool(expr, state)
-    is Expr.Member -> emptinessOf(expr.path, state) ?: expr.path
-}
+fun evalExpr(
+    expr: Expr,
+    state: ComposeState,
+): Any? =
+    when (expr) {
+        is Expr.Str -> resolveText(expr, state)
+        is Expr.Num -> resolveNum(expr, state, expr.value)
+        is Expr.Bool -> expr.value
+        is Expr.Ident ->
+            state[expr.name]?.let {
+                when (it) {
+                    is StateValue.IntValue -> it.value.toDouble()
+                    is StateValue.BoolValue -> it.value
+                    is StateValue.StringValue -> it.value
+                }
+            } ?: expr.name
+        is Expr.Logic -> resolveBool(expr, state)
+        is Expr.Member -> emptinessOf(expr.path, state) ?: expr.path
+    }
 
 /**
  * The string a `Text` shows: literal chunks with `$refs` substituted from live state. Divergence
  * #2 — a `Num` with a `ref` resolves through state here, where the TS prints its (always 0) literal.
  */
-fun resolveText(expr: Expr?, state: ComposeState): String = when (expr) {
-    null -> ""
-    is Expr.Str -> expr.parts.joinToString("") {
-        when (it) {
-            is StrPart.Literal -> it.text
-            is StrPart.Ref -> state.text(it.name)
-        }
+fun resolveText(
+    expr: Expr?,
+    state: ComposeState,
+): String =
+    when (expr) {
+        null -> ""
+        is Expr.Str ->
+            expr.parts.joinToString("") {
+                when (it) {
+                    is StrPart.Literal -> it.text
+                    is StrPart.Ref -> state.text(it.name)
+                }
+            }
+        is Expr.Num -> formatNumber(resolveNum(expr, state, expr.value))
+        is Expr.Bool -> expr.value.toString()
+        is Expr.Ident -> if (state[expr.name] != null) state.text(expr.name) else expr.name
+        is Expr.Member, is Expr.Logic -> ""
     }
-    is Expr.Num -> formatNumber(resolveNum(expr, state, expr.value))
-    is Expr.Bool -> expr.value.toString()
-    is Expr.Ident -> if (state[expr.name] != null) state.text(expr.name) else expr.name
-    is Expr.Member, is Expr.Logic -> ""
-}
 
 /**
  * A dimension: `16.dp` -> 16, `size.dp` -> whatever `size` holds. Anything that is not a number
  * expression yields [fallback], so `Modifier.padding(SomethingWeird)` degrades to the default
  * rather than to zero.
  */
-fun resolveNum(expr: Expr?, state: ComposeState, fallback: Double = 0.0): Double {
+fun resolveNum(
+    expr: Expr?,
+    state: ComposeState,
+    fallback: Double = 0.0,
+): Double {
     if (expr !is Expr.Num) return fallback
     val ref = expr.ref ?: return expr.value
     return state.number(ref) ?: fallback
@@ -861,26 +943,34 @@ fun resolveNum(expr: Expr?, state: ComposeState, fallback: Double = 0.0): Double
  * Truthiness for `AnimatedVisibility(visible = …)` and friends. Defaults to *true* for anything
  * unrecognised: an expression the parser could not model should not make content vanish.
  */
-fun resolveBool(expr: Expr?, state: ComposeState): Boolean = when (expr) {
-    null -> true
-    is Expr.Bool -> expr.value
-    is Expr.Num -> resolveNum(expr, state, expr.value) != 0.0
-    is Expr.Ident -> state.truthy(expr.name)
-    is Expr.Str -> resolveText(expr, state) == "true"
-    is Expr.Logic -> if (expr.op == LogicOp.And) {
-        resolveBool(expr.left, state) && resolveBool(expr.right, state)
-    } else {
-        resolveBool(expr.left, state) || resolveBool(expr.right, state)
+fun resolveBool(
+    expr: Expr?,
+    state: ComposeState,
+): Boolean =
+    when (expr) {
+        null -> true
+        is Expr.Bool -> expr.value
+        is Expr.Num -> resolveNum(expr, state, expr.value) != 0.0
+        is Expr.Ident -> state.truthy(expr.name)
+        is Expr.Str -> resolveText(expr, state) == "true"
+        is Expr.Logic ->
+            if (expr.op == LogicOp.And) {
+                resolveBool(expr.left, state) && resolveBool(expr.right, state)
+            } else {
+                resolveBool(expr.left, state) || resolveBool(expr.right, state)
+            }
+        is Expr.Member -> emptinessOf(expr.path, state) ?: true
     }
-    is Expr.Member -> emptinessOf(expr.path, state) ?: true
-}
 
 /**
  * `stateVar.isEmpty` / `stateVar.isNotEmpty` — the one method-call shape generated visibility
  * conditions actually reach for. Null when the path is something else. Hand-split rather than a
  * `Regex` so nothing depends on the wasm regex backend.
  */
-private fun emptinessOf(path: String, state: ComposeState): Boolean? {
+private fun emptinessOf(
+    path: String,
+    state: ComposeState,
+): Boolean? {
     val dot = path.lastIndexOf('.')
     if (dot <= 0) return null
     val name = path.substring(0, dot)
@@ -902,7 +992,10 @@ private fun formatNumber(value: Double): String {
 // Presets — the editor's starting points, and the parser's fixtures
 // -------------------------------------------------------------------------------------------------
 
-data class ComposePreset(val label: String, val code: String)
+data class ComposePreset(
+    val label: String,
+    val code: String,
+)
 
 /**
  * Transcribed verbatim from `PRESETS` in `cv-siddharth/src/ComposePlayground.tsx`, so the two
@@ -910,10 +1003,11 @@ data class ComposePreset(val label: String, val code: String)
  * [composeInterpreterSelfCheck], which parses all seven and asserts nothing degrades to
  * [Node.Unknown].
  */
-val composePresets: List<ComposePreset> = listOf(
-    ComposePreset(
-        "Counter",
-        """var count by remember { mutableStateOf(0) }
+val composePresets: List<ComposePreset> =
+    listOf(
+        ComposePreset(
+            "Counter",
+            """var count by remember { mutableStateOf(0) }
 
 Column(
     modifier = Modifier.fillMaxSize().padding(24.dp),
@@ -934,10 +1028,10 @@ Column(
         Button(onClick = { count++ }) { Text("add one") }
     }
 }""",
-    ),
-    ComposePreset(
-        "Profile card",
-        """Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
+        ),
+        ComposePreset(
+            "Profile card",
+            """Column(modifier = Modifier.fillMaxSize().padding(20.dp)) {
     Card(modifier = Modifier.fillMaxWidth().padding(4.dp)) {
         Column(modifier = Modifier.padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -966,10 +1060,10 @@ Column(
         }
     }
 }""",
-    ),
-    ComposePreset(
-        "Toggle",
-        """var on by remember { mutableStateOf(false) }
+        ),
+        ComposePreset(
+            "Toggle",
+            """var on by remember { mutableStateOf(false) }
 
 Column(
     modifier = Modifier.fillMaxSize().padding(24.dp),
@@ -986,10 +1080,10 @@ Column(
     Spacer(Modifier.height(16.dp))
     Button(onClick = { on = !on }) { Text("toggle") }
 }""",
-    ),
-    ComposePreset(
-        "Gaddi role",
-        """// theme tokens imported from the real Gaddi app
+        ),
+        ComposePreset(
+            "Gaddi role",
+            """// theme tokens imported from the real Gaddi app
 Column(
     modifier = Modifier.fillMaxSize().background(Gaddi.ink).padding(18.dp),
     verticalArrangement = Arrangement.Center
@@ -1014,10 +1108,10 @@ Column(
         }
     }
 }""",
-    ),
-    ComposePreset(
-        "Doori",
-        """// theme tokens imported from the real Doori app
+        ),
+        ComposePreset(
+            "Doori",
+            """// theme tokens imported from the real Doori app
 Column(
     modifier = Modifier.fillMaxSize().background(Doori.ink).padding(20.dp),
     verticalArrangement = Arrangement.Center,
@@ -1041,10 +1135,10 @@ Column(
         }
     }
 }""",
-    ),
-    ComposePreset(
-        "Animation",
-        """var size by remember { mutableStateOf(84) }
+        ),
+        ComposePreset(
+            "Animation",
+            """var size by remember { mutableStateOf(84) }
 var shown by remember { mutableStateOf(true) }
 
 Column(
@@ -1077,10 +1171,10 @@ Column(
         }
     }
 }""",
-    ),
-    ComposePreset(
-        "Layout",
-        """Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        ),
+        ComposePreset(
+            "Layout",
+            """Column(modifier = Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
     Text("Rows & weights", fontSize = 18.sp, fontWeight = FontWeight.Bold)
     Row(modifier = Modifier.fillMaxWidth().height(56.dp)) {
         Box(modifier = Modifier.weight(1.dp).fillMaxHeight().background(Color.Green))
@@ -1092,22 +1186,24 @@ Column(
         Text("A Material card", modifier = Modifier.padding(16.dp), color = Color.LightGray)
     }
 }""",
-    ),
-)
+        ),
+    )
 
 // -------------------------------------------------------------------------------------------------
 // Self-check
 // -------------------------------------------------------------------------------------------------
 
 /** Every node in the tree, parents before children. */
-private fun flattenNodes(nodes: List<Node>): List<Node> = nodes.flatMap { n ->
-    listOf(n) + when (n) {
-        is Node.Container -> flattenNodes(n.children)
-        is Node.Button -> flattenNodes(n.children)
-        is Node.Animated -> flattenNodes(n.children)
-        else -> emptyList()
+private fun flattenNodes(nodes: List<Node>): List<Node> =
+    nodes.flatMap { n ->
+        listOf(n) +
+            when (n) {
+                is Node.Container -> flattenNodes(n.children)
+                is Node.Button -> flattenNodes(n.children)
+                is Node.Animated -> flattenNodes(n.children)
+                else -> emptyList()
+            }
     }
-}
 
 /**
  * ponytail: one runnable check instead of a test module — same shape as [themeLabSelfCheck]. This
@@ -1127,6 +1223,13 @@ internal fun composeInterpreterSelfCheck() {
 }
 
 /** The Counter preset: exact state, exact tree shape, and divergence #1 (spacedBy keeps its arg). */
+// MagicNumber: assertion fixtures. detekt excludes every test source set from this rule by
+// default and these functions are tests — they live in main source because composeMain is
+// `internal` and this project has no commonTest, not because they are production code. `800f` in
+// `recomposeCellAt(1f, 1f, 800f, 500f)` is the grid being asserted against; naming it would add a
+// constant that means "the number in this one assertion".
+// The real end state is these moving to jvmTest, which SelfCheckTest.kt now makes possible.
+@Suppress("MagicNumber")
 private fun checkCounterPreset() {
     val noState = ComposeState()
     // ── the Counter preset: exact state + exact tree shape ──────────────────────────────────────
@@ -1188,13 +1291,14 @@ private fun checkInterpolationSplitting() {
     val interp = parseCompose("""Text("Count: ${'$'}count times ${'$'}{ n }!\nbye")""")
     val parts = ((interp.tree[0] as Node.Text).value as Expr.Str).parts
     check(
-        parts == listOf(
-            StrPart.Literal("Count: "),
-            StrPart.Ref("count"),
-            StrPart.Literal(" times "),
-            StrPart.Ref("n"),
-            StrPart.Literal("!\nbye"),
-        ),
+        parts ==
+            listOf(
+                StrPart.Literal("Count: "),
+                StrPart.Ref("count"),
+                StrPart.Literal(" times "),
+                StrPart.Ref("n"),
+                StrPart.Literal("!\nbye"),
+            ),
     ) { "interpolation split wrong: $parts" }
     // a lone $ is a literal, not a ref
     val lone = parseCompose("""Text("cost: ${'$'} 5")""")
@@ -1202,35 +1306,39 @@ private fun checkInterpolationSplitting() {
 }
 
 /** Every [Action] shape, parsed and then applied to live state. Returns that state for [checkDynamicEval]. */
+// MagicNumber: assertion fixtures — see the note on the first self-check in this file.
+@Suppress("MagicNumber")
 private fun checkActionShapes(): ComposeState {
     // ── every Action shape, parsed and then applied to live state ────────────────────────────────
-    val actions = parseCompose(
-        """
-        var n by remember { mutableStateOf(10) }
-        var flag by remember { mutableStateOf(false) }
-        var who by remember { mutableStateOf("sid") }
-        Column {
-            Button(onClick = { n++ }) { Text("a") }
-            Button(onClick = { n-- }) { Text("b") }
-            Button(onClick = { n += 5 }) { Text("c") }
-            Button(onClick = { n -= 3 }) { Text("d") }
-            Button(onClick = { flag = !flag }) { Text("e") }
-            Button(onClick = { n = 7 }) { Text("f") }
-            Button(onClick = { who = "ada" }) { Text("g") }
-        }
-        """.trimIndent(),
-    )
+    val actions =
+        parseCompose(
+            """
+            var n by remember { mutableStateOf(10) }
+            var flag by remember { mutableStateOf(false) }
+            var who by remember { mutableStateOf("sid") }
+            Column {
+                Button(onClick = { n++ }) { Text("a") }
+                Button(onClick = { n-- }) { Text("b") }
+                Button(onClick = { n += 5 }) { Text("c") }
+                Button(onClick = { n -= 3 }) { Text("d") }
+                Button(onClick = { flag = !flag }) { Text("e") }
+                Button(onClick = { n = 7 }) { Text("f") }
+                Button(onClick = { who = "ada" }) { Text("g") }
+            }
+            """.trimIndent(),
+        )
     val clicks = (actions.tree[0] as Node.Container).children.map { (it as Node.Button).onClick.single() }
     check(
-        clicks == listOf(
-            Action.Inc("n"),
-            Action.Dec("n"),
-            Action.AddAssign("n", 5.0),
-            Action.SubAssign("n", 3.0),
-            Action.Toggle("flag"),
-            Action.Set("n", Expr.Num(7.0)),
-            Action.Set("who", Expr.Str(listOf(StrPart.Literal("ada")))),
-        ),
+        clicks ==
+            listOf(
+                Action.Inc("n"),
+                Action.Dec("n"),
+                Action.AddAssign("n", 5.0),
+                Action.SubAssign("n", 3.0),
+                Action.Toggle("flag"),
+                Action.Set("n", Expr.Num(7.0)),
+                Action.Set("who", Expr.Str(listOf(StrPart.Literal("ada")))),
+            ),
     ) { "action shapes parsed wrong: $clicks" }
 
     val live = ComposeState(actions.state)
@@ -1252,15 +1360,19 @@ private fun checkActionShapes(): ComposeState {
 }
 
 /** State-driven dimensions and interpolation read through live state. */
+// MagicNumber: assertion fixtures — see the note on the first self-check in this file.
+@Suppress("MagicNumber")
 private fun checkStateDrivenDimensions() {
     // ── state-driven dimensions and interpolation read through live state ───────────────────────
     val anim = parseCompose(composePresets[5].code)
     val animState = ComposeState(anim.state)
-    val sizeArg = flattenNodes(anim.tree)
-        .filterIsInstance<Node.Container>()
-        .first { it.name == ContainerKind.Box }
-        .modifiers.first { it.name == "size" }
-        .args[0] as Expr.Num
+    val sizeArg =
+        flattenNodes(anim.tree)
+            .filterIsInstance<Node.Container>()
+            .first { it.name == ContainerKind.Box }
+            .modifiers
+            .first { it.name == "size" }
+            .args[0] as Expr.Num
     check(sizeArg.ref == "size" && sizeArg.unit == NumUnit.Dp) { "size.dp lost its ref/unit: $sizeArg" }
     check(resolveNum(sizeArg, animState) == 84.0) { "size.dp should read 84 out of state" }
     animState["size"] = StateValue.IntValue(150)
@@ -1269,20 +1381,24 @@ private fun checkStateDrivenDimensions() {
     check(resolveText(sizeArg, animState) == "150") { "Text(size.dp) should print the state value" }
 
     // Color(0x…) keeps its digits; RoundedCornerShape keeps its radius (the TS flattens it to 16)
-    val clip = flattenNodes(anim.tree)
-        .filterIsInstance<Node.Container>()
-        .first { it.name == ContainerKind.Box }
-        .modifiers.first { it.name == "clip" }
-        .args[0] as Expr.Member
+    val clip =
+        flattenNodes(anim.tree)
+            .filterIsInstance<Node.Container>()
+            .first { it.name == ContainerKind.Box }
+            .modifiers
+            .first { it.name == "clip" }
+            .args[0] as Expr.Member
     check(memberBase(clip.path) == "RoundedCornerShape" && memberArg(clip.path) == 20.0) {
         "RoundedCornerShape(20.dp) lost its radius: ${clip.path}"
     }
     val toggle = parseCompose(composePresets[2].code)
-    val hex = flattenNodes(toggle.tree)
-        .filterIsInstance<Node.Container>()
-        .first { it.name == ContainerKind.Box }
-        .modifiers.first { it.name == "background" }
-        .args[0] as Expr.Member
+    val hex =
+        flattenNodes(toggle.tree)
+            .filterIsInstance<Node.Container>()
+            .first { it.name == ContainerKind.Box }
+            .modifiers
+            .first { it.name == "background" }
+            .args[0] as Expr.Member
     check(hex.path == "ColorHex:0xFF3DDC84") { "Color(0xFF3DDC84) mangled: ${hex.path}" }
     // "state is ${on}" against real state
     val toggleState = ComposeState(toggle.state)
@@ -1295,22 +1411,23 @@ private fun checkStateDrivenDimensions() {
 /** TextField binding, AnimatedVisibility, logic and `.isEmpty`. */
 private fun checkFormBinding() {
     // ── TextField binding, AnimatedVisibility, logic and .isEmpty ────────────────────────────────
-    val form = parseCompose(
-        """
-        var username by remember { mutableStateOf("") }
-        var password by remember { mutableStateOf("") }
-        Column {
-            OutlinedTextField(value = username, onValueChange = { username = it }, modifier = Modifier.fillMaxWidth())
-            TextField(value = password, onValueChange = { it.trim() })
-            AnimatedVisibility(visible = username.isEmpty() || password.isEmpty()) {
-                Text("fill both fields")
+    val form =
+        parseCompose(
+            """
+            var username by remember { mutableStateOf("") }
+            var password by remember { mutableStateOf("") }
+            Column {
+                OutlinedTextField(value = username, onValueChange = { username = it }, modifier = Modifier.fillMaxWidth())
+                TextField(value = password, onValueChange = { it.trim() })
+                AnimatedVisibility(visible = username.isEmpty() || password.isEmpty()) {
+                    Text("fill both fields")
+                }
+                AnimatedVisibility(visible = username.isNotEmpty() && password.isNotEmpty()) {
+                    Text("hello ${'$'}username")
+                }
             }
-            AnimatedVisibility(visible = username.isNotEmpty() && password.isNotEmpty()) {
-                Text("hello ${'$'}username")
-            }
-        }
-        """.trimIndent(),
-    )
+            """.trimIndent(),
+        )
     val fields = flattenNodes(form.tree).filterIsInstance<Node.TextField>()
     check(fields.size == 2)
     check(fields[0].bindTo == "username") { "onValueChange = { username = it } must bind" }
@@ -1354,29 +1471,31 @@ private fun checkForgiveness() {
 
     // Nothing here may throw. A live editor reparses mid-keystroke, so every prefix of every
     // snippet above is also an input this has to survive.
-    val malformed = listOf(
-        "",
-        "   \n\t ",
-        "}}}}",
-        "@@@ *** ### €¥",
-        "var",
-        "var x by",
-        "var x by remember {",
-        "var x = 5",
-        "Text(",
-        """Text("unterminated""",
-        "Column {",
-        "Column(modifier = Modifier.padding(16.",
-        "Button(onClick = { count++ ) { Text(\"x\") }",
-        "Row(horizontalArrangement = Arrangement.spacedBy(",
-        "AnimatedVisibility(visible = ) { }",
-        "/* never closed",
-        "Card(((((",
-        "Column { Column { Column { Text(\"deep\")",
-    ) + composePresets.flatMap { p ->
-        // every prefix at a 40-char stride: the shapes a typist actually produces
-        (0..p.code.length step 40).map { p.code.substring(0, it) }
-    }
+    val malformed =
+        listOf(
+            "",
+            "   \n\t ",
+            "}}}}",
+            "@@@ *** ### €¥",
+            "var",
+            "var x by",
+            "var x by remember {",
+            "var x = 5",
+            "Text(",
+            """Text("unterminated""",
+            "Column {",
+            "Column(modifier = Modifier.padding(16.",
+            "Button(onClick = { count++ ) { Text(\"x\") }",
+            "Row(horizontalArrangement = Arrangement.spacedBy(",
+            "AnimatedVisibility(visible = ) { }",
+            "/* never closed",
+            "Card(((((",
+            "Column { Column { Column { Text(\"deep\")",
+        ) +
+            composePresets.flatMap { p ->
+                // every prefix at a 40-char stride: the shapes a typist actually produces
+                (0..p.code.length step 40).map { p.code.substring(0, it) }
+            }
     malformed.forEach { src ->
         val program = parseCompose(src) // must not throw
         program.tree.forEach { resolveBool((it as? Node.Animated)?.visible, noState) }
@@ -1384,6 +1503,8 @@ private fun checkForgiveness() {
 }
 
 /** All seven presets, end to end. */
+// MagicNumber: assertion fixtures — see the note on the first self-check in this file.
+@Suppress("MagicNumber")
 private fun checkEveryPreset() {
     // ── all seven presets, end to end ───────────────────────────────────────────────────────────
     check(composePresets.size == 7) { "the React site ships 7 presets" }
@@ -1406,7 +1527,10 @@ private fun checkEveryPreset() {
 }
 
 /** Walks whatever a node carries through the evaluators, asserting only that none of them throws. */
-private fun evaluateEverything(node: Node, state: ComposeState) {
+private fun evaluateEverything(
+    node: Node,
+    state: ComposeState,
+) {
     when (node) {
         is Node.Text -> resolveText(node.value, state)
         is Node.Animated -> resolveBool(node.visible, state)
@@ -1416,6 +1540,8 @@ private fun evaluateEverything(node: Node, state: ComposeState) {
 }
 
 /** `evalExpr`'s dynamic form, for the renderer paths that do not know the kind up front. */
+// MagicNumber: assertion fixtures — see the note on the first self-check in this file.
+@Suppress("MagicNumber")
 private fun checkDynamicEval(live: ComposeState) {
     val noState = ComposeState()
     // evalExpr's dynamic form, for the renderer paths that don't know the kind up front

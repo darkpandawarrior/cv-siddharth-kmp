@@ -25,45 +25,83 @@ package com.siddharth.cv.shared.playground
 /** A value expression. `ref` on [Num] means "read this number out of state" (e.g. `size.dp`). */
 sealed interface Expr {
     /** An interpolated string: literal chunks interleaved with `$state` reads. */
-    data class Str(val parts: List<StrPart>) : Expr
+    data class Str(
+        val parts: List<StrPart>,
+    ) : Expr
 
-    data class Num(val value: Double, val unit: NumUnit? = null, val ref: String? = null) : Expr
+    data class Num(
+        val value: Double,
+        val unit: NumUnit? = null,
+        val ref: String? = null,
+    ) : Expr
 
-    data class Bool(val value: Boolean) : Expr
+    data class Bool(
+        val value: Boolean,
+    ) : Expr
 
-    data class Ident(val name: String) : Expr
+    data class Ident(
+        val name: String,
+    ) : Expr
 
     /** A dotted path: `Color.Green`, `Arrangement.Center`, `FontWeight.Bold`, `password.isEmpty`. */
-    data class Member(val path: String) : Expr
+    data class Member(
+        val path: String,
+    ) : Expr
 
-    data class Logic(val op: LogicOp, val left: Expr, val right: Expr) : Expr
+    data class Logic(
+        val op: LogicOp,
+        val left: Expr,
+        val right: Expr,
+    ) : Expr
 }
 
 sealed interface StrPart {
-    data class Literal(val text: String) : StrPart
+    data class Literal(
+        val text: String,
+    ) : StrPart
 
-    data class Ref(val name: String) : StrPart
+    data class Ref(
+        val name: String,
+    ) : StrPart
 }
 
 enum class NumUnit { Dp, Sp }
 
 enum class LogicOp { And, Or }
 
-data class ModifierCall(val name: String, val args: List<Expr>)
+data class ModifierCall(
+    val name: String,
+    val args: List<Expr>,
+)
 
 /** What a `Button(onClick = { … })` lambda does to state. */
 sealed interface Action {
-    data class Inc(val name: String) : Action
+    data class Inc(
+        val name: String,
+    ) : Action
 
-    data class Dec(val name: String) : Action
+    data class Dec(
+        val name: String,
+    ) : Action
 
-    data class Toggle(val name: String) : Action
+    data class Toggle(
+        val name: String,
+    ) : Action
 
-    data class AddAssign(val name: String, val value: Double) : Action
+    data class AddAssign(
+        val name: String,
+        val value: Double,
+    ) : Action
 
-    data class SubAssign(val name: String, val value: Double) : Action
+    data class SubAssign(
+        val name: String,
+        val value: Double,
+    ) : Action
 
-    data class Set(val name: String, val value: Expr) : Action
+    data class Set(
+        val name: String,
+        val value: Expr,
+    ) : Action
 }
 
 enum class ContainerKind { Column, Row, Box, Card, Surface }
@@ -89,7 +127,9 @@ sealed interface Node {
         val children: List<Node> = emptyList(),
     ) : Node
 
-    data class Spacer(val modifiers: List<ModifierCall> = emptyList()) : Node
+    data class Spacer(
+        val modifiers: List<ModifierCall> = emptyList(),
+    ) : Node
 
     data class Animated(
         val visible: Expr,
@@ -109,22 +149,36 @@ sealed interface Node {
         val modifiers: List<ModifierCall> = emptyList(),
     ) : Node
 
-    data class Unknown(val name: String) : Node
+    data class Unknown(
+        val name: String,
+    ) : Node
 }
 
 /** A `var x by remember { mutableStateOf(init) }` declaration. */
-data class StateDecl(val name: String, val init: StateValue)
+data class StateDecl(
+    val name: String,
+    val init: StateValue,
+)
 
 /** State is Int/Boolean/String only — the three `mutableStateOf` shapes the subset supports. */
 sealed interface StateValue {
-    data class IntValue(val value: Int) : StateValue
+    data class IntValue(
+        val value: Int,
+    ) : StateValue
 
-    data class BoolValue(val value: Boolean) : StateValue
+    data class BoolValue(
+        val value: Boolean,
+    ) : StateValue
 
-    data class StringValue(val value: String) : StateValue
+    data class StringValue(
+        val value: String,
+    ) : StateValue
 }
 
-data class Program(val state: List<StateDecl>, val tree: List<Node>)
+data class Program(
+    val state: List<StateDecl>,
+    val tree: List<Node>,
+)
 
 /** Containers, mirroring the TS `CONTAINERS` set exactly. */
 internal val containerNames: Map<String, ContainerKind> =

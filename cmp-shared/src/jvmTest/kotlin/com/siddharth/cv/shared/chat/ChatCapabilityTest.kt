@@ -14,7 +14,6 @@ import kotlin.test.assertNull
  * cmp-shared's compile classpath, and [chatCapability] never inspects which engine it got.
  */
 class ChatCapabilityTest {
-
     @Test
     fun chatCapability_reportsAvailable_whenEngineConstructs() {
         val capability = chatCapability(engineProvider = { MockEngine { respondOk() } })

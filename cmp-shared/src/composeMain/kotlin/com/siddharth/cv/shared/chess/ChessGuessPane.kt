@@ -33,8 +33,8 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.siddharth.cv.shared.anthology.grouped
 import com.siddharth.cv.shared.data.generated.chessPositions
+import com.siddharth.cv.shared.format.grouped
 import com.siddharth.cv.shared.theme.GhostButton
 import com.siddharth.cv.shared.theme.MonoMeta
 import com.siddharth.cv.shared.theme.cvColor
@@ -64,7 +64,6 @@ import com.siddharth.cv.shared.theme.cvType
  * The web also bumps a playhtml-backed counter shared between visitors on every guess. There is no
  * backend here, so there is no shared counter, and nothing in this pane pretends there is one.
  */
-
 private val DarkSquare: Color = cvColor("#2A3B33")
 private val LightSquare: Color = cvColor("#C9D6CD")
 private val BoardMaxWidth: Dp = 320.dp
@@ -72,6 +71,9 @@ private val BoardMaxWidth: Dp = 320.dp
 /** Standard algebraic letters. `n` for knight, because `k` is the king. */
 private val PieceLetters: Map<Char, String> =
     mapOf('p' to "P", 'n' to "N", 'b' to "B", 'r' to "R", 'q' to "Q", 'k' to "K")
+
+/** Eight files, eight ranks. */
+private const val BoardEdge = 8
 
 /**
  * The FEN's piece-placement field as 64 slots, index 0 = a1 and 63 = h8, the same convention the
@@ -92,7 +94,7 @@ internal fun fenPieces(fen: String): List<Char?> {
             }
             c.isDigit() -> file += c - '0'
             else -> {
-                if (rank in 0..7 && file in 0..7) squares[rank * 8 + file] = c
+                if (rank in 0 until BoardEdge && file in 0 until BoardEdge) squares[rank * BoardEdge + file] = c
                 file++
             }
         }
@@ -110,7 +112,10 @@ internal fun sideToMove(fen: String): String = if (fen.split(" ").getOrNull(1) =
  */
 private val quizStride: Int = (7 downTo 1).first { stride -> gcd(stride, chessPositions.size) == 1 }
 
-private tailrec fun gcd(a: Int, b: Int): Int = if (b == 0) a else gcd(b, a % b)
+private tailrec fun gcd(
+    a: Int,
+    b: Int,
+): Int = if (b == 0) a else gcd(b, a % b)
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -200,7 +205,10 @@ internal fun GuessThePositionPane() {
 }
 
 @Composable
-private fun PositionBoard(fen: String, measurer: TextMeasurer) {
+private fun PositionBoard(
+    fen: String,
+    measurer: TextMeasurer,
+) {
     val pieces = fenPieces(fen)
     val glyph = cvType.mono.copy(fontSize = 15.sp, fontWeight = FontWeight.Bold)
     Box(Modifier.widthIn(max = BoardMaxWidth).fillMaxWidth().aspectRatio(1f)) {
@@ -247,6 +255,8 @@ private fun PositionBoard(fen: String, measurer: TextMeasurer) {
 // The two panes that are out, and what they would actually cost
 // -------------------------------------------------------------------------------------------
 
+/** Referenced from the KDoc above so the shape of the remaining cost cannot drift out of the file. */
+
 /**
  * WHY `ChessBoardPane` AND `DailyPuzzle` ARE ABSENT, and what they would now actually cost.
  *
@@ -281,7 +291,6 @@ private fun PositionBoard(fen: String, measurer: TextMeasurer) {
  * placement to a 789-line engine would trade 18 lines of [fenPieces] for a dependency on every
  * future change to a move generator it has no use for.
  */
-/** Referenced from the KDoc above so the shape of the remaining cost cannot drift out of the file. */
 internal fun chessBoardPaneCost(): String =
     "an interactive board, the two calibration presets, and a clock decision, over the move " +
         "generator labs/ChessEngine.kt already carries"
@@ -291,6 +300,9 @@ internal fun chessBoardPaneCost(): String =
 // -------------------------------------------------------------------------------------------
 
 /** ponytail: one runnable check, called from [chessScreenSelfCheck]. */
+// MagicNumber: assertion fixtures. detekt excludes every test source set from this rule by
+// default; these are tests that live in main source only because composeMain is `internal`
+// and this project has no commonTest. SelfCheckTest.kt now runs them from `check`.
 @Suppress("MagicNumber")
 internal fun chessGuessPaneSelfCheck() {
     check(chessPositions.isNotEmpty()) { "no quiz positions" }

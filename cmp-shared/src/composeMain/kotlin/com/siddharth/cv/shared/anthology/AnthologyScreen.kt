@@ -65,6 +65,7 @@ import com.siddharth.cv.shared.data.generated.seasonCanon
 import com.siddharth.cv.shared.data.generated.siblingSeries
 import com.siddharth.cv.shared.data.generated.unfiledPieces
 import com.siddharth.cv.shared.data.profile
+import com.siddharth.cv.shared.format.grouped
 import com.siddharth.cv.shared.media.ProjectShot
 import com.siddharth.cv.shared.theme.CvCard
 import com.siddharth.cv.shared.theme.CvColors
@@ -160,7 +161,11 @@ private val KeptPaperColors: CvColors =
  * opens, and the `?layer=` key the React route's `validateSearch` accepts, so when the spine wires
  * a `Route.Anthology(layer)` it has the vocabulary already and cannot invent a second one.
  */
-enum class AnthologyLayer(val key: String, val label: String, val season: Int?) {
+enum class AnthologyLayer(
+    val key: String,
+    val label: String,
+    val season: Int?,
+) {
     Form("form", "The Form", 1),
     Case("case", "The Case", 2),
     Fire("fire", "The Fire", 3),
@@ -212,8 +217,7 @@ fun AnthologyScreen(
 }
 
 /** `max-w-5xl mx-auto px-6`: the measure every block on this page shares. */
-private fun Modifier.pageMeasure(): Modifier =
-    this.widthIn(max = CvContentMaxWidth).fillMaxWidth().padding(horizontal = CvGutter)
+private fun Modifier.pageMeasure(): Modifier = this.widthIn(max = CvContentMaxWidth).fillMaxWidth().padding(horizontal = CvGutter)
 
 @Composable
 private fun AnthologyBody(
@@ -408,7 +412,11 @@ private fun LayerSwitch(
  * that matters, the same call [com.siddharth.cv.shared.labs.LabScreen]'s tabs make.
  */
 @Composable
-private fun LayerPill(label: String, selected: Boolean, onSelect: () -> Unit) {
+private fun LayerPill(
+    label: String,
+    selected: Boolean,
+    onSelect: () -> Unit,
+) {
     val colors = cvColors
     val interaction = remember { MutableInteractionSource() }
     val shape = RoundedCornerShape(999.dp)
@@ -424,8 +432,7 @@ private fun LayerPill(label: String, selected: Boolean, onSelect: () -> Unit) {
                     indication = null,
                     role = Role.RadioButton,
                     onClick = onSelect,
-                )
-                .padding(horizontal = 16.dp, vertical = 8.dp),
+                ).padding(horizontal = 16.dp, vertical = 8.dp),
     ) {
         BasicText(
             text = label,
@@ -514,7 +521,7 @@ internal fun TheFourteenFigure() {
                 .semantics {
                     contentDescription =
                         "$filled filled slots and one empty slot outlined in a broken line, " +
-                            "where a fourteenth should be."
+                        "where a fourteenth should be."
                 },
         ) {
             val cols = 7
@@ -570,7 +577,11 @@ private fun TheCase(burned: Boolean) {
     val gone =
         remember(burned) {
             if (burned) {
-                anthologyEntries.filter { it.season == 3 }.map { it.page }.filter { it != 0 }.toSet()
+                anthologyEntries
+                    .filter { it.season == 3 }
+                    .map { it.page }
+                    .filter { it != 0 }
+                    .toSet()
             } else {
                 emptySet()
             }
@@ -624,7 +635,10 @@ private fun TheCase(burned: Boolean) {
 
 /** `<figure>` + `<figcaption>`: a framed panel with the meaning in prose underneath it. */
 @Composable
-private fun Figure(caption: String, content: @Composable () -> Unit) {
+private fun Figure(
+    caption: String,
+    content: @Composable () -> Unit,
+) {
     val colors = cvColors
     val shape = RoundedCornerShape(16.dp)
     Column(
@@ -649,7 +663,12 @@ private fun Figure(caption: String, content: @Composable () -> Unit) {
 // 3. The entry card
 // ---------------------------------------------------------------------------------------------
 
-/** Season three's kindling ordinal: 1-13 withdrawn, 14 the one page kept. */
+/** The burning season: every page in it is withdrawn, except [KindlingFinale]. */
+private const val KindlingSeason = 3
+
+/** The notice board: posted rather than handled, so its plates are flat. */
+private const val NoticeSeason = 4
+
 private const val KindlingFinale = 14
 
 /** Loose warm paper on a desk sits very slightly askew. Season one and the kept page are neither. */
@@ -667,6 +686,8 @@ private const val PaperTiltDeg = 0.65f
  * primitive as it stands rather than fork it, so the seasons are told apart here by colour, label
  * and tilt, which is three channels rather than four. `CvCard(shape = …)` is the one-line fix.
  */
+
+/** Season three's kindling ordinal: 1-13 withdrawn, 14 the one page kept. */
 private data class EntryLook(
     val label: String,
     val colors: CvColors,
@@ -706,7 +727,7 @@ private fun entryLook(e: AnthologyEntry): EntryLook =
                 "a page out of his case, on warm paper",
             )
         // The exception, and the only undamaged object in the season.
-        e.season == 3 && e.kindling == KindlingFinale ->
+        e.season == KindlingSeason && e.kindling == KindlingFinale ->
             EntryLook(
                 "THE PAGE HE KEEPS",
                 KeptPaperColors,
@@ -717,7 +738,7 @@ private fun entryLook(e: AnthologyEntry): EntryLook =
             )
         // The fire. Same paper, marked by it, so the accent goes to ember and nothing rotates:
         // a burned page is the shape of its own edge and a tilt would fight the bite.
-        e.season == 3 ->
+        e.season == KindlingSeason ->
             EntryLook(
                 "PAGE ${e.page} WITHDRAWN",
                 InkColors.copy(accent = Ember, accentDim = Ember.copy(alpha = 0.8f)),
@@ -728,7 +749,7 @@ private fun entryLook(e: AnthologyEntry): EntryLook =
             )
         // The notice board. Posted rather than handled, so it is flat, and it carries the same
         // coverage cyan its plates do.
-        e.season == 4 ->
+        e.season == NoticeSeason ->
             EntryLook(
                 "NOTICE ${e.idx} OF 14",
                 InkColors.copy(accent = Coverage, accentDim = Coverage.copy(alpha = 0.8f)),
@@ -767,7 +788,11 @@ private fun entryLook(e: AnthologyEntry): EntryLook =
  * three burned or that one page in it is on paper.
  */
 @Composable
-private fun EntryCard(e: AnthologyEntry, index: Int, uri: UriHandler) {
+private fun EntryCard(
+    e: AnthologyEntry,
+    index: Int,
+    uri: UriHandler,
+) {
     val look = entryLook(e)
     val reduced = LocalReducedMotion.current
     CvTheme(colors = look.colors) {
@@ -828,7 +853,10 @@ private fun seasonOfKey(k: String): Int = k.substringAfter('s').substringBefore(
 
 private fun idxOfKey(k: String): Int = k.substringAfter('-').toIntOrNull() ?: 0
 
-private fun LazyListScope.tellersLayer(columns: Int, uri: UriHandler) {
+private fun LazyListScope.tellersLayer(
+    columns: Int,
+    uri: UriHandler,
+) {
     item("tellers-intro") {
         Reveal {
             Column(Modifier.pageMeasure().padding(top = 28.dp)) {
@@ -893,7 +921,10 @@ private fun LazyListScope.seasonRoll(
 }
 
 @Composable
-private fun TellerCard(w: AnthologyWitness, uri: UriHandler) {
+private fun TellerCard(
+    w: AnthologyWitness,
+    uri: UriHandler,
+) {
     val colors = cvColors
     // Resolved from the record's own entry keys rather than by scanning the corpus for an entry
     // that kept a copy of this witness: that scan is outright wrong the moment one teller carries
@@ -938,7 +969,10 @@ private fun AnthologyEntry.entryKey(): String = "s$season-${idx.toString().padSt
 // 5. Unfiled, and the sibling series
 // ---------------------------------------------------------------------------------------------
 
-private fun LazyListScope.unfiledLayer(columns: Int, uri: UriHandler) {
+private fun LazyListScope.unfiledLayer(
+    columns: Int,
+    uri: UriHandler,
+) {
     item("unfiled-intro") {
         Reveal {
             Column(Modifier.pageMeasure().padding(top = 28.dp)) {
@@ -976,7 +1010,10 @@ private fun LazyListScope.unfiledLayer(columns: Int, uri: UriHandler) {
     }
 }
 
-private fun LazyListScope.siblingLayer(columns: Int, uri: UriHandler) {
+private fun LazyListScope.siblingLayer(
+    columns: Int,
+    uri: UriHandler,
+) {
     siblingSeries.forEach { series -> siblingSeriesBlock(series, columns, uri) }
 }
 
@@ -1067,7 +1104,7 @@ private val StateLegendRows: List<Pair<String, String>> =
         "Self" to "The Directory. Him.",
         "Withdrawn" to
             "The page burned. The world is still there. The count never reaches it, because the " +
-                "Directory never had it to file.",
+            "Directory never had it to file.",
     )
 
 /**
@@ -1143,7 +1180,9 @@ private const val LcgIncrement = 1013904223
 private const val Uint32Mask = 0xFFFFFFFFL
 private const val Uint32Span = 4294967296f
 
-private class Lcg(seed: Int) {
+private class Lcg(
+    seed: Int,
+) {
     private var state: Int = seed
 
     fun next(): Float {
@@ -1198,14 +1237,15 @@ private fun Starfield(concluded: Int) {
             .semantics {
                 contentDescription =
                     "A flat projection of the Directory's sky. ${fieldPoints.size} anonymous worlds " +
-                        "behind ${worlds.size} named ones, with $concluded of the anonymous field " +
-                        "gone dark. Every named world is listed below."
+                    "behind ${worlds.size} named ones, with $concluded of the anonymous field " +
+                    "gone dark. Every named world is listed below."
             },
     ) {
         val half = min(size.width, size.height) / 2f
         val k = half / MapScale
         val cx = size.width / 2f
         val cy = size.height / 2f
+
         fun project(p: Offset) = Offset(cx + p.x * k, cy - p.y * k)
 
         // The field. Anything projecting outside the frame simply is not drawn, which reads as a
@@ -1277,10 +1317,11 @@ private fun StateLegend() {
                 Column {
                     BasicText(
                         text = term,
-                        style = cvType.bodySmall.copy(
-                            color = colors.onBackground,
-                            fontWeight = FontWeight.SemiBold,
-                        ),
+                        style =
+                            cvType.bodySmall.copy(
+                                color = colors.onBackground,
+                                fontWeight = FontWeight.SemiBold,
+                            ),
                     )
                     BasicText(text = desc, style = cvType.bodySmall)
                 }
@@ -1312,10 +1353,11 @@ private fun WorldRegister(concluded: Int) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         BasicText(
                             text = w.name,
-                            style = cvType.bodySmall.copy(
-                                color = colors.onBackground,
-                                fontWeight = FontWeight.SemiBold,
-                            ),
+                            style =
+                                cvType.bodySmall.copy(
+                                    color = colors.onBackground,
+                                    fontWeight = FontWeight.SemiBold,
+                                ),
                         )
                         Spacer(Modifier.width(8.dp))
                         TagChip(text = state)
@@ -1366,23 +1408,20 @@ private fun <T> LazyListScope.gridItems(
     }
 }
 
-private fun dashes(): PathEffect =
-    PathEffect.dashPathEffect(floatArrayOf(4f, 4f))
+/** Equal on/off, in px, so the rule reads as a seam rather than as a border. */
+private const val DashSegment = 4f
 
-/**
- * `Number.prototype.toLocaleString()`, minus the locale. `kotlin.text` has no grouping formatter on
- * every target, and the site prints these figures with commas.
- *
- * ponytail: no negatives in this corpus, so no sign handling.
- */
-internal fun Int.grouped(): String = toString().reversed().chunked(3).joinToString(",").reversed()
+private fun dashes(): PathEffect = PathEffect.dashPathEffect(floatArrayOf(DashSegment, DashSegment))
 
 /**
  * `/read/$slug` is not a route in this build. Every hash and path on the React site that this port
  * does not serve resolves against the live site instead of silently doing nothing, which is the same
  * contract `ProjectDetailScreen.openLink` already holds.
  */
-internal fun openRead(slug: String, uri: UriHandler) {
+internal fun openRead(
+    slug: String,
+    uri: UriHandler,
+) {
     uri.openUri(profile.portfolio.trimEnd('/') + "/read/" + slug)
 }
 
@@ -1479,7 +1518,7 @@ internal fun anthologySelfCheck() {
     check(kept.size == 1) { "season three has ${kept.size} kept pages" }
     check(entryLook(kept.first()).colors == KeptPaperColors) { "the kept page is not on paper" }
     check(
-        anthologyEntries.filter { it.season == 3 }.none {
+        anthologyEntries.filter { it.season == KindlingSeason }.none {
             it != kept.first() && entryLook(it).colors == KeptPaperColors
         },
     ) { "paper leaked onto a burned page" }

@@ -60,9 +60,15 @@ class StoryLayout internal constructor(
     /** The state everything non-animated reads: hit testing, the reduced-motion still frame. */
     val settled: DoubleArray get() = frames[frames.lastIndex]
 
-    fun xOf(frame: DoubleArray, i: Int): Double = frame[i]
+    fun xOf(
+        frame: DoubleArray,
+        i: Int,
+    ): Double = frame[i]
 
-    fun yOf(frame: DoubleArray, i: Int): Double = frame[size + i]
+    fun yOf(
+        frame: DoubleArray,
+        i: Int,
+    ): Double = frame[size + i]
 
     /**
      * The settle, replayed as a pure function of [progress] in 0..1, into a caller-owned [out]
@@ -72,7 +78,10 @@ class StoryLayout internal constructor(
      * already carry the cooling curve: easing the playback on top of them would be a second,
      * invented deceleration over a real one.
      */
-    fun sampleInto(progress: Double, out: DoubleArray) {
+    fun sampleInto(
+        progress: Double,
+        out: DoubleArray,
+    ) {
         require(out.size == size * 2) { "out must be ${size * 2} doubles, was ${out.size}" }
         val last = frames.lastIndex
         val at = (progress.coerceIn(0.0, 1.0) * last)
@@ -185,7 +194,12 @@ fun layoutStoryMap(
 }
 
 /** `k^2 / d` along the separating axis, for every pair. The term that spreads the graph out. */
-private fun repel(pos: DoubleArray, force: DoubleArray, n: Int, k: Double) {
+private fun repel(
+    pos: DoubleArray,
+    force: DoubleArray,
+    n: Int,
+    k: Double,
+) {
     val kk = k * k
     for (i in 0 until n) {
         for (j in i + 1 until n) {
@@ -211,7 +225,13 @@ private fun repel(pos: DoubleArray, force: DoubleArray, n: Int, k: Double) {
 }
 
 /** `d^2 / k` along each edge. The term that makes a real dependency read as a short wire. */
-private fun attract(pos: DoubleArray, force: DoubleArray, links: List<IntArray>, n: Int, k: Double) {
+private fun attract(
+    pos: DoubleArray,
+    force: DoubleArray,
+    links: List<IntArray>,
+    n: Int,
+    k: Double,
+) {
     for (link in links) {
         val i = link[0]
         val j = link[1]
@@ -227,7 +247,12 @@ private fun attract(pos: DoubleArray, force: DoubleArray, links: List<IntArray>,
 }
 
 /** Applies [force], capped at [temperature], and reports the largest step any node took. */
-private fun displace(pos: DoubleArray, force: DoubleArray, n: Int, temperature: Double): Double {
+private fun displace(
+    pos: DoubleArray,
+    force: DoubleArray,
+    n: Int,
+    temperature: Double,
+): Double {
     var largest = 0.0
     for (i in 0 until n) {
         val fx = force[i]
@@ -252,7 +277,11 @@ private fun displace(pos: DoubleArray, force: DoubleArray, n: Int, temperature: 
  * band of dead canvas on a wide surface and makes the graph read as smaller than the card it sits
  * in. What is preserved either way is the topology, which is what the figure is claiming.
  */
-private fun fitToFrame(settled: DoubleArray, frames: List<DoubleArray>, n: Int) {
+private fun fitToFrame(
+    settled: DoubleArray,
+    frames: List<DoubleArray>,
+    n: Int,
+) {
     var minX = Double.MAX_VALUE
     var maxX = -Double.MAX_VALUE
     var minY = Double.MAX_VALUE
@@ -274,7 +303,14 @@ private fun fitToFrame(settled: DoubleArray, frames: List<DoubleArray>, n: Int) 
     applyFit(settled, n, sx, sy, ox, oy)
 }
 
-private fun applyFit(frame: DoubleArray, n: Int, sx: Double, sy: Double, ox: Double, oy: Double) {
+private fun applyFit(
+    frame: DoubleArray,
+    n: Int,
+    sx: Double,
+    sy: Double,
+    ox: Double,
+    oy: Double,
+) {
     for (i in 0 until n) {
         frame[i] = frame[i] * sx + ox
         frame[n + i] = frame[n + i] * sy + oy
@@ -287,7 +323,9 @@ private fun applyFit(frame: DoubleArray, n: Int, sx: Double, sy: Double, ox: Dou
  * Kotlin's `Int` multiply wraps silently on every target rather than promoting or throwing, which
  * is exactly the modulo-2^32 the generator is defined over, so this is the same stream everywhere.
  */
-private class Lcg(seed: Int) {
+private class Lcg(
+    seed: Int,
+) {
     private var state: Int = seed
 
     /** The next value in 0..1. */
@@ -308,7 +346,10 @@ private class Lcg(seed: Int) {
  * reason `MermaidFlow` describes its graph and the forge describes its swarm. Every edge is named,
  * because the edges are the claim the surface makes.
  */
-fun describeStoryMap(nodes: List<StoryMapNode>, edges: List<StoryMapEdge>): String {
+fun describeStoryMap(
+    nodes: List<StoryMapNode>,
+    edges: List<StoryMapEdge>,
+): String {
     val label = nodes.associate { it.id to it.label }
     val wires =
         edges.joinToString("; ") { e -> "${label[e.from] ?: e.from} and ${label[e.to] ?: e.to}" }

@@ -71,7 +71,10 @@ import kotlin.math.abs
  * card that shipped in v1. A diagram we can't draw truthfully is worse than one we don't draw.
  */
 @Composable
-fun MermaidFlow(source: String, modifier: Modifier = Modifier) {
+fun MermaidFlow(
+    source: String,
+    modifier: Modifier = Modifier,
+) {
     val graph = remember(source) { parseMermaidFlow(source) }
     if (graph == null) {
         RawMermaidSource(source, modifier)
@@ -141,7 +144,10 @@ fun MermaidFlow(source: String, modifier: Modifier = Modifier) {
 
 /** The v1 rendering, kept as the fallback: exactly what a reader would see on GitHub. */
 @Composable
-private fun RawMermaidSource(source: String, modifier: Modifier = Modifier) {
+private fun RawMermaidSource(
+    source: String,
+    modifier: Modifier = Modifier,
+) {
     val colors = cvColors
     Box(
         modifier
@@ -221,10 +227,254 @@ private class FlowLayout(
 )
 
 /**
+ * Box size per node: the measured label plus padding, floored at [NODE_MIN_W].
+ *
+ * ponytail: a rhombus that truly circumscribes a tw x th box needs 2*tw by 2*th, which looks absurd
+ * next to the boxes. 1.45/1.7 clips the very corners of a wide diamond label. No real diagram uses
+ * `{}` yet; widen the factors if one ever does.
+ */
+
+/**
  * Everything that needs a [Density] or a [TextMeasurer] happens here, once, so the draw pass is
  * pure geometry. Text is measured rather than estimated — a mono font makes a per-character guess
  * tempting, but the labels carry `·`, `—` and `→`, and a guess that's 8% short clips them.
  */
+private fun nodeBoxes(
+    graph: FlowGraph,
+    texts: Map<String, TextLayoutResult>,
+    padX: Float,
+    padY: Float,
+    minW: Float,
+): Map<String, Size> =
+    graph.nodes.associate { node ->
+        val t = texts.getValue(node.id)
+        val tw = t.size.width.toFloat()
+        val th = t.size.height.toFloat()
+        val (w, h) =
+            if (node.shape == NodeShape.Diamond) {
+                (tw * DIAMOND_W_FACTOR + padX) to (th * DIAMOND_H_FACTOR + padY)
+            } else {
+                (tw + padX * 2f) to (th + padY * 2f)
+            }
+        node.id to Size(maxOf(w, minW), h)
+    }
+
+private const val DIAMOND_W_FACTOR = 1.45f
+private const val DIAMOND_H_FACTOR = 1.7f
+
+/**
+ * Gives every label between the same pair of ranks its own row, and returns how many rows the
+ * busiest band needed.
+ *
+ * Every label between two ranks lands on that band's midline, and the chip behind it is opaque — so
+ * two labels whose cross-axis footprints overlap do not merely touch, the later one erases the
+ * earlier. Gaddi's "redact per viewer" is three copies of a 21-character label whose centres sit
+ * ~85dp apart behind ~167dp chips: it drew as one smear, with two of the three half-painted over.
+ * A band that fits in one row writes nothing into [into], keeps t = 0.5, and lays out exactly as it
+ * did before.
+ */
+private fun stackBandLabels(
+    graph: FlowGraph,
+    edgeTexts: Map<FlowEdge, TextLayoutResult?>,
+    rankOf: Map<String, Int>,
+    lr: Boolean,
+    chipPad: Float,
+    crossCentre: (String) -> Float,
+    into: MutableMap<FlowEdge, Float>,
+): Int {
+    var labelRows = 1
+    graph.edges
+        .mapNotNull { e ->
+            val text = edgeTexts[e] ?: return@mapNotNull null
+            if ((rankOf[e.to] ?: 0) - (rankOf[e.from] ?: 0) != 1) return@mapNotNull null
+            Triple(e, rankOf.getValue(e.from), text)
+        }.groupBy { it.second }
+        .forEach { (_, band) ->
+            val spans =
+                band.map { (e, _, text) ->
+                    val extent = (if (lr) text.size.height else text.size.width) + chipPad * 2f
+                    val centre = (crossCentre(e.from) + crossCentre(e.to)) / 2f
+                    centre - extent / 2f to centre + extent / 2f
+                }
+            val rows = packLabelRows(spans)
+            val used = (rows.maxOrNull() ?: 0) + 1
+            if (used > 1) {
+                band.forEachIndexed { i, (e, _, _) -> into[e] = tForRankFraction((rows[i] + RowCentre) / used) }
+                labelRows = maxOf(labelRows, used)
+            }
+        }
+    return labelRows
+}
+
+/** Walks the ranks along the rank axis, centring each node in its band's thickness. */
+private fun placeNodes(
+    ranks: List<List<FlowNode>>,
+    texts: Map<String, TextLayoutResult>,
+    sizes: Map<String, Size>,
+    cross: CrossAxis,
+    rankGap: Float,
+    lr: Boolean,
+): Map<String, PlacedNode> {
+    val placed = HashMap<String, PlacedNode>()
+    var alongRank = 0f
+    ranks.forEachIndexed { r, group ->
+        val thickness = cross.bandThickness[r]
+        group.forEach { node ->
+            val s = sizes.getValue(node.id)
+            val across = cross.offsetOf(node.id)
+            placed[node.id] =
+                PlacedNode(
+                    shape = node.shape,
+                    text = texts.getValue(node.id),
+                    x = if (lr) alongRank + (thickness - s.width) / 2f else across,
+                    y = if (lr) across else alongRank + (thickness - s.height) / 2f,
+                    w = s.width,
+                    h = s.height,
+                )
+        }
+        alongRank += thickness + rankGap
+    }
+    return placed
+}
+
+/**
+ * The cross axis, resolved before the rank gap is known.
+ *
+ * Band thickness is the deepest node in the band, measured along the rank axis; the offsets place
+ * every node across it, with each band centred against the widest so the diagram reads as
+ * symmetric rather than left-ragged. It has to come first because the label packer needs these
+ * centres in order to size the rank gap, and the placement loop then reads them back.
+ */
+private class CrossAxis(
+    val bandThickness: List<Float>,
+    val span: Float,
+    private val offsets: Map<String, Float>,
+    private val sizes: Map<String, Size>,
+    private val lr: Boolean,
+) {
+    fun offsetOf(id: String): Float = offsets.getValue(id)
+
+    fun centreOf(id: String): Float {
+        val s = sizes.getValue(id)
+        return offsets.getValue(id) + (if (lr) s.height else s.width) / 2f
+    }
+}
+
+private fun crossAxisOf(
+    ranks: List<List<FlowNode>>,
+    sizes: Map<String, Size>,
+    withinGap: Float,
+    lr: Boolean,
+): CrossAxis {
+    fun alongCrossOf(id: String) = if (lr) sizes.getValue(id).height else sizes.getValue(id).width
+
+    val bandThickness =
+        ranks.map { group ->
+            group.maxOfOrNull { if (lr) sizes.getValue(it.id).width else sizes.getValue(it.id).height } ?: 0f
+        }
+    val bandExtent =
+        ranks.map { group ->
+            val each = group.sumOf { alongCrossOf(it.id).toDouble() }
+            (each + withinGap * (group.size - 1).coerceAtLeast(0)).toFloat()
+        }
+    val span = bandExtent.maxOrNull() ?: 0f
+
+    val offsets = HashMap<String, Float>()
+    ranks.forEachIndexed { r, group ->
+        var alongCross = (span - bandExtent[r]) / 2f
+        group.forEach { node ->
+            offsets[node.id] = alongCross
+            alongCross += alongCrossOf(node.id) + withinGap
+        }
+    }
+    return CrossAxis(bandThickness, span, offsets, sizes, lr)
+}
+
+/** Every edge as a drawable cubic, once both endpoints are placed and the bow line is known. */
+private fun drawEdges(
+    graph: FlowGraph,
+    placed: Map<String, PlacedNode>,
+    rankOf: Map<String, Int>,
+    edgeTexts: Map<FlowEdge, TextLayoutResult?>,
+    labelT: Map<FlowEdge, Float>,
+    lr: Boolean,
+    bowLine: Float,
+): List<PlacedEdge> =
+    graph.edges.mapNotNull { e ->
+        if (e.from == e.to) return@mapNotNull null // Mermaid allows it; nothing here uses it.
+        val a = placed[e.from] ?: return@mapNotNull null
+        val b = placed[e.to] ?: return@mapNotNull null
+        val forward = (rankOf[e.to] ?: 0) > (rankOf[e.from] ?: 0)
+        val curve = routeEdge(a, b, forward = forward, lr = lr, bowLine = bowLine)
+
+        PlacedEdge(
+            path =
+                Path().apply {
+                    moveTo(curve.p0.x, curve.p0.y)
+                    cubicTo(curve.c1.x, curve.c1.y, curve.c2.x, curve.c2.y, curve.p3.x, curve.p3.y)
+                },
+            tip = curve.p3,
+            tipDir = if (e.arrow) curve.dir else null,
+            dashed = e.dashed,
+            thick = e.thick,
+            label = edgeTexts[e],
+            labelCenter = cubicAt(curve.p0, curve.c1, curve.c2, curve.p3, labelT[e] ?: RowCentre),
+        )
+    }
+
+/** The cubic an edge is drawn along, plus the direction its arrowhead points at the far end. */
+private class EdgeCurve(
+    val p0: Offset,
+    val c1: Offset,
+    val c2: Offset,
+    val p3: Offset,
+    val dir: Offset,
+)
+
+/**
+ * Four cases: forward or back, times left-right or top-down.
+ *
+ * Lifted out of [buildFlowLayout], where it was the single largest contributor to that function's
+ * cyclomatic complexity of 52 and had nothing to do with the layout around it. A forward edge
+ * leaves one box and enters the next with its control points on the midline between them; a back
+ * edge (Gaddi's replay loop) bows out past [bowLine], the far side of the content, rather than
+ * drawing a straight line back through every box in between.
+ */
+private fun routeEdge(
+    a: PlacedNode,
+    b: PlacedNode,
+    forward: Boolean,
+    lr: Boolean,
+    bowLine: Float,
+): EdgeCurve =
+    when {
+        forward && lr -> {
+            val p0 = Offset(a.x + a.w, a.centerY)
+            val p3 = Offset(b.x, b.centerY)
+            val mid = (p0.x + p3.x) / 2f
+            EdgeCurve(p0, Offset(mid, p0.y), Offset(mid, p3.y), p3, Offset(1f, 0f))
+        }
+
+        forward -> {
+            val p0 = Offset(a.centerX, a.y + a.h)
+            val p3 = Offset(b.centerX, b.y)
+            val mid = (p0.y + p3.y) / 2f
+            EdgeCurve(p0, Offset(p0.x, mid), Offset(p3.x, mid), p3, Offset(0f, 1f))
+        }
+
+        lr -> {
+            val p0 = Offset(a.centerX, a.y + a.h)
+            val p3 = Offset(b.centerX, b.y + b.h)
+            EdgeCurve(p0, Offset(p0.x, bowLine), Offset(p3.x, bowLine), p3, Offset(0f, -1f))
+        }
+
+        else -> {
+            val p0 = Offset(a.x + a.w, a.centerY)
+            val p3 = Offset(b.x + b.w, b.centerY)
+            EdgeCurve(p0, Offset(bowLine, p0.y), Offset(bowLine, p3.y), p3, Offset(-1f, 0f))
+        }
+    }
+
 private fun buildFlowLayout(
     graph: FlowGraph,
     measurer: TextMeasurer,
@@ -245,26 +495,7 @@ private fun buildFlowLayout(
             node.id to measurer.measure(node.label, nodeStyle, constraints = labelCap)
         }
 
-    // Node boxes.
-    val padX = px(NODE_PAD_X)
-    val padY = px(NODE_PAD_Y)
-    val minW = px(NODE_MIN_W)
-    val sizes =
-        graph.nodes.associate { node ->
-            val t = texts.getValue(node.id)
-            val tw = t.size.width.toFloat()
-            val th = t.size.height.toFloat()
-            // ponytail: a rhombus that truly circumscribes a tw x th box needs 2*tw by 2*th, which
-            // looks absurd next to the boxes. 1.45/1.7 clips the very corners of a wide diamond
-            // label. No real diagram uses `{}` yet; widen the factors if one ever does.
-            val (w, h) =
-                if (node.shape == NodeShape.Diamond) {
-                    (tw * 1.45f + padX) to (th * 1.7f + padY)
-                } else {
-                    (tw + padX * 2f) to (th + padY * 2f)
-                }
-            node.id to Size(maxOf(w, minW), h)
-        }
+    val sizes = nodeBoxes(graph, texts, padX = px(NODE_PAD_X), padY = px(NODE_PAD_Y), minW = px(NODE_MIN_W))
 
     // Edge labels, measured before placement because they set the gap between ranks. Only forward
     // edges count: a back edge's label rides the bow, out past the last rank, where it costs
@@ -279,36 +510,7 @@ private fun buildFlowLayout(
             .mapNotNull { edgeTexts[it] }
             .maxOfOrNull { if (lr) it.size.width.toFloat() else it.size.height.toFloat() }
             ?: 0f
-    val withinGap = px(WITHIN_GAP)
-
-    // Rank axis: band thickness is the deepest node in the band; cross axis: bands are centred
-    // against the widest band so the diagram reads as symmetric rather than left-ragged.
-    val bandThickness =
-        ranks.map { group ->
-            group.maxOfOrNull { if (lr) sizes.getValue(it.id).width else sizes.getValue(it.id).height } ?: 0f
-        }
-    val bandExtent =
-        ranks.map { group ->
-            val each = group.sumOf { (if (lr) sizes.getValue(it.id).height else sizes.getValue(it.id).width).toDouble() }
-            (each + withinGap * (group.size - 1).coerceAtLeast(0)).toFloat()
-        }
-    val crossSpan = bandExtent.maxOrNull() ?: 0f
-
-    // Cross-axis offsets don't depend on the rank gap, and the label packer below needs them before
-    // that gap can be sized — so they're resolved here and the placement loop reads them back.
-    val crossOf = HashMap<String, Float>()
-    ranks.forEachIndexed { r, group ->
-        var alongCross = (crossSpan - bandExtent[r]) / 2f
-        group.forEach { node ->
-            val s = sizes.getValue(node.id)
-            crossOf[node.id] = alongCross
-            alongCross += (if (lr) s.height else s.width) + withinGap
-        }
-    }
-    fun crossCentre(id: String): Float {
-        val s = sizes.getValue(id)
-        return crossOf.getValue(id) + (if (lr) s.height else s.width) / 2f
-    }
+    val cross = crossAxisOf(ranks, sizes, withinGap = px(WITHIN_GAP), lr = lr)
 
     // Every label between the same pair of ranks lands on that band's midline, and the chip behind
     // it is opaque — so two labels whose cross-axis footprints overlap don't merely touch, the later
@@ -318,28 +520,16 @@ private fun buildFlowLayout(
     // its own row, still on its own curve. A band that fits in one row writes nothing, keeps t = 0.5,
     // and lays out exactly as it did before.
     val labelT = HashMap<FlowEdge, Float>()
-    var labelRows = 1
-    graph.edges
-        .mapNotNull { e ->
-            val text = edgeTexts[e] ?: return@mapNotNull null
-            if ((rankOf[e.to] ?: 0) - (rankOf[e.from] ?: 0) != 1) return@mapNotNull null
-            Triple(e, rankOf.getValue(e.from), text)
-        }
-        .groupBy { it.second }
-        .forEach { (_, band) ->
-            val spans =
-                band.map { (e, _, text) ->
-                    val extent = (if (lr) text.size.height else text.size.width) + px(LABEL_CHIP_PAD) * 2f
-                    val centre = (crossCentre(e.from) + crossCentre(e.to)) / 2f
-                    centre - extent / 2f to centre + extent / 2f
-                }
-            val rows = packLabelRows(spans)
-            val used = (rows.maxOrNull() ?: 0) + 1
-            if (used > 1) {
-                band.forEachIndexed { i, (e, _, _) -> labelT[e] = tForRankFraction((rows[i] + 0.5f) / used) }
-                labelRows = maxOf(labelRows, used)
-            }
-        }
+    val labelRows =
+        stackBandLabels(
+            graph = graph,
+            edgeTexts = edgeTexts,
+            rankOf = rankOf,
+            lr = lr,
+            chipPad = px(LABEL_CHIP_PAD),
+            crossCentre = cross::centreOf,
+            into = labelT,
+        )
 
     // One row reduces to the original `widest label + breathing room`; N rows have to stack.
     val rankGap =
@@ -347,96 +537,18 @@ private fun buildFlowLayout(
             px(if (lr) RANK_GAP_LR else RANK_GAP_TD),
             labelRows * forwardLabelExtent + (labelRows - 1) * px(LABEL_ROW_GAP) + px(20.dp),
         )
-    val rankSpan = bandThickness.sum() + rankGap * (ranks.size - 1).coerceAtLeast(0)
+    val rankSpan = cross.bandThickness.sum() + rankGap * (ranks.size - 1).coerceAtLeast(0)
 
-    val placed = HashMap<String, PlacedNode>()
-    var alongRank = 0f
-    ranks.forEachIndexed { r, group ->
-        group.forEach { node ->
-            val s = sizes.getValue(node.id)
-            val cross = crossOf.getValue(node.id)
-            placed[node.id] =
-                PlacedNode(
-                    shape = node.shape,
-                    text = texts.getValue(node.id),
-                    x = if (lr) alongRank + (bandThickness[r] - s.width) / 2f else cross,
-                    y = if (lr) cross else alongRank + (bandThickness[r] - s.height) / 2f,
-                    w = s.width,
-                    h = s.height,
-                )
-        }
-        alongRank += bandThickness[r] + rankGap
-    }
+    val placed = placeNodes(ranks, texts, sizes, cross, rankGap, lr)
 
     val hasBackEdge =
         graph.edges.any { it.from != it.to && (rankOf[it.to] ?: 0) <= (rankOf[it.from] ?: 0) }
     val bow = if (hasBackEdge) px(BACK_BOW) else 0f
-    val contentW = (if (lr) rankSpan else crossSpan) + (if (lr) 0f else bow)
-    val contentH = (if (lr) crossSpan else rankSpan) + (if (lr) bow else 0f)
+    val contentW = (if (lr) rankSpan else cross.span) + (if (lr) 0f else bow)
+    val contentH = (if (lr) cross.span else rankSpan) + (if (lr) bow else 0f)
     val bowLine = if (lr) contentH - bow / 2f else contentW - bow / 2f
 
-    val edges =
-        graph.edges.mapNotNull { e ->
-            if (e.from == e.to) return@mapNotNull null // Mermaid allows it; nothing here uses it.
-            val a = placed[e.from] ?: return@mapNotNull null
-            val b = placed[e.to] ?: return@mapNotNull null
-            val forward = (rankOf[e.to] ?: 0) > (rankOf[e.from] ?: 0)
-
-            val p0: Offset
-            val c1: Offset
-            val c2: Offset
-            val p3: Offset
-            val dir: Offset
-            when {
-                forward && lr -> {
-                    p0 = Offset(a.x + a.w, a.centerY)
-                    p3 = Offset(b.x, b.centerY)
-                    val mid = (p0.x + p3.x) / 2f
-                    c1 = Offset(mid, p0.y)
-                    c2 = Offset(mid, p3.y)
-                    dir = Offset(1f, 0f)
-                }
-                forward -> {
-                    p0 = Offset(a.centerX, a.y + a.h)
-                    p3 = Offset(b.centerX, b.y)
-                    val mid = (p0.y + p3.y) / 2f
-                    c1 = Offset(p0.x, mid)
-                    c2 = Offset(p3.x, mid)
-                    dir = Offset(0f, 1f)
-                }
-                // Back edge (Gaddi's replay loop) — bow out past the far side of the content rather
-                // than draw a straight line back through every box in between.
-                lr -> {
-                    p0 = Offset(a.centerX, a.y + a.h)
-                    p3 = Offset(b.centerX, b.y + b.h)
-                    c1 = Offset(p0.x, bowLine)
-                    c2 = Offset(p3.x, bowLine)
-                    dir = Offset(0f, -1f)
-                }
-                else -> {
-                    p0 = Offset(a.x + a.w, a.centerY)
-                    p3 = Offset(b.x + b.w, b.centerY)
-                    c1 = Offset(bowLine, p0.y)
-                    c2 = Offset(bowLine, p3.y)
-                    dir = Offset(-1f, 0f)
-                }
-            }
-
-            val path =
-                Path().apply {
-                    moveTo(p0.x, p0.y)
-                    cubicTo(c1.x, c1.y, c2.x, c2.y, p3.x, p3.y)
-                }
-            PlacedEdge(
-                path = path,
-                tip = p3,
-                tipDir = if (e.arrow) dir else null,
-                dashed = e.dashed,
-                thick = e.thick,
-                label = edgeTexts[e],
-                labelCenter = cubicAt(p0, c1, c2, p3, labelT[e] ?: 0.5f),
-            )
-        }
+    val edges = drawEdges(graph, placed, rankOf, edgeTexts, labelT, lr = lr, bowLine = bowLine)
 
     return FlowLayout(
         nodes = graph.nodes.mapNotNull { placed[it.id] },
@@ -445,6 +557,9 @@ private fun buildFlowLayout(
         height = contentH,
     )
 }
+
+/** A label sits on the middle of its own row, not on the row's leading edge. */
+private const val RowCentre = 0.5f
 
 /**
  * First-fit interval colouring: every span gets the lowest row index whose spans it doesn't overlap.
@@ -498,7 +613,13 @@ private fun tForRankFraction(frac: Float): Float {
 private const val BISECTION_STEPS = 16
 
 /** de Casteljau at a single `t` — cheaper and clearer than dragging a PathMeasure in for one point. */
-private fun cubicAt(p0: Offset, c1: Offset, c2: Offset, p3: Offset, t: Float): Offset {
+private fun cubicAt(
+    p0: Offset,
+    c1: Offset,
+    c2: Offset,
+    p3: Offset,
+    t: Float,
+): Offset {
     val u = 1f - t
     val a = u * u * u
     val b = 3f * u * u * t
@@ -583,7 +704,7 @@ private fun DrawScope.drawFlow(
         val h = t.size.height.toFloat()
         drawRoundRect(
             ground,
-            Offset(e.labelCenter.x - w / 2f - chip, e.labelCenter.y - h / 2f - chip * 0.5f),
+            Offset(e.labelCenter.x - w / 2f - chip, e.labelCenter.y - h / 2f - chip / 2f),
             Size(w + chip * 2f, h + chip),
             CornerRadius(4.dp.toPx()),
         )
@@ -600,7 +721,12 @@ private fun diamondPath(n: PlacedNode): Path =
         close()
     }
 
-private fun DrawScope.drawArrowHead(tip: Offset, dir: Offset, color: Color, len: Float) {
+private fun DrawScope.drawArrowHead(
+    tip: Offset,
+    dir: Offset,
+    color: Color,
+    len: Float,
+) {
     val normal = Offset(-dir.y, dir.x)
     val base = tip - dir * len
     val half = len * 0.42f

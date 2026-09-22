@@ -227,8 +227,7 @@ private fun ExcelsiorBody(
 // ---------------------------------------------------------------------------------------------
 
 /** `max-w-6xl mx-auto px-6`, held to the port's shared measure so the reader is not wider than /ink. */
-private fun Modifier.pageMeasure(): Modifier =
-    this.widthIn(max = CvContentMaxWidth).fillMaxWidth().padding(horizontal = CvGutter)
+private fun Modifier.pageMeasure(): Modifier = this.widthIn(max = CvContentMaxWidth).fillMaxWidth().padding(horizontal = CvGutter)
 
 /** Below this a spread would give each page less than a phone's width, so pages stack singly. */
 private val SpreadBreakpoint: Dp = 720.dp
@@ -358,8 +357,7 @@ private fun ReaderBar(
                 .drawBehind {
                     val h = 1.dp.toPx()
                     drawRect(colors.line, topLeft = Offset(0f, size.height - h), size = Size(size.width, h))
-                }
-                .horizontalScroll(rememberScrollState())
+                }.horizontalScroll(rememberScrollState())
                 .padding(horizontal = CvGutter),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -451,7 +449,11 @@ private fun PageRow(
 }
 
 @Composable
-private fun Page(year: String, n: Int, modifier: Modifier) {
+private fun Page(
+    year: String,
+    n: Int,
+    modifier: Modifier,
+) {
     ProjectShot(
         url = pageUrl(year, n),
         label = "Excelsior $year, page $n",
@@ -465,24 +467,31 @@ private fun Page(year: String, n: Int, modifier: Modifier) {
 // Derivations. Read these, never a literal.
 // ---------------------------------------------------------------------------------------------
 
+/** `p005.webp` — the generator zero-pads to three, and the URLs have to match byte for byte. */
+private const val PageDigits = 3
+
 /**
  * `/excelsior/pages/<year>/pNNN.webp`, the rule `src/data/excelsior.ts` builds and the generated
  * corpus records rather than emitting 396 strings. `.webp` and never `.avif`: skiko ships no AVIF
  * decoder, and an avif URL renders blank with nothing in the log.
  */
-private fun pageUrl(year: String, n: Int): String =
-    "${profile.portfolio.trimEnd('/')}/excelsior/pages/$year/p${n.toString().padStart(3, '0')}.webp"
+private fun pageUrl(
+    year: String,
+    n: Int,
+): String = "${profile.portfolio.trimEnd('/')}/excelsior/pages/$year/p${n.toString().padStart(PageDigits, '0')}.webp"
 
 /** Unknown or absent year is the newest edition, which is what `validateSearch` does with it. */
-private fun editionOf(year: String?): ExcelsiorEdition =
-    excelsiorEditions.firstOrNull { it.year == year } ?: excelsiorEditions.first()
+private fun editionOf(year: String?): ExcelsiorEdition = excelsiorEditions.firstOrNull { it.year == year } ?: excelsiorEditions.first()
 
 /**
  * How a magazine actually opens: page 1 alone on the shelf, then true spreads (2|3, 4|5), so facing
  * pages designed as one artwork land together. Narrow viewports get one page per row, because half
  * of 390px is not a page.
  */
-private fun spreads(total: Int, twoUp: Boolean): List<List<Int>> {
+private fun spreads(
+    total: Int,
+    twoUp: Boolean,
+): List<List<Int>> {
     if (!twoUp) return (1..total).map { listOf(it) }
     val out = mutableListOf(listOf(1))
     var p = 2
@@ -494,21 +503,27 @@ private fun spreads(total: Int, twoUp: Boolean): List<List<Int>> {
 }
 
 /** `wrote | about | credit`, the three the generator validates. */
-private fun kindLabel(kind: String): String = when (kind) {
-    "wrote" -> "I WROTE THIS"
-    "about" -> "ABOUT ME"
-    else -> "THE CREDIT"
-}
+private fun kindLabel(kind: String): String =
+    when (kind) {
+        "wrote" -> "I WROTE THIS"
+        "about" -> "ABOUT ME"
+        else -> "THE CREDIT"
+    }
 
 @Composable
-private fun kindTint(kind: String): Color =
-    kindTintOf(kind, cvColors.accent, cvColors.accent2, cvColors.muted)
+private fun kindTint(kind: String): Color = kindTintOf(kind, cvColors.accent, cvColors.accent2, cvColors.muted)
 
-private fun kindTintOf(kind: String, wrote: Color, about: Color, credit: Color): Color = when (kind) {
-    "wrote" -> wrote
-    "about" -> about
-    else -> credit
-}
+private fun kindTintOf(
+    kind: String,
+    wrote: Color,
+    about: Color,
+    credit: Color,
+): Color =
+    when (kind) {
+        "wrote" -> wrote
+        "about" -> about
+        else -> credit
+    }
 
 // ---------------------------------------------------------------------------------------------
 // Self-check
@@ -523,6 +538,10 @@ private fun kindTintOf(kind: String, wrote: Color, about: Color, credit: Color):
  * page shows up as a magazine that skips p.63, which nobody notices in a build log; a mark pointing
  * past the end of its edition is a chip that scrolls nowhere at all.
  */
+// MagicNumber: assertion fixtures. detekt excludes every test source set from this rule by
+// default; these are tests that live in main source only because composeMain is `internal`
+// and this project has no commonTest. SelfCheckTest.kt now runs them from `check`.
+@Suppress("MagicNumber")
 internal fun excelsiorSelfCheck() {
     excelsiorEditions.forEach { e ->
         listOf(true, false).forEach { twoUp ->

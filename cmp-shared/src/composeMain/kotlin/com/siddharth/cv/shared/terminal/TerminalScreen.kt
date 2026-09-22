@@ -55,8 +55,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.siddharth.cv.shared.LocalNav
 import com.siddharth.cv.shared.Route
-import com.siddharth.cv.shared.theme.CvMotion
 import com.siddharth.cv.shared.theme.CvColors
+import com.siddharth.cv.shared.theme.CvMotion
 import com.siddharth.cv.shared.theme.GhostButton
 import com.siddharth.cv.shared.theme.LocalReducedMotion
 import com.siddharth.cv.shared.theme.cvColors
@@ -143,36 +143,39 @@ fun TerminalScreen(modifier: Modifier = Modifier) {
     // ponytail: 3-px repeating gradient instead of a per-scanline draw loop, and NO BlendMode.Screen
     // — the blend forces an offscreen layer on Skia/WebGL for a difference you cannot see at 2%
     // alpha. Swap the two-line brush below if the screen ever needs to actually brighten content.
-    val scanlines = remember {
-        Brush.verticalGradient(
-            0.0f to Color.White.copy(alpha = 0.02f),
-            0.34f to Color.White.copy(alpha = 0.02f),
-            0.35f to Color.Transparent,
-            1.0f to Color.Transparent,
-            startY = 0f,
-            endY = 3f,
-            tileMode = TileMode.Repeated,
-        )
-    }
+    val scanlines =
+        remember {
+            Brush.verticalGradient(
+                0.0f to Color.White.copy(alpha = 0.02f),
+                0.34f to Color.White.copy(alpha = 0.02f),
+                0.35f to Color.Transparent,
+                1.0f to Color.Transparent,
+                startY = 0f,
+                endY = 3f,
+                tileMode = TileMode.Repeated,
+            )
+        }
 
     Box(
-        modifier = modifier
-            .fillMaxSize()
-            .background(colors.deepVoid)
-            .clickable(interactionSource = rootInteraction, indication = null) { focus.requestFocus() }
-            .drawWithContent {
-                drawContent()
-                drawRect(brush = scanlines)
-                // Vignette: the glass curvature of a CRT, cheaper than a shader.
-                drawRect(
-                    brush = Brush.radialGradient(
-                        0.55f to Color.Transparent,
-                        1.0f to Color.Black.copy(alpha = 0.55f),
-                        center = Offset(size.width / 2f, size.height / 2f),
-                        radius = maxOf(size.width, size.height) * 0.72f,
-                    ),
-                )
-            },
+        modifier =
+            modifier
+                .fillMaxSize()
+                .background(colors.deepVoid)
+                .clickable(interactionSource = rootInteraction, indication = null) { focus.requestFocus() }
+                .drawWithContent {
+                    drawContent()
+                    drawRect(brush = scanlines)
+                    // Vignette: the glass curvature of a CRT, cheaper than a shader.
+                    drawRect(
+                        brush =
+                            Brush.radialGradient(
+                                0.55f to Color.Transparent,
+                                1.0f to Color.Black.copy(alpha = 0.55f),
+                                center = Offset(size.width / 2f, size.height / 2f),
+                                radius = maxOf(size.width, size.height) * 0.72f,
+                            ),
+                    )
+                },
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             TitleBar(colors = colors, onExit = { nav.go(Route.Home) })
@@ -202,13 +205,22 @@ fun TerminalScreen(modifier: Modifier = Modifier) {
                         false
                     } else {
                         when (event.key) {
-                            Key.Enter, Key.NumPadEnter -> { submit(); true }
+                            Key.Enter, Key.NumPadEnter -> {
+                                submit()
+                                true
+                            }
                             Key.Tab -> {
                                 TerminalEngine.complete(field.text)?.let(::setInput)
                                 true
                             }
-                            Key.DirectionUp -> { walkHistory(back = true); true }
-                            Key.DirectionDown -> { walkHistory(back = false); true }
+                            Key.DirectionUp -> {
+                                walkHistory(back = true)
+                                true
+                            }
+                            Key.DirectionDown -> {
+                                walkHistory(back = false)
+                                true
+                            }
                             else -> false
                         }
                     }
@@ -222,19 +234,22 @@ fun TerminalScreen(modifier: Modifier = Modifier) {
 
 /** `sid.android — /bin/sh` chrome: the three dots, the host label, and the way out. */
 @Composable
-private fun TitleBar(colors: CvColors, onExit: () -> Unit) {
+private fun TitleBar(
+    colors: CvColors,
+    onExit: () -> Unit,
+) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(colors.ink.copy(alpha = 0.85f))
-            .drawBehind {
-                drawRect(
-                    color = colors.line,
-                    topLeft = Offset(0f, size.height - 1f),
-                    size = Size(size.width, 1f),
-                )
-            }
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(colors.ink.copy(alpha = 0.85f))
+                .drawBehind {
+                    drawRect(
+                        color = colors.line,
+                        topLeft = Offset(0f, size.height - 1f),
+                        size = Size(size.width, 1f),
+                    )
+                }.padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -256,7 +271,11 @@ private fun TitleBar(colors: CvColors, onExit: () -> Unit) {
 
 /** One printed line. Tone picks the colour; the UI never reads the text. */
 @Composable
-private fun OutputLine(line: TermLine, colors: CvColors, animate: Boolean) {
+private fun OutputLine(
+    line: TermLine,
+    colors: CvColors,
+    animate: Boolean,
+) {
     var shown by remember { mutableStateOf(!animate) }
     LaunchedEffect(Unit) { shown = true }
     val progress by animateFloatAsState(
@@ -266,25 +285,37 @@ private fun OutputLine(line: TermLine, colors: CvColors, animate: Boolean) {
     )
     BasicText(
         text = line.text,
-        modifier = Modifier.graphicsLayer {
-            alpha = progress
-            translationY = (1f - progress) * 3.dp.toPx()
-        },
-        style = cvType.mono.copy(
-            color = toneColor(line.tone, colors),
-            fontWeight = if (line.tone == TermTone.HEAD) FontWeight.Bold else null,
-        ),
+        modifier =
+            Modifier.graphicsLayer {
+                alpha = progress
+                translationY = (1f - progress) * 3.dp.toPx()
+            },
+        style =
+            cvType.mono.copy(
+                color = toneColor(line.tone, colors),
+                fontWeight = if (line.tone == TermTone.HEAD) FontWeight.Bold else null,
+            ),
     )
 }
 
-private fun toneColor(tone: TermTone, colors: CvColors): Color = when (tone) {
-    TermTone.OUT -> colors.onBackground
-    TermTone.DIM -> colors.muted
-    TermTone.ACCENT -> colors.accent
-    TermTone.ACCENT2 -> colors.accent2
-    TermTone.ERROR -> Color(0xFFFF5C7A)
-    TermTone.HEAD -> colors.accent
-}
+/**
+ * The shell's error red. Not a [CvColors] token: the palette has no error colour, and the one a
+ * terminal needs has to stay legible against the shell's own ink whatever theme the site is on.
+ */
+private val TerminalError = Color(0xFFFF5C7A)
+
+private fun toneColor(
+    tone: TermTone,
+    colors: CvColors,
+): Color =
+    when (tone) {
+        TermTone.OUT -> colors.onBackground
+        TermTone.DIM -> colors.muted
+        TermTone.ACCENT -> colors.accent
+        TermTone.ACCENT2 -> colors.accent2
+        TermTone.ERROR -> TerminalError
+        TermTone.HEAD -> colors.accent
+    }
 
 /** The live prompt: accent caret, borderless field, and a block cursor that blinks. */
 @Composable
@@ -305,11 +336,12 @@ private fun InputRow(
                 singleLine = true,
                 textStyle = cvType.mono.copy(color = colors.onBackground),
                 cursorBrush = SolidColor(colors.accent),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .focusRequester(focusRequester)
-                    .onPreviewKeyEvent(onKey)
-                    .semantics { contentDescription = "terminal input — type help" },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .focusRequester(focusRequester)
+                        .onPreviewKeyEvent(onKey)
+                        .semantics { contentDescription = "terminal input — type help" },
             )
             if (value.text.isEmpty() && blink < 0.5f) {
                 // Block cursor only while the field is empty — past that the real caret takes over.
@@ -328,20 +360,22 @@ private fun InputRow(
 private fun SignalSweep(accent: Color) {
     val progress by rememberInfiniteFloat(durationMillis = 7000)
     Box(
-        modifier = Modifier.fillMaxSize().drawBehind {
-            val band = size.height * 0.4f
-            val top = progress * (size.height + band) - band
-            drawRect(
-                brush = Brush.verticalGradient(
-                    0f to Color.Transparent,
-                    0.5f to accent.copy(alpha = 0.05f),
-                    1f to Color.Transparent,
-                    startY = top,
-                    endY = top + band,
-                ),
-                topLeft = Offset(0f, top),
-                size = Size(size.width, band),
-            )
-        },
+        modifier =
+            Modifier.fillMaxSize().drawBehind {
+                val band = size.height * 0.4f
+                val top = progress * (size.height + band) - band
+                drawRect(
+                    brush =
+                        Brush.verticalGradient(
+                            0f to Color.Transparent,
+                            0.5f to accent.copy(alpha = 0.05f),
+                            1f to Color.Transparent,
+                            startY = top,
+                            endY = top + band,
+                        ),
+                    topLeft = Offset(0f, top),
+                    size = Size(size.width, band),
+                )
+            },
     )
 }
