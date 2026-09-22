@@ -34,7 +34,7 @@ from the React repo rather than written here.
 Deliberately bleeding edge, every version is the newest published, pre-release included.
 `compileSdk` / `minSdk` are `37` / `26`.
 
-The badges above are hand-maintained, not generated — this file previously claimed they were "read
+The badges above are hand-maintained, not generated. This file previously claimed they were "read
 off `gradle/libs.versions.toml`" and every one of them was stale (Kotlin 2.4.20-RC, CMP 1.12.0-rc01,
 AGP 9.5.0-alpha02, Gradle 9.7.0). A hand-typed badge is the least checkable claim a repo makes, so
 check it rather than trust it:
@@ -73,7 +73,7 @@ origin; `<link rel="canonical">` and the sitemap depend on it.
 
 ### The design system
 
-`cmp-shared/src/composeMain/.../theme/CvComponents.kt` is the whole component set — sixteen
+`cmp-shared/src/composeMain/.../theme/CvComponents.kt` is the whole component set, sixteen
 public, data-free parts (`CvCard`, `TagChip`, `PrimaryButton`, `MetricGauge`, `Sparkline`,
 `HeroShimmerText`, `MediaPanel`, `ExpanderSection` …) that every one of the 33 routes is assembled
 from. `CvComponentPreviews.kt` next to it previews all of them, including the edge cases worth
@@ -81,8 +81,8 @@ seeing (a gauge at 0/0.5/1, a flat sparkline, the second `CvResumeColors` palett
 
 Those previews use `androidx.compose.ui.tooling.preview.Preview` in `composeMain`, not the
 `org.jetbrains.compose.ui.tooling.preview` one. Since Compose Multiplatform 1.10 the AndroidX
-annotation **is** the multiplatform annotation — `org.jetbrains.compose.ui:ui-tooling-preview`
-publishes it into `commonMain` — and the JetBrains-namespaced one is deprecated. Almost every
+annotation **is** the multiplatform annotation, `org.jetbrains.compose.ui:ui-tooling-preview`
+publishes it into `commonMain`, and the JetBrains-namespaced one is deprecated. Almost every
 answer written before 2026 has this backwards.
 
 The rest of the module's ~348 composables have no previews on purpose: they are private rows and
