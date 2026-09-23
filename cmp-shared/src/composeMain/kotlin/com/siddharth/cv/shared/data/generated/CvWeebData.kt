@@ -78,7 +78,7 @@ data class WeebDivergenceRow(
 
 /** The anime and manga ledger behind /weeb. Every figure on that page renders from here. */
 val weeb: WeebData = WeebData(
-    generatedAt = "2026-09-06",
+    generatedAt = "2026-09-23",
     anime = WeebAnime(
         total = 479,
         matched = 467,
@@ -109,13 +109,13 @@ val weeb: WeebData = WeebData(
     manga = WeebManga(total = 26, byRead = mapOf("Completed" to 5, "Reading" to 21), chaptersRead = 1924),
     stale = listOf(
         WeebStale(
-            name = "The World’s Finest Assassin Gets Reincarnated In Another World As An Aristocrat",
-            title = "The World's Finest Assassin Gets Reincarnated in Another World as an Aristocrat",
-            romaji = "Sekai Saikou no Ansatsusha, Isekai Kizoku ni Tensei suru",
-            english = "The World's Finest Assassin Gets Reincarnated in Another World as an Aristocrat",
-            sequel = "Sekai Saikou no Ansatsusha, Isekai Kizoku ni Tensei suru 2nd Season",
-            year = 2027,
-            status = "NOT_YET_RELEASED",
+            name = "Frieren: Beyond Journey’s End",
+            title = "Frieren: Beyond Journey’s End",
+            romaji = "Sousou no Frieren",
+            english = "Frieren: Beyond Journey’s End",
+            sequel = "Frieren: Beyond Journey’s End Season 2",
+            year = 2026,
+            status = "FINISHED",
         ),
         WeebStale(
             name = "Grand Blue",
@@ -132,15 +132,6 @@ val weeb: WeebData = WeebData(
             romaji = "Chainsaw Man",
             english = "Chainsaw Man",
             sequel = "Chainsaw Man – The Movie: Reze Arc",
-            year = 2025,
-            status = "FINISHED",
-        ),
-        WeebStale(
-            name = "Frieren: Beyond Journey’s End",
-            title = "Sousou no Frieren: ●● no Mahou",
-            romaji = "Sousou no Frieren: ●● no Mahou",
-            english = null,
-            sequel = "Sousou no Frieren: ●● no Mahou Part 2",
             year = 2025,
             status = "FINISHED",
         ),
@@ -235,15 +226,6 @@ val weeb: WeebData = WeebData(
             status = "FINISHED",
         ),
         WeebStale(
-            name = "Masamune Kun’s Revenge",
-            title = "Masamune-kun's Revenge",
-            romaji = "Masamune-kun no Revenge",
-            english = "Masamune-kun's Revenge",
-            sequel = "Masamune-kun's Revenge R",
-            year = 2023,
-            status = "FINISHED",
-        ),
-        WeebStale(
             name = "Classroom Of The Elite",
             title = "Classroom of the Elite",
             romaji = "Youkoso Jitsuryoku Shijou Shugi no Kyoushitsu e",
@@ -325,6 +307,15 @@ val weeb: WeebData = WeebData(
             status = "FINISHED",
         ),
         WeebStale(
+            name = "Highschool DxD",
+            title = "High School DxD BorN",
+            romaji = "High School DxD BorN",
+            english = null,
+            sequel = "High School DxD HERO",
+            year = 2018,
+            status = "FINISHED",
+        ),
+        WeebStale(
             name = "Konosuba",
             title = "KONOSUBA -God's blessing on this wonderful world!",
             romaji = "Kono Subarashii Sekai ni Shukufuku wo!",
@@ -349,15 +340,6 @@ val weeb: WeebData = WeebData(
             english = "Blood Blockade Battlefront",
             sequel = "Blood Blockade Battlefront & Beyond",
             year = 2017,
-            status = "FINISHED",
-        ),
-        WeebStale(
-            name = "Assassination Classroom",
-            title = "Assassination Classroom",
-            romaji = "Ansatsu Kyoushitsu",
-            english = "Assassination Classroom",
-            sequel = "Assassination Classroom Second Season",
-            year = 2016,
             status = "FINISHED",
         ),
         WeebStale(
@@ -430,15 +412,6 @@ val weeb: WeebData = WeebData(
             english = "Noragami",
             sequel = "Noragami Aragoto",
             year = 2015,
-            status = "FINISHED",
-        ),
-        WeebStale(
-            name = "Highschool DxD",
-            title = "High School DxD",
-            romaji = "High School DxD",
-            english = "High School DxD",
-            sequel = "High School DxD NEW",
-            year = 2013,
             status = "FINISHED",
         ),
         WeebStale(
@@ -523,6 +496,15 @@ val weeb: WeebData = WeebData(
             status = "FINISHED",
         ),
         WeebStale(
+            name = "The World’s Finest Assassin Gets Reincarnated In Another World As An Aristocrat",
+            title = "The World's Finest Assassin Gets Reincarnated in Another World as an Aristocrat",
+            romaji = "Sekai Saikou no Ansatsusha, Isekai Kizoku ni Tensei suru",
+            english = "The World's Finest Assassin Gets Reincarnated in Another World as an Aristocrat",
+            sequel = "Sekai Saikou no Ansatsusha, Isekai Kizoku ni Tensei suru 2nd Season",
+            year = null,
+            status = "NOT_YET_RELEASED",
+        ),
+        WeebStale(
             name = "Loner Life In Another World",
             title = "Loner Life in Another World",
             romaji = "Hitoribocchi no Isekai Kouryaku",
@@ -547,9 +529,9 @@ val weeb: WeebData = WeebData(
             WeebDivergenceRow(name = "Boruto: Naruto Next Generations", mine = 5, crowd = 57, delta = 43),
             WeebDivergenceRow(name = "Platinum End", mine = 5, crowd = 58, delta = 42),
             WeebDivergenceRow(name = "Ninja Kamui", mine = 5, crowd = 64, delta = 36),
-            WeebDivergenceRow(name = "Highschool DxD", mine = 5, crowd = 69, delta = 31),
+            WeebDivergenceRow(name = "Assassination Classroom", mine = 5, crowd = 68, delta = 32),
+            WeebDivergenceRow(name = "Highschool DxD", mine = 5, crowd = 71, delta = 29),
             WeebDivergenceRow(name = "Bakugan", mine = 4, crowd = 53, delta = 27),
-            WeebDivergenceRow(name = "Frieren: Beyond Journey’s End", mine = 5, crowd = 73, delta = 27),
         ),
         bottom = listOf(
             WeebDivergenceRow(name = "Takt op. Destiny", mine = 3, crowd = 69, delta = -9),

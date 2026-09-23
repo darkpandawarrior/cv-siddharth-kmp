@@ -123,7 +123,7 @@ val opsDrift: List<DriftEntry> = listOf(
         repo = "Doori",
         upstream = "kmp-toolkit",
         pin = "db8ffcc",
-        behind = 0,
+        behind = 2,
         pinnedAt = "2026-09-22",
     ),
     DriftEntry(
@@ -136,9 +136,9 @@ val opsDrift: List<DriftEntry> = listOf(
     DriftEntry(
         repo = "Gaddi",
         upstream = "kmp-toolkit",
-        pin = "db8ffcc",
+        pin = "ce21dce",
         behind = 0,
-        pinnedAt = "2026-09-22",
+        pinnedAt = "2026-09-23",
     ),
     DriftEntry(
         repo = "PaymentsLab-KMP",
@@ -151,7 +151,7 @@ val opsDrift: List<DriftEntry> = listOf(
         repo = "PaymentsLab-KMP",
         upstream = "kmp-toolkit",
         pin = "db8ffcc",
-        behind = 0,
+        behind = 2,
         pinnedAt = "2026-09-22",
     ),
     DriftEntry(
@@ -165,7 +165,7 @@ val opsDrift: List<DriftEntry> = listOf(
         repo = "kmp-app-template",
         upstream = "kmp-toolkit",
         pin = "2324a3a",
-        behind = 43,
+        behind = 45,
         pinnedAt = "2026-09-21",
     ),
     DriftEntry(
@@ -179,7 +179,7 @@ val opsDrift: List<DriftEntry> = listOf(
         repo = "Candidai",
         upstream = "kmp-toolkit",
         pin = "db8ffcc",
-        behind = 0,
+        behind = 2,
         pinnedAt = "2026-09-22",
     ),
 )
