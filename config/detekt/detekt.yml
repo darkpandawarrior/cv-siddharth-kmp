@@ -11,7 +11,7 @@
 #
 # THE TRAP THAT MAKES THIS FILE FRAGILE
 #   detekt's `excludes:` REPLACES the built-in default list, it does not extend it.
-#   Mileway's config records getting burned by this: omitting the test globs from
+#   Doori's config records getting burned by this: omitting the test globs from
 #   naming.FunctionNaming turned every backtick-named test function into a violation.
 #   So the *notOurs anchor below re-lists detekt 2.0's defaults IN FULL, plus the KMP
 #   test source sets detekt ships no default for but this family targets
@@ -129,7 +129,7 @@ exceptions:
   TooGenericExceptionCaught:
     excludes: *notOurs
     active: true
-    # DELIBERATELY OVERTURNING Mileway's and PaymentsLab's `active: false`. Their recorded
+    # DELIBERATELY OVERTURNING Doori's and PaymentsLab-KMP's `active: false`. Their recorded
     # reason — "runCatching { } is idiomatic" — does not hold: this rule fires on `catch`
     # clauses and runCatching {} has none. It never triggered the rule.
     exceptionNames:
@@ -239,7 +239,7 @@ style:
       # `private const val NeedleRadiusFraction = 0.86f` is strictly better code.
       # BOTH Preview FQNs listed deliberately. androidx.compose.ui.tooling.preview.Preview IS
       # the multiplatform annotation from Compose Multiplatform 1.10.0 onward and works in
-      # commonMain -- verified in this family: Mileway has 7 commonMain files importing the
+      # commonMain -- verified in this family: Doori has 7 commonMain files importing the
       # androidx FQN and zero importing the org.jetbrains one, and they compile green.
       # org.jetbrains.compose.ui.tooling.preview.Preview is the LEGACY path, kept here only so
       # older or vendored code still matches. Do not "correct" androidx out of this list.
@@ -315,7 +315,7 @@ style:
       # code. Prescribed by detekt's Compose guide.
       # BOTH Preview FQNs listed deliberately. androidx.compose.ui.tooling.preview.Preview IS
       # the multiplatform annotation from Compose Multiplatform 1.10.0 onward and works in
-      # commonMain -- verified in this family: Mileway has 7 commonMain files importing the
+      # commonMain -- verified in this family: Doori has 7 commonMain files importing the
       # androidx FQN and zero importing the org.jetbrains one, and they compile green.
       # org.jetbrains.compose.ui.tooling.preview.Preview is the LEGACY path, kept here only so
       # older or vendored code still matches. Do not "correct" androidx out of this list.
