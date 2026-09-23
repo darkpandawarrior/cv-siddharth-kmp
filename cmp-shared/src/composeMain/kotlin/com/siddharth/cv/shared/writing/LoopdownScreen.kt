@@ -346,19 +346,19 @@ private fun PostLinks.published(): List<Pair<String, String>> =
 private val SeriesProject: Map<String, NamedLink> =
     mapOf(
         "sensors-who-lie" to
-            NamedLink("Built in: Doori's location engine", "#project/mileway"), // claim-audit:allow -- route fragment
+            NamedLink("Built in: Doori's location engine", "#project/doori"),
         "the-coroutine-court" to NamedLink("From: the -80% crashes work", "#work"),
         "the-night-shift" to NamedLink("From: the 50%→95% GPS work", "#work"),
         "ghosts-in-the-recomposition" to NamedLink("From: the ~87% Compose migration", "#work"),
         "one-brain-two-bodies" to
             NamedLink(
                 "Built in: PaymentsLab-KMP's expect/actual split",
-                "#project/paymentslab", // claim-audit:allow -- route fragment, stable slug
+                "#project/paymentslab-kmp",
             ),
         "chain-of-custody" to
-            NamedLink("Built in: Doori's trip data model", "#project/mileway"), // claim-audit:allow -- route fragment
+            NamedLink("Built in: Doori's trip data model", "#project/doori"),
         "crossing-the-schema" to
-            NamedLink("Built in: Doori's Room migrations", "#project/mileway"), // claim-audit:allow -- route fragment
+            NamedLink("Built in: Doori's Room migrations", "#project/doori"),
         "notes-from-the-loop" to NamedLink("Built in: The Loopdown itself", "#project/the-loopdown"),
     )
 

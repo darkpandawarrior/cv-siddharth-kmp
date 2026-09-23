@@ -1146,9 +1146,9 @@ private fun checkModuleGraph() {
 @Suppress("MagicNumber")
 private fun checkGatewayFeed() {
     check(gatewayCount > 0) {
-        "the paymentslab gateway metric no longer parses as a number" // claim-audit:allow -- stable slug
+        "the paymentslab-kmp gateway metric no longer parses as a number"
     }
-    val paymentsLabProject = projects.first { it.slug == "paymentslab" } // claim-audit:allow -- stable route slug, not display copy
+    val paymentsLabProject = projects.first { it.slug == "paymentslab-kmp" }
     check(paymentsLabProject.badges.any { it == "$gatewayCount gateways" }) {
         "the metric says $gatewayCount gateways but the badges disagree: ${paymentsLabProject.badges}"
     }

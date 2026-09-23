@@ -248,7 +248,7 @@ object TerminalEngine {
                         dim("  ${it.status}"),
                     )
                 }
-            val hint = dim("-> open <slug> for the full case study, e.g. `open mileway`")
+            val hint = dim("-> open <slug> for the full case study, e.g. `open doori`")
             out(body + dim("") + hint)
         }
 
@@ -412,7 +412,7 @@ object TerminalEngine {
                 hi2("  project   each build overrides accent + surface on its detail page"),
                 dim("  resume    the same mechanism, inverted to dark-on-light"),
                 dim(""),
-                dim("open kursi and watch every accent below the header re-resolve."), // claim-audit:allow -- example command, stable slug
+                dim("open gaddi and watch every accent below the header re-resolve."),
             )
         }
 
@@ -472,7 +472,7 @@ object TerminalEngine {
                 listOf(
                     dim(""),
                     dim("up/down walks history · Tab completes · `open <slug>` and `cat <file>` complete too"),
-                    dim("try: open mileway · metrics · neofetch · hire"), // claim-audit:allow -- example command, stable slug
+                    dim("try: open doori · metrics · neofetch · hire"),
                 ),
         )
     }
@@ -519,8 +519,9 @@ object TerminalEngine {
  * the clear signal.
  */
 fun demo() {
-    val dooriSlug = "mileway" // claim-audit:allow -- stable route slug, not display copy
+    val dooriSlug = "doori"
     check(TerminalEngine.run("open $dooriSlug").navigate == Route.ProjectDetail(dooriSlug)) { "open <slug> must navigate" }
+    check(TerminalEngine.run("open mileway").navigate == Route.ProjectDetail(dooriSlug)) { "a pre-rename slug still resolves" }
     check(
         TerminalEngine
             .run("open ../etc")
@@ -544,7 +545,7 @@ fun demo() {
     check(TerminalEngine.run("exit").navigate == Route.Home) { "exit goes home" }
     check(TerminalEngine.run("resume").navigate == Route.Resume) { "resume opens the résumé" }
     check(TerminalEngine.complete("zzz") == null) { "no match completes to null" }
-    check(TerminalEngine.complete("open mile") == "open mileway") { "arg completion" } // claim-audit:allow -- route slug
+    check(TerminalEngine.complete("open doo") == "open doori") { "arg completion" }
     check(
         TerminalEngine
             .run("ask anything")
