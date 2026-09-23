@@ -1,5 +1,7 @@
 package com.siddharth.cv.shared.data
 
+import com.siddharth.cv.shared.data.generated.projectFacts
+
 /**
  * Seven projects, transcribed verbatim from cv-siddharth/src/data/profile.ts.
  *
@@ -7,8 +9,7 @@ package com.siddharth.cv.shared.data
  * generated writing corpus this repo does not vendor, so a Kotlin copy would freeze a count that
  * changes on the next generation run.
  *
- * Deliberate inconsistency preserved: Doori's `status` says 46 modules while its
- * detail metric says 36 — 36 local + 10 composed. Both are correct; do not reconcile.
+ * Current module and gateway counts come from the generated web portfolio facts.
  */
 val projects =
     listOf(
@@ -24,7 +25,7 @@ val projects =
                     """ISMCTS AI with 10 bot personas plus a DARBAR social layer for bluffing and alliances.""",
                 ),
             links = listOf(NamedLink("GitHub", "https://github.com/darkpandawarrior/Gaddi")),
-            status = "13 modules · 4 platforms · 10 bot personas",
+            status = "${projectFacts.gaddiModules} modules · 4 platforms · 10 bot personas",
             badges = listOf("Kotlin Multiplatform", "Game engine", "ISMCTS AI"),
             theme =
                 ProjectTheme(
@@ -188,7 +189,7 @@ val projects =
                 ),
             highlights =
                 listOf(
-                    """46-module clean architecture: 13 feature modules meeting only at the composition root.""",
+                    """${projectFacts.dooriModules} module clean architecture: ${projectFacts.dooriFeatures} feature modules meeting only at the composition root.""",
                     """Real location engine, reimbursement policy engine, durable submit-outbox, and an on-device AI assistant.""",
                 ),
             links =
@@ -200,8 +201,8 @@ val projects =
                         "#project/paymentslab", // claim-audit:allow -- internal route fragment, stable slug
                     ),
                 ),
-            status = "46 modules · 5 platforms · 159 tests",
-            badges = listOf("Kotlin Multiplatform", "46 modules", "5 platforms", "Open source"),
+            status = "${projectFacts.dooriModules} modules · 5 platforms · offline AI",
+            badges = listOf("Kotlin Multiplatform", "${projectFacts.dooriModules} modules", "5 platforms", "Open source"),
             // Telemetry-cyan — the site's own "depth" accent, reused rather than invented.
             theme =
                 ProjectTheme(
@@ -235,8 +236,8 @@ val projects =
                     sections =
                         listOf(
                             ProjectDetailSection(
-                                heading = "46-module clean architecture (36 local + 10 composed)",
-                                body = """Thirteen feature modules that never depend on each other, meeting only at the :app composition root and wired with Koin. A shared commonMain core holds the design system, Room (KMP) + DataStore, and every check-in / hardware-event screen, with platform services behind expect/actual. Convention plugins from my own kmp-build-logic keep every module's build consistent.""",
+                                heading = "${projectFacts.dooriModules} module clean architecture (36 local + 10 composed)",
+                                body = """${projectFacts.dooriFeatures} feature modules that never depend on each other, meeting only at the :app composition root and wired with Koin. A shared commonMain core holds the design system, Room (KMP) + DataStore, and every check-in / hardware-event screen, with platform services behind expect/actual. Convention plugins from my own kmp-build-logic keep every module's build consistent.""",
                             ),
                             ProjectDetailSection(
                                 heading = "Location engine",
@@ -264,13 +265,13 @@ val projects =
                             ),
                             ProjectDetailSection(
                                 heading = "FOSS-safe distribution & quality gates",
-                                body = """Dual gms / noGms builds (Google Play + F-Droid) with a dependency-prefix guard that fails the build if proprietary libraries leak into the FOSS flavor. 159 Roborazzi JVM screenshot tests (no emulator, no network) covering phone, watch and desktop, plus Napier logging, detekt, ktlint, Kover and CI.""",
+                                body = """Dual gms / noGms builds (Google Play + F-Droid) with a dependency-prefix guard that fails the build if proprietary libraries leak into the FOSS flavor. Roborazzi JVM screenshot tests (no emulator, no network) covering phone, watch and desktop, plus Napier logging, detekt, ktlint, Kover and CI.""",
                             ),
                         ),
                     metrics =
                         listOf(
-                            LabeledValue("46", "Gradle modules (36 local + 10 composed)"),
-                            LabeledValue("13", "isolated feature modules"),
+                            LabeledValue(projectFacts.dooriModules.toString(), "Gradle modules (${projectFacts.dooriLocalModules} local + ${projectFacts.dooriComposedModules} composed)"),
+                            LabeledValue(projectFacts.dooriFeatures.toString(), "isolated feature modules"),
                             LabeledValue("5", "platforms · one codebase"),
                             LabeledValue("0", "backend calls"),
                         ),
@@ -292,7 +293,7 @@ val projects =
                                     "Live Activity / Dynamic Island",
                                 ),
                             ),
-                            SkillGroup("Quality", listOf("Roborazzi (159 JVM screenshot tests)", "detekt", "ktlint", "Kover", "CI")),
+                            SkillGroup("Quality", listOf("Roborazzi JVM screenshot tests", "detekt", "ktlint", "Kover", "CI")),
                         ),
                     extraLinks =
                         listOf(
@@ -303,7 +304,7 @@ val projects =
                     diagrams =
                         listOf(
                             Diagram(
-                                title = "46-module architecture, features meet only at :app",
+                                title = "${projectFacts.dooriModules} module architecture, features meet only at :app",
                                 code = """graph TD
   app[":app composition root"]
   t["feature: tracking"]
@@ -342,7 +343,7 @@ val projects =
             stack = listOf("Kotlin Multiplatform", "Compose Multiplatform", "Ktor", "Android", "iOS", "Room"),
             highlights =
                 listOf(
-                    """40-module registry (15 local + 25 composed) spans 66 cataloged payment gateways.""",
+                    """${projectFacts.paymentsModules} module registry (${projectFacts.paymentsLocalModules} local + ${projectFacts.paymentsComposedModules} composed) spans ${projectFacts.paymentGateways} cataloged payment gateways.""",
                     """Five money-movement rails plus split payments, all idempotency-keyed and MOCK_MODE-honest.""",
                 ),
             links =
@@ -353,8 +354,8 @@ val projects =
                         "#project/mileway", // claim-audit:allow -- internal route fragment, stable slug
                     ),
                 ),
-            status = "40 modules · 66 gateways · 5 rails",
-            badges = listOf("Kotlin Multiplatform", "40 modules", "66 gateways", "Open source"),
+            status = "${projectFacts.paymentsModules} modules · ${projectFacts.paymentGateways} gateways · 5 rails",
+            badges = listOf("Kotlin Multiplatform", "${projectFacts.paymentsModules} modules", "${projectFacts.paymentGateways} gateways", "Open source"),
             theme =
                 ProjectTheme(
                     accent = "#A78BFA",
@@ -376,7 +377,7 @@ val projects =
                 ),
             detail =
                 ProjectDetailData(
-                    overview = """Payments is the hardest integration surface on Android: every gateway ships a different SDK, most of them are Activity-callback-era, the client can lie about the outcome, and the interesting logic (signatures, webhooks, idempotency, recovery) lives on the server. PaymentsLab-KMP runs real payment flows across a 66-gateway catalog behind a single PaymentGateway abstraction, and visualizes them step by step. A Ktor server does the order creation, signature verification and webhook reconciliation a real integration requires. Beyond one-shot pay-in it models five money-movement rails.""",
+                    overview = """Payments is the hardest integration surface on Android: every gateway ships a different SDK, most of them are Activity-callback-era, the client can lie about the outcome, and the interesting logic (signatures, webhooks, idempotency, recovery) lives on the server. PaymentsLab-KMP runs real payment flows across a ${projectFacts.paymentGateways} gateway catalog behind a single PaymentGateway abstraction, and visualizes them step by step. A Ktor server does the order creation, signature verification and webhook reconciliation a real integration requires. Beyond one-shot pay-in it models five money-movement rails.""",
                     sections =
                         listOf(
                             ProjectDetailSection(
@@ -384,8 +385,8 @@ val projects =
                                 body = """A client-side Success is a hint, never proof. Only the server decides the true state, after signature verification and webhook reconciliation. A server that owns price and truth, a client that always confirms before trusting, a journal written to Room before the SDK launches so a process death mid-payment is always recoverable, and a redaction layer so no secret or PII ever renders or logs.""",
                             ),
                             ProjectDetailSection(
-                                heading = "40 modules, 66 gateways",
-                                body = """One Gradle module per native-SDK provider is contributed into a registry via Koin's getAll<PaymentGateway>(), so adding gateway N+1 touches no existing code. There are 15 local modules plus 25 composed from kmp-toolkit (19 of them standalone provider gateway modules). The in-app catalog spans 66 registered gateways: 7 native-SDK integrations, 47 hosted-webview gateways behind one archetype, 8 mobile-money flows and 4 catalog-only / KYC-gated entries, each with its own status badge and region.""",
+                                heading = "${projectFacts.paymentsModules} modules, ${projectFacts.paymentGateways} gateways",
+                                body = """One Gradle module per native-SDK provider is contributed into a registry via Koin's getAll<PaymentGateway>(), so adding gateway N+1 touches no existing code. There are ${projectFacts.paymentsLocalModules} local modules plus ${projectFacts.paymentsComposedModules} composed from kmp-toolkit. The in-app catalog spans ${projectFacts.paymentGateways} registered gateways: ${projectFacts.gatewaysNative} native SDK integrations, ${projectFacts.gatewaysInternal} internal flow, ${projectFacts.gatewaysHosted} hosted webview gateways, ${projectFacts.gatewaysMobileMoney} mobile money flows and ${projectFacts.gatewaysStub} catalog stubs, each with its own status badge and region.""",
                             ),
                             ProjectDetailSection(
                                 heading = "Five money-movement rails + split payments",
@@ -406,8 +407,8 @@ val projects =
                         ),
                     metrics =
                         listOf(
-                            LabeledValue("40", "Gradle modules (15 local + 25 composed)"),
-                            LabeledValue("66", "gateways cataloged"),
+                            LabeledValue(projectFacts.paymentsModules.toString(), "Gradle modules (${projectFacts.paymentsLocalModules} local + ${projectFacts.paymentsComposedModules} composed)"),
+                            LabeledValue(projectFacts.paymentGateways.toString(), "gateways cataloged"),
                             LabeledValue("5", "money-movement rails"),
                             LabeledValue("1", "PaymentGateway contract"),
                         ),
@@ -418,7 +419,7 @@ val projects =
                                 listOf(
                                     "Kotlin Multiplatform",
                                     "Compose Multiplatform",
-                                    "40 Gradle modules (15 + 25 composed)",
+                                    "${projectFacts.paymentsModules} Gradle modules (${projectFacts.paymentsLocalModules} local + ${projectFacts.paymentsComposedModules} composed)",
                                     "Koin registry (getAll)",
                                     "kmp-toolkit (shared MVI base)",
                                 ),
@@ -467,7 +468,7 @@ val projects =
   p1["provider: razorpay"] --> reg
   p2["provider: stripe"] --> reg
   p3["provider: cashfree"] --> reg
-  p4["provider: hosted-webview<br/>(covers 44 gateways)"] --> reg
+  p4["provider: hosted-webview<br/>(covers ${projectFacts.gatewaysHosted} gateways)"] --> reg
   pn["provider: N+1"] --> reg
   reg --> orch["PaymentOrchestrator"]""",
                             ),
@@ -509,7 +510,7 @@ val projects =
                 ),
             highlights =
                 listOf(
-                    """25-module Kotlin Multiplatform clean architecture (12 feature + 6 core modules) targeting Android, iOS, Desktop, Web and a Spring Boot 4 server from one shared engine.""",
+                    """Kotlin Multiplatform clean architecture targeting Android, iOS, Desktop, Web and a Spring Boot 4 server from one shared engine.""",
                     """core:engine is a no-IO module: A-F fit scoring, ATS search, SimHash fingerprinting, and funnel math ported 1:1 from career-ops and verified against its own test vectors.""",
                     """62 ATS & job-board provider integrations and a zero-token scan path (direct Greenhouse/Ashby/Lever APIs, no LLM cost) inherited from the open-source engine it's built on.""",
                     """4 merged PRs to the public career-ops project (⭐60k+): two new ATS providers (BambooHR, Breezy HR), a dashboard status-cell fix, and an agent-inbox feature. Real, verifiable upstream contributions.""",
@@ -520,7 +521,7 @@ val projects =
                     NamedLink("Upstream (career-ops, ⭐60k+)", "https://github.com/santifer/career-ops"),
                 ),
             status = "Active · 4 PRs merged upstream",
-            badges = listOf("Kotlin Multiplatform", "25 modules", "Open-source contributor"),
+            badges = listOf("Kotlin Multiplatform", "Open-source contributor"),
             theme =
                 ProjectTheme(
                     accent = "#3B82F6",
@@ -541,7 +542,7 @@ val projects =
                         listOf(
                             ProjectDetailSection(
                                 heading = "One engine, five targets",
-                                body = """A 25-module clean-architecture split, 12 feature modules and 6 core modules, targets Android, iOS, Desktop, Web (wasmJs) and a Spring Boot 4 server from one shared Kotlin codebase: 543 files, ~45,000 lines. core:designsystem, core:protocol, core:engine, core:data, core:network and core:ai sit underneath feature modules for dashboard, pipeline, explore, intel, ops, profile, auth, assistant and more.""",
+                                body = """A clean architecture split targets Android, iOS, Desktop, Web (wasmJs) and a Spring Boot 4 server from one shared Kotlin codebase: core:designsystem, core:protocol, core:engine, core:data, core:network and core:ai sit underneath feature modules for dashboard, pipeline, explore, intel, ops, profile, auth, assistant and more.""",
                             ),
                             ProjectDetailSection(
                                 heading = "A no-IO engine, ported and verified",
@@ -557,7 +558,7 @@ val projects =
                             ),
                             ProjectDetailSection(
                                 heading = "Zero tokens until an LLM is actually needed",
-                                body = """The engine's scan path hits Greenhouse, Ashby and Lever APIs plus per-company local parsers directly, at zero LLM cost, falling back to an agent-driven search only for companies with no structured source. Every scanned posting passes through one shared trust-validator that scores and flags it before it reaches the tracker. 62 ATS & job-board provider modules plug into that one contract instead of reinventing trust scoring each time.""",
+                                body = """The engine's scan path hits Greenhouse, Ashby and Lever APIs plus per-company local parsers directly, at zero LLM cost, falling back to an agent-driven search only for companies with no structured source. Every scanned posting passes through one shared trust-validator that scores and flags it before it reaches the tracker. ${projectFacts.careerOpsProviders} ATS & job-board provider modules plug into that one contract instead of reinventing trust scoring each time.""",
                             ),
                             ProjectDetailSection(
                                 heading = "One engine, many candidates",
@@ -570,7 +571,7 @@ val projects =
                         ),
                     metrics =
                         listOf(
-                            LabeledValue("25", "KMP modules · 5 targets"),
+                            LabeledValue("5", "platform targets"),
                             LabeledValue("45k", "lines of Kotlin · 543 files"),
                             LabeledValue("62", "ATS & job-board providers"),
                             LabeledValue("4", "PRs merged upstream"),
@@ -649,7 +650,7 @@ val projects =
             name = """This portfolio + “Panda”, my AI assistant""",
             tagline = """The site you're reading, plus Panda, a provider-agnostic LLM assistant that answers for me, grounded in my real CV.""",
             description = """An interactive résumé with a built-in AI assistant. React 19 + Vite + Tailwind on Vercel Edge, with a provider-agnostic chat backend (Groq / Gemini / Claude) and prompt-injection guards.""",
-            stack = listOf("React 19", "Vite 7", "Tailwind v4", "Vercel Edge", "Multi-provider LLM"),
+            stack = listOf("React 19", "Vite 8", "Tailwind v4", "Vercel Edge", "Multi-provider LLM"),
             highlights =
                 listOf(
                     """3D scroll-driven hero, printable résumé view, and case studies with real production metrics.""",
@@ -657,7 +658,7 @@ val projects =
                 ),
             links =
                 listOf(
-                    NamedLink("Live", "https://cv-siddharth.vercel.app"),
+                    NamedLink("Live", "https://siddharth-pandalai.vercel.app"),
                     NamedLink("GitHub", "https://github.com/darkpandawarrior/cv-siddharth"),
                 ),
             status = "Live",
@@ -777,10 +778,10 @@ val projects =
             stack = listOf("Kotlin Multiplatform", "Gradle convention plugins", "Compose Multiplatform", "MIT"),
             highlights =
                 listOf(
-                    """kmp-toolkit: 39 modules, each extracted the moment a second consumer needed the same logic, never designed as a "platform" up front: typed Result, an MVI ViewModel core, an offline-first store, network, security, on-device AI behind one seam, device-integrity, an operation-log outbox, and a 19-provider payment-gateway abstraction.""",
-                    """kmp-build-logic: 17 convention plugins here (22 authored across all repos). The AGP / Kotlin / Compose / test / lint / Firebase / Room / Koin setup written once and applied with one line.""",
+                    """kmp-toolkit: ${projectFacts.toolkitModules} modules, each extracted the moment a second consumer needed the same logic, never designed as a "platform" up front: typed Result, an MVI ViewModel core, an offline-first store, network, security, on-device AI behind one seam, device-integrity, an operation-log outbox, and a ${projectFacts.toolkitProviderModules} provider payment-gateway abstraction.""",
+                    """kmp-build-logic: ${projectFacts.conventionPlugins} convention plugins. The AGP / Kotlin / Compose / test / lint / Firebase / Room / Koin setup written once and applied with one line.""",
                     """kmp-app-template, the app shape the toolkit slots into: one shared Compose UI, a wired Splash → Login → Home nav scaffold, thin Android + Desktop shells, and a customizer.sh that renames the whole project in one command.""",
-                    """Consumed by Doori (10 of its 46 modules), PaymentsLab-KMP (25 of its 40) and Gaddi. The composition is the proof the extraction was real, not a library nobody uses.""",
+                    """Consumed by Doori (${projectFacts.dooriComposedModules} of its ${projectFacts.dooriModules} modules), PaymentsLab-KMP (${projectFacts.paymentsComposedModules} of its ${projectFacts.paymentsModules}) and Gaddi. The composition is the proof the extraction was real, not a library nobody uses.""",
                 ),
             links =
                 listOf(
@@ -789,19 +790,19 @@ val projects =
                     NamedLink("kmp-app-template", "https://github.com/darkpandawarrior/kmp-app-template"),
                 ),
             status = "Active · MIT · vendored across 5 repos",
-            badges = listOf("Kotlin Multiplatform", "39 modules", "22 convention plugins", "MIT"),
+            badges = listOf("Kotlin Multiplatform", "${projectFacts.toolkitModules} modules", "${projectFacts.conventionPlugins} convention plugins", "MIT"),
             detail =
                 ProjectDetailData(
                     overview = """The KMP toolkit family is three decoupled repos (kmp-toolkit, kmp-build-logic and kmp-app-template) instead of one "platform" repo, so that using one of them never means dragging the other two along. None of the three were designed up front: each exists because a second consumer needed something the first one already had, and extracting it once was cheaper than copy-pasting it again. The family is vendored into Doori, PaymentsLab-KMP, Gaddi and this portfolio's own Compose Multiplatform twin via Gradle includeBuild, so a fix or a version bump lands once and every consumer picks it up on its own schedule.""",
                     sections =
                         listOf(
                             ProjectDetailSection(
-                                heading = "kmp-toolkit: 39 modules, extracted, never designed",
-                                body = """The library repo: typed Result, an MVI ViewModel core, an offline-first store, network, security, on-device AI behind one seam, device-integrity, an operation-log outbox, and a 19-provider payment-gateway abstraction. 39 modules, each pulled out the moment a second consumer needed the same logic rather than sketched in ahead of demand. It is the smaller of the two contracts described in the shared-foundation write-up: the tiny (State, Event) → Effects mvi-core base that both Doori and PaymentsLab-KMP build their reducer/store layer on.""",
+                                heading = "kmp-toolkit: ${projectFacts.toolkitModules} modules, extracted, never designed",
+                                body = """The library repo: typed Result, an MVI ViewModel core, an offline-first store, network, security, on-device AI behind one seam, device-integrity, an operation-log outbox, and a ${projectFacts.toolkitProviderModules} provider payment-gateway abstraction. ${projectFacts.toolkitModules} modules, each pulled out the moment a second consumer needed the same logic rather than sketched in ahead of demand. It is the smaller of the two contracts described in the shared-foundation write-up: the tiny (State, Event) → Effects mvi-core base that both Doori and PaymentsLab-KMP build their reducer/store layer on.""",
                             ),
                             ProjectDetailSection(
                                 heading = "kmp-build-logic: the setup written once",
-                                body = """17 convention plugins live in this repo (22 authored across the whole family). AGP, Kotlin, Compose, test, lint, Firebase, Room and Koin configuration for a module is one line (apply the plugin) instead of a build.gradle.kts a new module has to get right from scratch. This is the other half of the shared foundation: the composite build every consumer app pulls in for its module wiring.""",
+                                body = """${projectFacts.conventionPlugins} convention plugins live in this repo. AGP, Kotlin, Compose, test, lint, Firebase, Room and Koin configuration for a module is one line (apply the plugin) instead of a build.gradle.kts a new module has to get right from scratch. This is the other half of the shared foundation: the composite build every consumer app pulls in for its module wiring.""",
                             ),
                             ProjectDetailSection(
                                 heading = "kmp-app-template: the shape a new app starts from",
@@ -809,7 +810,7 @@ val projects =
                             ),
                             ProjectDetailSection(
                                 heading = "The composition is the proof",
-                                body = """Doori consumes 10 of its 46 modules from the toolkit; PaymentsLab-KMP consumes 25 of its 40; Gaddi draws on the same foundation. This portfolio's own Compose Multiplatform twin is built on kmp-app-template too, which is the reason that project's write-up can say the template carries a real four-target app rather than a hello-world, the same claim this family makes about itself, checked by a fourth independent consumer.""",
+                                body = """Doori consumes ${projectFacts.dooriComposedModules} of its ${projectFacts.dooriModules} modules from the toolkit; PaymentsLab-KMP consumes ${projectFacts.paymentsComposedModules} of its ${projectFacts.paymentsModules}; Gaddi draws on the same foundation. This portfolio's own Compose Multiplatform twin is built on kmp-app-template too, which is the reason that project's write-up can say the template carries a real four-target app rather than a hello-world, the same claim this family makes about itself, checked by a fourth independent consumer.""",
                             ),
                             ProjectDetailSection(
                                 heading = "One MVI contract, two apps",
@@ -818,10 +819,10 @@ val projects =
                         ),
                     metrics =
                         listOf(
-                            LabeledValue("36", "modules · kmp-toolkit"),
-                            LabeledValue("17", "convention plugins here · 22 across the family"),
+                            LabeledValue(projectFacts.toolkitModules.toString(), "modules · kmp-toolkit"),
+                            LabeledValue(projectFacts.conventionPlugins.toString(), "shared convention plugins"),
                             LabeledValue("5", "repos vendoring this family"),
-                            LabeledValue("19", "gateway providers behind one abstraction"),
+                            LabeledValue(projectFacts.toolkitProviderModules.toString(), "gateway provider modules behind one abstraction"),
                         ),
                     techStack =
                         listOf(
@@ -835,7 +836,7 @@ val projects =
                                     "on-device AI seam",
                                     "device-integrity",
                                     "operation-log outbox",
-                                    "19-provider payment-gateway abstraction",
+                                    "${projectFacts.toolkitProviderModules} provider payment-gateway abstraction",
                                 ),
                             ),
                             SkillGroup("kmp-build-logic", listOf("AGP", "Kotlin", "Compose", "test + lint", "Firebase", "Room", "Koin")),
@@ -855,9 +856,9 @@ val projects =
                             Diagram(
                                 title = "Three repos, one seam each",
                                 code = """graph LR
-  bl["kmp-build-logic<br/>17 plugins"] -.->|"includeBuild"| m["Doori"]
+  bl["kmp-build-logic<br/>${projectFacts.conventionPlugins} plugins"] -.->|"includeBuild"| m["Doori"]
   bl -.->|"includeBuild"| p["PaymentsLab-KMP"]
-  tk["kmp-toolkit<br/>39 modules"] -.->|"includeBuild"| m
+  tk["kmp-toolkit<br/>${projectFacts.toolkitModules} modules"] -.->|"includeBuild"| m
   tk -.->|"includeBuild"| p
   tk -.->|"includeBuild"| ku["Gaddi"]
   at["kmp-app-template"] -.->|"scaffold"| cv["cv-siddharth-kmp"]""",

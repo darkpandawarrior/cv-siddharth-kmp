@@ -2,6 +2,7 @@ package com.siddharth.cv.shared.labs
 
 import androidx.compose.ui.graphics.Color
 import com.siddharth.cv.shared.data.generated.chess
+import com.siddharth.cv.shared.data.generated.projectFacts
 import com.siddharth.cv.shared.data.projects
 import com.siddharth.cv.shared.format.TenthsPerUnit
 import com.siddharth.cv.shared.format.tenthsToString
@@ -76,24 +77,8 @@ internal class LabExperiment(
     val description: String,
 )
 
-/**
- * How many gateways PaymentsLab-KMP catalogs, read out of the project's own metrics rather than typed
- * here. The React lab gets a four-way split (native-SDK / hosted-webview / mobile-money / stub) from
- * `data/projectStats.ts`, which `gen-kotlin-data.mjs` does not emit into Kotlin — so this port draws
- * one shelf of every gateway instead of four bins. That is a real loss of texture and it is the
- * honest one: the alternative was hand-copying four numbers into this file, which is exactly the
- * drift the generator exists to prevent. [labsSelfCheck] cross-checks this against the project's
- * badge list, so the two can't part company silently.
- */
-internal val gatewayCount: Int =
-    projects
-        .firstOrNull { it.slug == "paymentslab" } // claim-audit:allow -- stable route slug, not display copy
-        ?.detail
-        ?.metrics
-        ?.firstOrNull { it.label.contains("gateways") }
-        ?.value
-        ?.toIntOrNull()
-        ?: 0
+/** Generated catalog total shared with the web portfolio; the bench renders one shelf. */
+internal val gatewayCount: Int = projectFacts.paymentGateways
 
 /** The measured curve, straight from the generated corpus. Ten buckets of game progress. */
 internal val clockDeciles = chess.thesis.deciles
