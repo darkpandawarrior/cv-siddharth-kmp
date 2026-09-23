@@ -166,7 +166,7 @@ val experience =
 val caseStudies =
     listOf(
         CaseStudy(
-            slug = "mileway",
+            slug = "doori",
             title = "Doori: offline-first mileage tracker (Android · iOS · Wear OS · watchOS · Desktop)",
             metric = "${projectFacts.dooriModules} modules · 5 platforms · offline AI",
             summary = """An open-source app I designed and built end-to-end: mileage, travel & expense tracking that runs entirely offline across Android, iOS, Wear OS, watchOS and Compose Desktop from one shared Kotlin codebase. Zero backend, Room + DataStore only, so the whole thing is reproducible and reviewable by anyone.""",

@@ -646,6 +646,6 @@ internal fun paletteSelfCheck() {
     val ranked = paletteFilter("resume", commands)
     check(ranked.firstOrNull()?.id == "route:resume") { "typing 'resume' must put the résumé first, got ${ranked.firstOrNull()?.id}" }
     check(paletteFilter("zzzz", commands).isEmpty()) { "a nonsense query filters everything out" }
-    val dooriId = "project:mileway" // claim-audit:allow -- stable command id, not display copy
+    val dooriId = "project:doori"
     check(paletteFilter("doori", commands).firstOrNull()?.id == dooriId) { "project rows are reachable by name" }
 }

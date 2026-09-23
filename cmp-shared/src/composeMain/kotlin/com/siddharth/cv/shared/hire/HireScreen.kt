@@ -205,7 +205,7 @@ private fun CaseStudyRow(
     nav: CvNavState,
 ) {
     val colors = cvColors
-    // A case study is not always a project. `mileway` is both and has a detail page; `gps-accuracy` // claim-audit:allow -- backtick-quoted slug identifier
+    // A case study is not always a project. `doori` is both and has a detail page; `gps-accuracy`
     // and `crash-reduction` exist only in `caseStudies`, and routing them to ProjectDetail would
     // send two of the three links on the page a recruiter is handed to the 404 screen. The
     // homepage's Work section renders every case study, so that fallback can never miss.

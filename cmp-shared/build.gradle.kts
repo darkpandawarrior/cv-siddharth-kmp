@@ -49,7 +49,7 @@ kotlin {
     // ponytail: scaffold-only until Compose ships iosX64, or drop it if Intel sim support
     // isn't actually needed.
     // No binaries.framework here: :cmp-ios is the umbrella that owns ComposeApp.framework and
-    // export()s this module into it (mirrors Kursi). Declaring a second framework with the same
+    // export()s this module into it (mirrors Gaddi). Declaring a second framework with the same
     // baseName from this module would build an unused duplicate of the same Swift-facing API.
     iosArm64()
     iosSimulatorArm64()

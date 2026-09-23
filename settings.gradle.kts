@@ -2,7 +2,7 @@ pluginManagement {
     // kmp-toolkit's own settings.gradle.kts does includeBuild("../kmp-build-logic") — a relative
     // path that only resolves if this repo also vendors kmp-build-logic as a sibling of
     // external/kmp-toolkit (see includeBuild("external/kmp-toolkit") below) and includes it here
-    // too. Gradle then collapses both references into the same included build. Mirrors Kursi/Mileway.
+    // too. Gradle then collapses both references into the same included build. Mirrors Gaddi/Doori.
     includeBuild("external/kmp-build-logic")
     repositories {
         google {

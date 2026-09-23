@@ -9,7 +9,7 @@ plugins {
  * links against.
  *
  * This module sits ABOVE :cmp-shared and must never be depended upon by anything else (that would
- * introduce a cycle). It mirrors Kursi's :cmp-ios exactly — the only repo in the family whose iOS
+ * introduce a cycle). It mirrors Gaddi's :cmp-ios exactly — the only repo in the family whose iOS
  * app builds green end to end. Before this module existed, `include(":cmp-ios")` was absent from
  * settings.gradle.kts and the Xcode project reached directly into :cmp-shared's own framework
  * binary, so `iosApp.xcodeproj` was not wired to any Gradle module the build actually knew about.

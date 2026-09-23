@@ -14,7 +14,7 @@ import com.siddharth.cv.shared.data.generated.projectFacts
 val projects =
     listOf(
         Project(
-            slug = "kursi", // claim-audit:allow -- stable route slug, not display copy
+            slug = "gaddi",
             name = "Gaddi",
             tagline = """A Hinglish social-deduction bluffing game of power, satire & second chances. Gaddi ke liye kuch bhi karega.""",
             description = """Deterministic Kotlin Multiplatform social-deduction game with ISMCTS bot AI, shipped across Android, iOS, Desktop, and Web.""",
@@ -171,7 +171,7 @@ val projects =
                 ),
         ),
         Project(
-            slug = "mileway",
+            slug = "doori",
             name = "Doori",
             tagline = """Offline-first mileage, travel & expense tracker on one Kotlin codebase across Android, iOS, Wear OS, watchOS & Desktop.""",
             description = """Offline-first mileage, travel, and expense tracker spanning five platforms from one Kotlin codebase, zero backend.""",
@@ -198,7 +198,7 @@ val projects =
                     NamedLink("Case study", "#work"),
                     NamedLink(
                         "PaymentsLab-KMP (sibling KMP app)",
-                        "#project/paymentslab", // claim-audit:allow -- internal route fragment, stable slug
+                        "#project/paymentslab-kmp",
                     ),
                 ),
             status = "${projectFacts.dooriModules} modules · 5 platforms · offline AI",
@@ -336,7 +336,7 @@ val projects =
                 ),
         ),
         Project(
-            slug = "paymentslab", // claim-audit:allow -- stable route slug, not display copy
+            slug = "paymentslab-kmp",
             name = "PaymentsLab-KMP",
             tagline = """An Integration Lab for the Android payments ecosystem: every gateway behind one abstraction, with a live look at what actually happens on each transaction.""",
             description = """A Kotlin Multiplatform systems showcase: real payment flows across dozens of providers, all behind a single PaymentGateway abstraction, backed by a Ktor server that owns order creation, signature verification and webhook reconciliation.""",
@@ -351,7 +351,7 @@ val projects =
                     NamedLink("GitHub", "https://github.com/darkpandawarrior/PaymentsLab-KMP"),
                     NamedLink(
                         "Doori (sibling KMP app)",
-                        "#project/mileway", // claim-audit:allow -- internal route fragment, stable slug
+                        "#project/doori",
                     ),
                 ),
             status = "${projectFacts.paymentsModules} modules · ${projectFacts.paymentGateways} gateways · 5 rails",
@@ -495,7 +495,7 @@ val projects =
                 ),
         ),
         Project(
-            slug = "hiresignal", // claim-audit:allow -- stable route slug, not display copy
+            slug = "candidai",
             name = "Candidai",
             tagline = """A native, multiplatform AI career-intelligence engine, and the open-source project it's built on.""",
             description = """A local-first job-search engine (resume onboarding, reverse-ATS discovery, evidence-based fit scoring and tailored résumés) rebuilt from scratch in Kotlin Multiplatform, with its scoring engine ported and verified against the open-source career-ops project I actively contribute to upstream.""",
@@ -665,7 +665,7 @@ val projects =
             badges = listOf("React 19", "Vercel", "LLM chat"),
         ),
         Project(
-            slug = "deadlock", // claim-audit:allow -- stable route slug, not display copy
+            slug = "stutter",
             name = "STUTTER",
             tagline = """A first-person time-loop game about a moment someone could not let end.""",
             description = """Godot 4.7 in GDScript. A deterministic echo-replay spine powers cooperative echoes, ghosts, and boss desync from one system, with recorded input intent replayed through the same physics step. Built solo as an AI-orchestrated dev crew.""",
@@ -873,19 +873,37 @@ val projects =
  * detail page: the pager can only land on a page that exists.
  */
 val projectOrder =
-    listOf("mileway", "kursi", "paymentslab", "hiresignal", "deadlock", "kmp-family") // claim-audit:allow -- route slugs
+    listOf("doori", "gaddi", "paymentslab-kmp", "candidai", "stutter", "kmp-family")
+
+/**
+ * Pre-rename slugs that still have to resolve: a bookmarked `/project/mileway`, a shared
+ * `#project/kursi` link, `open hiresignal` typed into the terminal from muscle memory. Every
+ * slug this app hands out itself is already canonical, so this is only ever consulted for
+ * something that arrived from outside it.
+ */
+private val legacySlugAliases =
+    mapOf(
+        "mileway" to "doori",
+        "kursi" to "gaddi",
+        "paymentslab" to "paymentslab-kmp",
+        "hiresignal" to "candidai",
+        "deadlock" to "stutter",
+    )
+
+private fun canonicalSlug(slug: String): String = legacySlugAliases[slug] ?: slug
 
 /**
  * The one place a slug becomes a project. Every externally-supplied slug — the
  * terminal's `/open <slug>`, a chat directive — routes through here, so an
  * invented or injected slug resolves to null rather than each caller
- * re-implementing the check.
+ * re-implementing the check. [canonicalSlug] is applied first, so a pre-rename slug resolves to
+ * the same project a current link does.
  */
-fun projectBySlug(slug: String): Project? = projects.firstOrNull { it.slug == slug }
+fun projectBySlug(slug: String): Project? = projects.firstOrNull { it.slug == canonicalSlug(slug) }
 
 /** The next project in [projectOrder], wrapping. Null if [slug] isn't in the pager. */
 fun nextProject(slug: String): Project? {
-    val i = projectOrder.indexOf(slug)
+    val i = projectOrder.indexOf(canonicalSlug(slug))
     if (i < 0) return null
     return projectBySlug(projectOrder[(i + 1) % projectOrder.size])
 }

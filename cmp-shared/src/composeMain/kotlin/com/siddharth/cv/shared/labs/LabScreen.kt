@@ -750,7 +750,7 @@ private fun CrashInstrument(
 @Composable
 private fun ModuleGraphInstrument(experiment: LabExperiment) {
     val colors = cvColors
-    val cyan = labAccent("mileway") // claim-audit:allow -- labAccent takes the stable slug
+    val cyan = labAccent("doori")
     // 13 feature labels plus the two captions, all static: cache them all rather than re-shaping.
     val measurer = rememberTextMeasurer(cacheSize = 24)
     var isolate by remember { mutableStateOf(true) }
@@ -877,7 +877,7 @@ private fun SearchTreeInstrument(
     seconds: State<Float>,
 ) {
     val reduced = LocalReducedMotion.current
-    val gold = labAccent("kursi") // claim-audit:allow -- labAccent takes the stable slug
+    val gold = labAccent("gaddi")
     val measurer = rememberTextMeasurer(cacheSize = 8)
     var tierIndex by remember { mutableStateOf(0) }
     var runIndex by remember { mutableStateOf(0) }
@@ -1025,7 +1025,7 @@ private fun FanoutInstrument(
 ) {
     val colors = cvColors
     val reduced = LocalReducedMotion.current
-    val blue = labAccent("hiresignal") // claim-audit:allow -- labAccent takes the stable slug
+    val blue = labAccent("candidai")
     val measurer = rememberTextMeasurer(cacheSize = 8)
     var dedup by remember { mutableStateOf(true) }
     var seedBase by remember { mutableStateOf(0) }
@@ -1211,7 +1211,7 @@ private fun GatewayInstrument(
 ) {
     val colors = cvColors
     val reduced = LocalReducedMotion.current
-    val violet = labAccent("paymentslab") // claim-audit:allow -- labAccent takes the stable slug
+    val violet = labAccent("paymentslab-kmp")
     val feed = remember { GatewayFeed() }
     val measurer = rememberTextMeasurer(cacheSize = 8)
     var routed by remember { mutableStateOf(false) }
@@ -1384,7 +1384,7 @@ private fun ReplayInstrument(
     seconds: State<Float>,
 ) {
     val colors = cvColors
-    val red = labAccent("deadlock") // claim-audit:allow -- labAccent takes the stable slug
+    val red = labAccent("stutter")
     val log = remember { ReplayLog() }
     val measurer = rememberTextMeasurer(cacheSize = 8)
     var perturbed by remember { mutableStateOf(false) }
@@ -1804,9 +1804,9 @@ internal fun labScreenSelfCheck() {
     check(stillAge < RecomposeFlashSeconds) { "the still frame misses the flash by ${stillAge}s" }
 
     // Accents come from project data. A typo in a slug must be loud, not a quietly wrong hue.
-    check(labAccent("kursi") == cvColor("#E8C874")) { "Gaddi's gold moved or the slug is wrong" } // claim-audit:allow -- route slug
-    check(labAccent("hiresignal") == cvColor("#3B82F6")) { "Candidai's blue moved or the slug is wrong" } // claim-audit:allow -- route slug
-    check(labAccent("mileway") == cvColor("#5ee6ff")) { "Doori's cyan moved or the slug is wrong" }
+    check(labAccent("gaddi") == cvColor("#E8C874")) { "Gaddi's gold moved or the slug is wrong" }
+    check(labAccent("candidai") == cvColor("#3B82F6")) { "Candidai's blue moved or the slug is wrong" }
+    check(labAccent("doori") == cvColor("#5ee6ff")) { "Doori's cyan moved or the slug is wrong" }
     check(labAccent("no-such-project") == CvDarkColors.accent2) { "unknown slugs must fall back" }
 
     // The fan-out's still frame is claimed to be mid-flight through its third scan.
