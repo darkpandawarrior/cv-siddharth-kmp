@@ -1,5 +1,6 @@
 package com.siddharth.cv.shared.data
 
+import com.siddharth.cv.shared.data.generated.projectFacts
 import com.siddharth.cv.shared.labs.labCount
 
 /**
@@ -21,7 +22,7 @@ val profile =
         phone = "+91 8848852062",
         github = "https://github.com/darkpandawarrior",
         linkedin = "https://linkedin.com/in/siddharth-pandalai",
-        portfolio = "https://cv-siddharth.vercel.app",
+        portfolio = "https://siddharth-pandalai.vercel.app",
         // No notice period and no "available immediately". Dice.tech runs to Present on the same page,
         // and in this market a notice period is assumed: the two together read as either hiding
         // unemployment or not intending to serve notice. Location and remote preference are the parts a
@@ -167,12 +168,12 @@ val caseStudies =
         CaseStudy(
             slug = "mileway",
             title = "Doori: offline-first mileage tracker (Android · iOS · Wear OS · watchOS · Desktop)",
-            metric = "46 modules · 5 platforms · offline AI",
+            metric = "${projectFacts.dooriModules} modules · 5 platforms · offline AI",
             summary = """An open-source app I designed and built end-to-end: mileage, travel & expense tracking that runs entirely offline across Android, iOS, Wear OS, watchOS and Compose Desktop from one shared Kotlin codebase. Zero backend, Room + DataStore only, so the whole thing is reproducible and reviewable by anyone.""",
             problem = """I wanted a clean, inspectable reference for the architecture I advocate for at scale: Compose Multiplatform, strict module isolation, MVI state, a real location engine and a real policy/reimbursement layer. Built with zero backend, so the whole thing is reproducible and reviewable by anyone.""",
             approach =
                 listOf(
-                    """46-module clean architecture: 13 feature modules that never depend on each other, meeting only at the :app composition root, wired with Koin.""",
+                    """${projectFacts.dooriModules} module clean architecture: ${projectFacts.dooriFeatures} feature modules that never depend on each other, meeting only at the :app composition root, wired with Koin.""",
                     """Shared commonMain core: design system, Room (KMP) + DataStore, and every check-in / hardware-event screen. It drives Android, iOS, Wear OS, a watchOS SwiftUI app and a Compose Desktop window from one snapshot model.""",
                     """A location engine that treats GPS as a noisy signal: jitter suppression, spike detection, a four-bucket distance accumulator, IMU (accelerometer) fusion and device-tier-adaptive sampling, with a deterministic simulated-drive source so the whole engine is unit-testable without hardware.""",
                     """A policy engine that computes reimbursement from configurable per-vehicle rate rules and flags policy violations on approvals. The real logic a live expense platform needs, all local.""",
@@ -187,7 +188,7 @@ val caseStudies =
                     "Kotlin Multiplatform",
                     "Compose Multiplatform",
                     "Android · iOS · Wear OS · watchOS · Desktop",
-                    "46 modules",
+                    "${projectFacts.dooriModules} modules",
                     "Offline AI",
                     "Open source",
                 ),

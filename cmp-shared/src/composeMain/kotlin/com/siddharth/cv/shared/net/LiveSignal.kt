@@ -30,7 +30,7 @@ import kotlinx.serialization.json.Json
  */
 
 /** Same deployment as [com.siddharth.cv.shared.chat.CHAT_ENDPOINT], and hardcoded for that reason. */
-private const val SIGNAL_ORIGIN = "https://cv-siddharth.vercel.app"
+private const val SIGNAL_ORIGIN = "https://siddharth-pandalai.vercel.app"
 
 const val SPOTIFY_ENDPOINT: String = "$SIGNAL_ORIGIN/api/spotify"
 const val GITHUB_ACTIVITY_ENDPOINT: String = "$SIGNAL_ORIGIN/api/github-activity"

@@ -33,7 +33,7 @@ import kotlinx.coroutines.flow.channelFlow
  */
 
 /** Production endpoint. Hardcoded: this client exists to talk to exactly one deployment. */
-const val CHAT_ENDPOINT: String = "https://cv-siddharth.vercel.app/api/chat"
+const val CHAT_ENDPOINT: String = "https://siddharth-pandalai.vercel.app/api/chat"
 
 /**
  * What a visitor should read when a reply fails, so they still leave with a way to reach a human.

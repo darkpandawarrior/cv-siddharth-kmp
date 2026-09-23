@@ -200,7 +200,7 @@ private val prerenderRoutes: List<Route> =
 private const val DEFAULT_ORIGIN = "https://cv-siddharth-kmp.vercel.app"
 
 /** The React original, where the rooms this build does not serve still live. See [exploreSection]. */
-private const val REACT_SITE = "https://cv-siddharth.vercel.app"
+private const val REACT_SITE = "https://siddharth-pandalai.vercel.app"
 
 private val json = Json
 
