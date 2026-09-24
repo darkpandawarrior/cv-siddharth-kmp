@@ -2970,6 +2970,26 @@ val pastClients: List<PastClient> = listOf(
             ),
         ),
     ),
+    PastClient(
+        key = "pickupbarbodas",
+        name = "pickUP Driver",
+        icon = "/store/production.pickupbarbodas.driver.webp",
+        color = null,
+        setUpByHim = false,
+        lastSeen = "20260924",
+        firstSeen = "20260924",
+        apps = listOf(
+            PastApp(
+                id = "production.pickupbarbodas.driver",
+                name = "pickUP Driver",
+                url = "https://play.google.com/store/apps/details?id=production.pickupbarbodas.driver&hl=en",
+                side = "driver",
+                rating = null,
+                lastSeen = "20260924",
+                setUpByHim = false,
+            ),
+        ),
+    ),
 )
 
 val fleetStats: FleetStats = FleetStats(
