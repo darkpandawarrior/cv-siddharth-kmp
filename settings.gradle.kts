@@ -1,3 +1,20 @@
+// external/kmp-toolkit and external/kmp-build-logic are git submodules. A checkout that clones
+// this repo without initialising submodules (e.g. actions/checkout without `submodules:
+// recursive` — refresh-twin.yml in the sibling cv-siddharth repo does exactly this) leaves both
+// directories present but empty. includeBuild then treats each as a build with zero projects
+// instead of failing at checkout time, so the first symptom is a confusing
+// "Project with path ':network' not found in build ':kmp-toolkit'" deep in dependency
+// resolution. Self-heal here, once, rather than rely on every caller remembering the flag.
+if (!File(rootDir, "external/kmp-toolkit/settings.gradle.kts").exists() ||
+    !File(rootDir, "external/kmp-build-logic/settings.gradle.kts").exists()
+) {
+    ProcessBuilder("git", "submodule", "update", "--init", "--recursive")
+        .directory(rootDir)
+        .inheritIO()
+        .start()
+        .waitFor()
+}
+
 pluginManagement {
     // kmp-toolkit's own settings.gradle.kts does includeBuild("../kmp-build-logic") — a relative
     // path that only resolves if this repo also vendors kmp-build-logic as a sibling of
