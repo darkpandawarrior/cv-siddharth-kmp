@@ -194,7 +194,7 @@ val storyMapNodes: List<StoryMapNode> = listOf(
     StoryMapNode(
         id = "oss",
         label = "Open source",
-        sub = "26 merged upstream",
+        sub = "27 merged upstream",
         x = 0.3162,
         y = 0.3044,
         r = 12.0,

@@ -78,7 +78,7 @@ data class WeebDivergenceRow(
 
 /** The anime and manga ledger behind /weeb. Every figure on that page renders from here. */
 val weeb: WeebData = WeebData(
-    generatedAt = "2026-09-26",
+    generatedAt = "2026-10-01",
     anime = WeebAnime(
         total = 479,
         matched = 467,
@@ -552,8 +552,8 @@ val weeb: WeebData = WeebData(
                 crowd = 65,
                 delta = -5,
             ),
+            WeebDivergenceRow(name = "Dragon Ball Z", mine = 4, crowd = 81, delta = -1),
             WeebDivergenceRow(name = "The Disastrous Life Of Saiki K", mine = 4, crowd = 81, delta = -1),
-            WeebDivergenceRow(name = "Dragon Ball Z", mine = 4, crowd = 80, delta = 0),
         ),
     ),
 )
