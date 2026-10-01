@@ -78,7 +78,7 @@ data class WeebDivergenceRow(
 
 /** The anime and manga ledger behind /weeb. Every figure on that page renders from here. */
 val weeb: WeebData = WeebData(
-    generatedAt = "2026-09-06",
+    generatedAt = "2026-09-26",
     anime = WeebAnime(
         total = 479,
         matched = 467,
@@ -316,15 +316,6 @@ val weeb: WeebData = WeebData(
             status = "FINISHED",
         ),
         WeebStale(
-            name = "The Disastrous Life Of Saiki K",
-            title = "The Disastrous Life of Saiki K.",
-            romaji = "Saiki Kusuo no Ψ-nan",
-            english = "The Disastrous Life of Saiki K.",
-            sequel = "The Disastrous Life of Saiki K. Season 2",
-            year = 2018,
-            status = "FINISHED",
-        ),
-        WeebStale(
             name = "Konosuba",
             title = "KONOSUBA -God's blessing on this wonderful world!",
             romaji = "Kono Subarashii Sekai ni Shukufuku wo!",
@@ -544,7 +535,7 @@ val weeb: WeebData = WeebData(
     divergence = WeebDivergence(
         n = 48,
         top = listOf(
-            WeebDivergenceRow(name = "Boruto: Naruto Next Generations", mine = 5, crowd = 57, delta = 43),
+            WeebDivergenceRow(name = "Boruto: Naruto Next Generations", mine = 5, crowd = 56, delta = 44),
             WeebDivergenceRow(name = "Platinum End", mine = 5, crowd = 58, delta = 42),
             WeebDivergenceRow(name = "Ninja Kamui", mine = 5, crowd = 64, delta = 36),
             WeebDivergenceRow(name = "Highschool DxD", mine = 5, crowd = 69, delta = 31),
@@ -558,10 +549,10 @@ val weeb: WeebData = WeebData(
             WeebDivergenceRow(
                 name = "Monster Musume: Everyday Life With Monster Girls",
                 mine = 3,
-                crowd = 66,
-                delta = -6,
+                crowd = 65,
+                delta = -5,
             ),
-            WeebDivergenceRow(name = "The Disastrous Life Of Saiki K", mine = 4, crowd = 83, delta = -3),
+            WeebDivergenceRow(name = "The Disastrous Life Of Saiki K", mine = 4, crowd = 81, delta = -1),
             WeebDivergenceRow(name = "Dragon Ball Z", mine = 4, crowd = 80, delta = 0),
         ),
     ),
