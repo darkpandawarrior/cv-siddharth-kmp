@@ -30,55 +30,55 @@ data class DriftEntry(
 val opsPerimeter: List<PerimeterEntry> = listOf(
     PerimeterEntry(
         file = "anthology.ts",
-        generatedAt = "2026-10-03",
+        generatedAt = "2026-10-05",
         slaDays = 21,
         generator = "npm run gen:anthology",
     ),
     PerimeterEntry(
         file = "archiveText.ts",
-        generatedAt = "2026-10-03",
+        generatedAt = "2026-10-05",
         slaDays = 45,
         generator = "npm run gen:archive-text",
     ),
     PerimeterEntry(
         file = "chess.ts",
-        generatedAt = "2026-10-03",
+        generatedAt = "2026-10-05",
         slaDays = 21,
         generator = "npm run gen:chess",
     ),
     PerimeterEntry(
         file = "chessDeep.ts",
-        generatedAt = "2026-10-03",
+        generatedAt = "2026-10-05",
         slaDays = 21,
         generator = "npm run gen:chess-deep",
     ),
     PerimeterEntry(
         file = "history.ts",
-        generatedAt = "2026-10-03",
+        generatedAt = "2026-10-05",
         slaDays = 21,
         generator = "npm run gen:history",
     ),
     PerimeterEntry(
         file = "kmpGraph.ts",
-        generatedAt = "2026-10-02",
+        generatedAt = "2026-10-04",
         slaDays = 45,
         generator = "npm run gen:stats",
     ),
     PerimeterEntry(
         file = "lanes.ts",
-        generatedAt = "2026-10-03",
+        generatedAt = "2026-10-05",
         slaDays = 45,
         generator = "npm run gen:lanes",
     ),
     PerimeterEntry(
         file = "loopdownArt.ts",
-        generatedAt = "2026-10-03",
+        generatedAt = "2026-10-05",
         slaDays = 45,
         generator = "npm run gen:loopdown-art",
     ),
     PerimeterEntry(
         file = "projectStats.ts",
-        generatedAt = "2026-09-25",
+        generatedAt = "2026-10-05",
         slaDays = 21,
         generator = "npm run gen:stats",
     ),
@@ -102,31 +102,31 @@ val opsPerimeter: List<PerimeterEntry> = listOf(
     ),
     PerimeterEntry(
         file = "systemGraph.ts",
-        generatedAt = "2026-10-03",
+        generatedAt = "2026-10-05",
         slaDays = 30,
         generator = "npm run gen:system-graph",
     ),
     PerimeterEntry(
         file = "timeline.ts",
-        generatedAt = "2026-10-03",
+        generatedAt = "2026-10-05",
         slaDays = 45,
         generator = "npm run gen:timeline",
     ),
     PerimeterEntry(
         file = "weeb.ts",
-        generatedAt = "2026-10-03",
+        generatedAt = "2026-10-05",
         slaDays = 21,
         generator = "npm run gen:weeb",
     ),
     PerimeterEntry(
         file = "weebTitles.ts",
-        generatedAt = "2026-10-03",
+        generatedAt = "2026-10-05",
         slaDays = 45,
         generator = "npm run gen:weeb",
     ),
     PerimeterEntry(
         file = "writing.ts",
-        generatedAt = "2026-10-03",
+        generatedAt = "2026-10-05",
         slaDays = 21,
         generator = "npm run gen:loopdown",
     ),
@@ -179,7 +179,7 @@ val opsDrift: List<DriftEntry> = listOf(
         behind = null,
         pinnedAt = null,
     ),
-    DriftEntry(repo = "Doori", upstream = "kmp-toolkit", pin = "db8ffcc", behind = null, pinnedAt = null),
+    DriftEntry(repo = "Doori", upstream = "kmp-toolkit", pin = "76cb747", behind = null, pinnedAt = null),
     DriftEntry(
         repo = "Gaddi",
         upstream = "kmp-build-logic",
@@ -218,4 +218,4 @@ val opsDrift: List<DriftEntry> = listOf(
     ),
 )
 
-val opsGeneratedAt: String = "2026-10-03"
+val opsGeneratedAt: String = "2026-10-05"
