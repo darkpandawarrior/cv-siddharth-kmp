@@ -106,3 +106,17 @@ for the primary CTA hover-in. Durations: fast 180, base 300, slow 600, reveal 60
   worktree; they do not feed this theme.
 - The code wins on any value here. If a hex differs, fix this file, then check `index.css`.
 - Run the `antislop` skill as the filter on any UI diff and report its Delivery Gate result.
+
+## Changelog
+
+| Date | Change | Why | Source |
+|---|---|---|---|
+| 2026-10-09 | Initial version, distilled from the code token files and existing design docs | Establish design direction for agents | DESIGN.md rollout |
+
+## Open questions
+
+- None recorded yet.
+
+## Evolving this file
+
+Agents: when you change UI and find this file wrong or silent, fix it in the same change and add a Changelog row. Code token files win over this file; when they disagree, correct the doc. A user correction of a visual choice with a stated reason becomes a rule here immediately. Lessons that apply beyond this repo go to the LEARNINGS log of the `design-md` skill in AgentHarness.
