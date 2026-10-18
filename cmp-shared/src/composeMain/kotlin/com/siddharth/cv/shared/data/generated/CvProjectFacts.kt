@@ -29,12 +29,12 @@ data class ProjectFacts(
 /** Current public project counts, shared with the web portfolio. */
 val projectFacts: ProjectFacts = ProjectFacts(
     dooriLocalModules = 36,
-    dooriComposedModules = 13,
-    dooriModules = 49,
+    dooriComposedModules = 16,
+    dooriModules = 52,
     dooriFeatures = 13,
     paymentsLocalModules = 17,
-    paymentsComposedModules = 29,
-    paymentsModules = 46,
+    paymentsComposedModules = 31,
+    paymentsModules = 48,
     gatewaysNative = 15,
     gatewaysInternal = 1,
     gatewaysHosted = 44,
@@ -42,8 +42,8 @@ val projectFacts: ProjectFacts = ProjectFacts(
     gatewaysStub = 3,
     paymentGateways = 70,
     gaddiModules = 15,
-    careerOpsProviders = 103,
-    toolkitModules = 43,
+    careerOpsProviders = 109,
+    toolkitModules = 46,
     toolkitProviderModules = 20,
     conventionPlugins = 18,
 )
