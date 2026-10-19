@@ -6,18 +6,27 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -73,6 +82,7 @@ import com.siddharth.cv.shared.theme.CvTheme
 import com.siddharth.cv.shared.theme.ShaderOrGradientBackground
 import com.siddharth.cv.shared.theme.cvColors
 import com.siddharth.cv.shared.theme.cvType
+import com.siddharth.cv.shared.theme.rememberSystemReducedMotion
 import com.siddharth.cv.shared.weeb.WeebScreen
 import com.siddharth.cv.shared.writing.InkScreen
 import com.siddharth.cv.shared.writing.LoopdownScreen
@@ -119,7 +129,7 @@ fun App(
     // The chord is caught on a focusable root wrapping the whole app. onPreviewKeyEvent sees the
     // event BEFORE any focused child, which is the point: the terminal and the chat composer are
     // both text fields that would otherwise swallow ⌘K as ordinary input.
-    CvTheme {
+    CvTheme(reducedMotion = rememberSystemReducedMotion()) {
         CompositionLocalProvider(LocalNav provides nav) {
             Box(
                 Modifier
@@ -150,9 +160,16 @@ fun App(
 
                 // Screens that re-theme (résumé paper, per-project accent) nest their own CvTheme,
                 // so the ambient layer behind them keeps the site's dark palette by construction.
-                RouteHost(nav, homeList, Modifier.fillMaxSize().padding(top = TopBarHeight))
+                RouteHost(
+                    nav,
+                    homeList,
+                    Modifier
+                        .fillMaxSize()
+                        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+                        .padding(top = TopBarHeight + WindowInsets.statusBars.asPaddingValues().calculateTopPadding()),
+                )
 
-                TopBar(nav, homeList)
+                TopBar(nav, homeList, onOpenPalette = { paletteOpen = true })
 
                 // ⌘K / Ctrl-K. Handled here rather than inside the palette so that exactly one
                 // place owns the chord, and so the palette itself stays a pure function of
@@ -297,6 +314,7 @@ private val WideBreakpoint = 900.dp
 private fun TopBar(
     nav: CvNavState,
     homeList: LazyListState,
+    onOpenPalette: () -> Unit,
 ) {
     val colors = cvColors
     val widthDp =
@@ -317,8 +335,9 @@ private fun TopBar(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .height(TopBarHeight)
                 .background(colors.glass)
+                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))
+                .height(TopBarHeight)
                 .padding(horizontal = 24.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -344,6 +363,9 @@ private fun TopBar(
         NavLink("résumé", accent = nav.current == Route.Resume) { nav.go(Route.Resume) }
         Spacer(Modifier.width(18.dp))
         NavLink("terminal", accent = nav.current == Route.Terminal) { nav.go(Route.Terminal) }
+        // Touch has no ⌘K: this is the only way a phone user reaches the palette (and Hire, Ops, ...).
+        Spacer(Modifier.width(18.dp))
+        NavLink("menu", description = "Open command palette") { onOpenPalette() }
     }
 }
 
@@ -351,22 +373,26 @@ private fun TopBar(
 private fun NavLink(
     text: String,
     accent: Boolean = false,
+    description: String? = null,
     onClick: () -> Unit,
 ) {
     val colors = cvColors
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
+    val pressed by interaction.collectIsPressedAsState()
     BasicText(
         text = text,
         modifier =
             Modifier
+                .minimumInteractiveComponentSize()
                 .hoverable(interaction)
                 .clickable(
                     interactionSource = interaction,
                     indication = null,
                     role = Role.Button,
+                    onClickLabel = description,
                     onClick = onClick,
                 ).padding(vertical = 8.dp),
-        style = cvType.metaMono.copy(color = if (accent || hovered) colors.accent else colors.muted),
+        style = cvType.metaMono.copy(color = if (accent || hovered || pressed) colors.accent else colors.muted),
     )
 }

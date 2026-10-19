@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -47,6 +48,8 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
@@ -137,7 +140,14 @@ fun TerminalScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    LaunchedEffect(Unit) { focus.requestFocus() }
+    // Auto-focus opens the soft keyboard the instant a phone user lands here; on compact widths wait
+    // for a tap (the whole screen is a focus target).
+    val compact =
+        with(LocalDensity.current) {
+            LocalWindowInfo.current.containerSize.width
+                .toDp()
+        } < 600.dp
+    LaunchedEffect(Unit) { if (!compact) focus.requestFocus() }
     LaunchedEffect(lines.size) { listState.scrollToItem((lines.size - 1).coerceAtLeast(0)) }
 
     // ponytail: 3-px repeating gradient instead of a per-scanline draw loop, and NO BlendMode.Screen
@@ -177,7 +187,7 @@ fun TerminalScreen(modifier: Modifier = Modifier) {
                     )
                 },
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize().imePadding()) {
             TitleBar(colors = colors, onExit = { nav.go(Route.Home) })
             LazyColumn(
                 state = listState,
