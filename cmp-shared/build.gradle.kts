@@ -35,8 +35,15 @@ kotlin {
         namespace = "com.siddharth.cv.shared"
         compileSdk {
             version =
-                release(libs.versions.android.compileSdk.get().toInt()) {
-                    minorApiLevel = libs.versions.android.compileSdkMinor.get().toInt()
+                release(
+                    libs.versions.android.compileSdk
+                        .get()
+                        .toInt(),
+                ) {
+                    minorApiLevel =
+                        libs.versions.android.compileSdkMinor
+                            .get()
+                            .toInt()
                 }
         }
         minSdk =
