@@ -10,11 +10,11 @@
     <meta property="og:description" content="Compose Multiplatform port of an interactive CV — one Kotlin codebase, four platforms.">
     <meta property="og:type" content="profile">
     <!-- Inline so there is no favicon round-trip (and no 404 in the console). Android green dot. -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><circle cx='8' cy='8' r='7' fill='%233ddc84'/></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><circle cx='8' cy='8' r='7' fill='%23f2a13d'/></svg>">
     <style>
         /* --color-void from the source site's @theme. Set on html so the skiko payload downloads
            over the site's own ground instead of a white flash. */
-        html, body { margin: 0; padding: 0; height: 100%; background: #05070a; color: #e8efe9;
+        html, body { margin: 0; padding: 0; height: 100%; background: #0a0d0c; color: #e8efe9;
                      font-family: "Space Grotesk", system-ui, sans-serif; }
         #compose { position: fixed; inset: 0; }
         #boot {
@@ -22,15 +22,15 @@
             font: 400 13px/1.6 ui-monospace, monospace; color: #8b909a;
             letter-spacing: 0.08em; text-transform: uppercase; pointer-events: none;
         }
-        #boot b { color: #3ddc84; font-weight: 400; }
+        #boot b { color: #f2a13d; font-weight: 400; }
         /* The crawlable layer. Visible until Compose paints (main() hides it), so a crawler, a
            reader with JS disabled, and any browser without wasm all get real text. It is a SIBLING
            of #compose, never a child — Compose clears its own container on mount and would delete
            this if it lived inside. */
         #seo { max-width: 46rem; margin: 0 auto; padding: 4rem 1.5rem; line-height: 1.65; }
         #seo h1 { font-size: 2rem; margin: 0 0 .25rem; }
-        #seo h2 { font-size: 1.1rem; margin: 2rem 0 .5rem; color: #3ddc84; }
-        #seo a { color: #3ddc84; }
+        #seo h2 { font-size: 1.1rem; margin: 2rem 0 .5rem; color: #f2a13d; }
+        #seo a { color: #f2a13d; }
         #seo .muted { color: #8b909a; }
     </style>
 </head>

@@ -14,9 +14,12 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -53,6 +56,7 @@ import com.siddharth.cv.shared.theme.CvMotion
 import com.siddharth.cv.shared.theme.CvSectionGap
 import com.siddharth.cv.shared.theme.GhostButton
 import com.siddharth.cv.shared.theme.HeroShimmerText
+import com.siddharth.cv.shared.theme.LocalReducedMotion
 import com.siddharth.cv.shared.theme.MonoMeta
 import com.siddharth.cv.shared.theme.PrimaryButton
 import com.siddharth.cv.shared.theme.Reveal
@@ -115,7 +119,11 @@ fun HomeScreen(
     LazyColumn(
         state = listState,
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = 32.dp, bottom = 120.dp),
+        contentPadding =
+            PaddingValues(
+                top = 32.dp,
+                bottom = 120.dp + WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding(),
+            ),
     ) {
         items(homeSections, key = { it.id }) { section ->
             SectionSlot(last = section.index == homeSections.lastIndex) {
@@ -187,7 +195,8 @@ private fun SectionSlot(
 @Composable
 private fun HeroSection() {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
-        if (maxWidth >= 900.dp) {
+        val boxWidth = maxWidth
+        if (boxWidth >= 900.dp) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.weight(1f)) { HeroCopy() }
                 Spacer(Modifier.width(40.dp))
@@ -196,8 +205,11 @@ private fun HeroSection() {
         } else {
             Column(Modifier.fillMaxWidth()) {
                 HeroCopy()
-                Spacer(Modifier.height(56.dp))
-                TiltPhone(Modifier.align(Alignment.CenterHorizontally))
+                // A mock phone drawn on a phone pushes the proof below the fold; keep it from tablets up.
+                if (boxWidth >= 600.dp) {
+                    Spacer(Modifier.height(56.dp))
+                    TiltPhone(Modifier.align(Alignment.CenterHorizontally))
+                }
             }
         }
     }
@@ -237,9 +249,9 @@ private fun HeroCopy() {
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    PrimaryButton("See the work", onClick = { nav.goSection("work") })
+                    PrimaryButton("Hire me", onClick = { nav.go(Route.Hire) })
+                    GhostButton("See the work", onClick = { nav.goSection("work") })
                     GhostButton("Résumé", onClick = { nav.go(Route.Resume) })
-                    GhostButton("Terminal", onClick = { nav.go(Route.Terminal) })
                 }
 
                 Spacer(Modifier.height(24.dp))
@@ -284,8 +296,9 @@ private fun TiltPhone(modifier: Modifier = Modifier) {
     val names = remember { projectOrder.mapNotNull { projectBySlug(it)?.name } }
     var shown by remember { mutableStateOf(0) }
 
-    LaunchedEffect(names) {
-        if (names.size < 2) return@LaunchedEffect
+    val reduced = LocalReducedMotion.current
+    LaunchedEffect(names, reduced) {
+        if (names.size < 2 || reduced) return@LaunchedEffect
         while (true) {
             delay(3000)
             shown = (shown + 1) % names.size

@@ -29,12 +29,14 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -55,8 +57,15 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -186,7 +195,7 @@ fun SectionHeading(
     text: String,
     modifier: Modifier = Modifier,
 ) {
-    BasicText(text = text, modifier = modifier, style = cvType.h2)
+    BasicText(text = text, modifier = modifier.semantics { heading() }, style = cvType.h2)
 }
 
 /**
@@ -346,6 +355,8 @@ fun TagChip(
     Box(
         modifier =
             modifier
+                // Touch target only: the pill keeps its look, the hit area grows to 48dp.
+                .then(if (onClick != null) Modifier.minimumInteractiveComponentSize() else Modifier)
                 .graphicsLayer {
                     scaleX = scale
                     scaleY = scale
@@ -396,6 +407,7 @@ fun PrimaryButton(
     modifier: Modifier = Modifier,
 ) {
     val colors = cvColors
+    val haptics = LocalHapticFeedback.current
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
     val pressed by interaction.collectIsPressedAsState()
@@ -436,8 +448,15 @@ fun PrimaryButton(
                     translationY = lift * density
                 }.glow(colors.accent, radius = 26.dp, alpha = glowAlpha, offsetY = 6.dp)
                 .background(colors.accent, shape)
-                .clickable(interactionSource = interaction, indication = null, role = Role.Button, onClick = onClick)
-                .padding(horizontal = 20.dp, vertical = 12.dp),
+                .clickable(
+                    interactionSource = interaction,
+                    indication = null,
+                    role = Role.Button,
+                    onClick = {
+                        haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        onClick()
+                    },
+                ).padding(horizontal = 20.dp, vertical = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
         BasicText(
@@ -457,19 +476,21 @@ fun GhostButton(
     val colors = cvColors
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
+    val pressed by interaction.collectIsPressedAsState()
+    val active = hovered || pressed
     val shape = RoundedCornerShape(10.dp)
     Box(
         modifier =
             modifier
                 .background(Color.Transparent, shape)
-                .border(1.dp, if (hovered) colors.accent.copy(alpha = 0.6f) else colors.line, shape)
+                .border(1.dp, if (active) colors.accent.copy(alpha = 0.6f) else colors.line, shape)
                 .clickable(interactionSource = interaction, indication = null, role = Role.Button, onClick = onClick)
                 .padding(horizontal = 20.dp, vertical = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
         BasicText(
             text = text,
-            style = cvType.body.copy(color = if (hovered) colors.accent else colors.onBackground),
+            style = cvType.body.copy(color = if (active) colors.accent else colors.onBackground),
         )
     }
 }
@@ -496,7 +517,12 @@ fun AnimatedCounter(
             animationSpec = tween(if (reduced) 0 else 1200, easing = CvMotion.EaseOutExpo),
             label = "counter",
         )
-    BasicText(text = "$prefix$value$suffix", modifier = modifier, style = style ?: cvType.metric)
+    // Announce the final figure once, not every frame of the count-up.
+    BasicText(
+        text = "$prefix$value$suffix",
+        modifier = modifier.clearAndSetSemantics { contentDescription = "$prefix$target$suffix" },
+        style = style ?: cvType.metric,
+    )
 }
 
 /**
@@ -750,6 +776,7 @@ fun ExpanderSection(
             modifier =
                 Modifier
                     .fillMaxWidth()
+                    .heightIn(min = 48.dp)
                     .then(
                         if (focused) {
                             Modifier.border(2.dp, colors.accent, RoundedCornerShape(6.dp))
@@ -761,7 +788,8 @@ fun ExpanderSection(
                         indication = null,
                         role = Role.Button,
                         onClick = { open = !open },
-                    ).padding(vertical = 10.dp),
+                    ).semantics { stateDescription = if (open) "expanded" else "collapsed" }
+                    .padding(vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Canvas(Modifier.size(10.dp).graphicsLayer { rotationZ = rotation }) {

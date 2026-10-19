@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -39,7 +40,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -194,8 +198,10 @@ private fun LinkRow(
     Box(
         modifier
             .fillMaxWidth()
+            .heightIn(min = 48.dp)
             .clickable(role = Role.Button) { uriHandler.openUri(url) }
             .padding(vertical = 10.dp),
+        contentAlignment = Alignment.CenterStart,
     ) {
         content()
     }
@@ -833,7 +839,11 @@ fun ContactSection(modifier: Modifier = Modifier) {
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                AnimatedContent(targetState = copied, label = "copyEmail") { done ->
+                AnimatedContent(
+                    targetState = copied,
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                    label = "copyEmail",
+                ) { done ->
                     PrimaryButton(
                         text = if (done) "Copied" else "Copy email",
                         onClick = {
