@@ -1,0 +1,10 @@
+# Decisions log
+
+Settled choices for this repo, one line each, so a new session does not re-open them. Read before proposing an architectural change, and append a line when a decision is made.
+
+- 2026-07-29: The Compose Multiplatform port keeps the React site as the indexed portfolio. The 3D, tldraw, Leaflet and mermaid surfaces and the SSR and SEO layer were dropped rather than faked, and index.html carries noindex plus a canonical link back to the React site. Why: a faked surface misleads, and the README documents what ported, degraded or was dropped, with reasons. (source: 82fc08c)
+- 2026-08-30: Routes are defined once. Both the UI and the prerenderer ask routeOrNull whether a room has a route here, and the prerender page list derives from the route list instead of being hand-typed. Why: a hand-typed list let a new Route ship a screen with no indexable page and no sitemap entry. (source: 9825d1c)
+- 2026-08-30: Absent and dropped are different states in the README, and absent surfaces are never rendered as zeroes. Why: twelve of the sixteen absent React surfaces were in no KMP document, so the port read as complete at seven route kinds out of twenty-three. (source: 9825d1c, README.md)
+- 2026-09-07: ChatClient uses kmp-toolkit :network and :result but keeps its hand-rolled SSE reader and does not use :llm-chat's HttpChatProvider. Why: that provider always serializes "mode": null, which the production endpoint rejects with a 400, and it has no slot for the separate "route" hint. (source: a03abfd)
+- 2026-09-07: Compose-dependent code lives in composeMain and its tests in jvmTest, and commonMain stays free of it. Why: SkillMatch.kt in commonMain forced a real iosX64 compile, which has no Compose runtime on the classpath and failed the build. (source: 0887402)
+- 2026-09-07: The project slugs and display data moved to the renamed brands (Doori, Gaddi, PaymentsLab-KMP, Candidai, Stutter). Why: the portfolio must match the rename sweep so links and slugs stay canonical. (source: 93d012b, bf9f7be)
