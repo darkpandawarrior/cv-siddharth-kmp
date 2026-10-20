@@ -876,18 +876,18 @@ val projectOrder =
     listOf("doori", "gaddi", "paymentslab-kmp", "candidai", "stutter", "kmp-family")
 
 /**
- * Pre-rename slugs that still have to resolve: a bookmarked `/project/mileway`, a shared
- * `#project/kursi` link, `open hiresignal` typed into the terminal from muscle memory. Every
+ * Pre-rename slugs that still have to resolve: a bookmarked `/project/mileway`, a shared // claim-audit:allow
+ * `#project/kursi` link, `open hiresignal` typed into the terminal from muscle memory. Every // claim-audit:allow
  * slug this app hands out itself is already canonical, so this is only ever consulted for
  * something that arrived from outside it.
  */
 private val legacySlugAliases =
     mapOf(
-        "mileway" to "doori",
-        "kursi" to "gaddi",
-        "paymentslab" to "paymentslab-kmp",
-        "hiresignal" to "candidai",
-        "deadlock" to "stutter",
+        "mileway" to "doori", // claim-audit:allow
+        "kursi" to "gaddi", // claim-audit:allow
+        "paymentslab" to "paymentslab-kmp", // claim-audit:allow
+        "hiresignal" to "candidai", // claim-audit:allow
+        "deadlock" to "stutter", // claim-audit:allow
     )
 
 private fun canonicalSlug(slug: String): String = legacySlugAliases[slug] ?: slug
