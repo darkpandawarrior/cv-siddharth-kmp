@@ -46,7 +46,7 @@ private var host: WeakReference<Activity>? = null
  * observable state, so installing after the first frame would compose the Print button away and
  * never bring it back.
  *
- * ponytail: a single global host, because this app has exactly one Activity. If it ever grows a
+ * a single global host, because this app has exactly one Activity. If it ever grows a
  * second one that shows the résumé, the upgrade path is a `LocalActivity`-style CompositionLocal
  * and a `printResume(host, html)` signature rather than a registry of Activities.
  */

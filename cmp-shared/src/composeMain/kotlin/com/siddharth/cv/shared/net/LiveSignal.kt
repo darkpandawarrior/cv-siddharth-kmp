@@ -54,7 +54,7 @@ internal val signalJson: Json =
  * (`ktor-client-js`). On jvm/android/ios that constructor throws, and it must throw where
  * [fetchSignal] can catch it rather than at class-init time.
  *
- * ponytail: this is the second such client in the module. Merging them is one line in ChatClient.kt
+ * this is the second such client in the module. Merging them is one line in ChatClient.kt
  * (`private val chatClient` becomes this), which is not this pass's file to edit.
  */
 @PublishedApi
@@ -164,7 +164,7 @@ fun SpotifyNow.nowOrLast(): SpotifyTrack? {
     return recent.firstOrNull { it.track.isNotBlank() }
 }
 
-// ponytail: one runnable check rather than a test module — the only logic here is the two
+// one runnable check rather than a test module — the only logic here is the two
 // reductions, and both have a way of going wrong that a compiler cannot see (a repo listed twice,
 // a placeholder track surfacing while Spotify is disconnected). Call from any target's main().
 internal fun liveSignalSelfCheck() {

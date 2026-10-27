@@ -877,7 +877,7 @@ private fun neighboursOf(id: String): List<String> =
     }
 
 /**
- * ponytail: U+2192 is in neither vendored font cut, and Skia paints a missing glyph as a tofu box
+ * U+2192 is in neither vendored font cut, and Skia paints a missing glyph as a tofu box
  * rather than falling back to a system face, so the one arrow in the corpus is spelled out. Same
  * rule as the star in ShippedScreen and the chevron ExpanderSection draws for itself.
  */
@@ -888,7 +888,7 @@ private fun plainText(text: String): String = text.replace("→", "to")
 // ---------------------------------------------------------------------------------------------
 
 /**
- * ponytail: one runnable check instead of a test module. The layout's own contract is
+ * one runnable check instead of a test module. The layout's own contract is
  * [storyMapLayoutSelfCheck]; this adds the screen's half, which is the classifier — the one place
  * where a wrong answer ships either a button that goes nowhere or a stated absence for a page that
  * exists.

@@ -1771,7 +1771,7 @@ private fun StringBuilder.ul(
 }
 
 // ---------------------------------------------------------------------------------------------
-// ponytail: one runnable check instead of a test module — same shape as navSelfCheck() in Nav.kt.
+// one runnable check instead of a test module — same shape as navSelfCheck() in Nav.kt.
 // It guards the three things that would fail silently in generated HTML: escaping, the clamp, and
 // the route -> file mapping (a wrong path here means a 404 that only shows up in production).
 // ---------------------------------------------------------------------------------------------
@@ -1795,7 +1795,7 @@ internal fun selfCheck() {
     // from nowhere, so wasm DCE deletes it and the checks silently never run — a check that never
     // runs is worse than no check, because it reads as coverage. `prerenderSite` is on the deploy
     // path, so wiring them here makes them a real gate.
-    // ponytail: move all four into a proper commonTest module the day this project has one.
+    // move all four into a proper commonTest module the day this project has one.
     navSelfCheck()
     floatingChatSelfCheck()
     mermaidParseSelfCheck()

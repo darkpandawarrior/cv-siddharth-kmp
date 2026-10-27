@@ -29,7 +29,7 @@ actual fun printResume(html: String) {
         runCatching { desktop.browse(file.toURI()) }.onSuccess { return }
     }
 
-    // ponytail: stdout is the whole fallback UI. It is reachable only on a desktop with no
+    // stdout is the whole fallback UI. It is reachable only on a desktop with no
     // browser handler at all; upgrade path is a Compose snackbar with a copyable path, which
     // needs a UI channel this function deliberately does not have.
     println("[cv] Could not open a browser. Résumé written to: ${file.absolutePath}")

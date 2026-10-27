@@ -41,7 +41,7 @@ find . \
   -type f \( -name '*.kt' -o -name '*.kts' -o -name '*.xml' -o -name '*.toml' -o -name '*.properties' -o -name '*.md' \) \
   -not -path './.git/*' -not -path '*/build/*' -not -path './scripts/customizer.sh' -print0 |
   while IFS= read -r -d '' f; do
-    # ponytail: `sed -i ''` is the BSD (macOS) form; on GNU/Linux use `sed -i`.
+    # `sed -i ''` is the BSD (macOS) form; on GNU/Linux use `sed -i`.
     sed -i '' -e "s|$OLD_PKG|$NEW_PKG|g" "$f" 2>/dev/null || sed -i -e "s|$OLD_PKG|$NEW_PKG|g" "$f"
   done
 

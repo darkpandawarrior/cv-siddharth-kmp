@@ -101,7 +101,7 @@ data class ProjectRole(
 )
 
 /**
- * ponytail: collapsed from the web shape — `deviceFrame`, `screens` and `liveUrl`
+ * collapsed from the web shape — `deviceFrame`, `screens` and `liveUrl`
  * are dropped because v1 ships no images. A target renders as a chip:
  * "Android · 6 screens". `platform` stays the display string ("Wear OS", "watchOS").
  */

@@ -95,7 +95,7 @@ import kotlinx.coroutines.launch
  * parser alone is a file — and none of them is what "does the chat stream on wasm" is asking. What
  * IS here is the whole streaming contract: the transcript, live tokens, the route-aware quick
  * prompts, and every failure the endpoint can hand back, said out loud.
- * ponytail: add the directive renderer first if this grows — it's the one that changes what the
+ * add the directive renderer first if this grows — it's the one that changes what the
  * model is *for*, and the terminal already proves the widget vocabulary ports.
  *
  * ONE ENTRY POINT: [FloatingChat] owns its own open/closed state, so the integrator overlays it and
@@ -743,7 +743,7 @@ private const val DirectiveBrackets = 4
  * Only whole-line directives are stripped. Inline `[[…]]` inside a sentence is left alone — it is
  * far more likely to be prose about the syntax than an instruction to the client.
  *
- * ponytail: when the widget renderer lands, this becomes the tokenizer that feeds it instead of a
+ * when the widget renderer lands, this becomes the tokenizer that feeds it instead of a
  * delete. Until then, dropping is strictly better than showing.
  */
 internal fun stripDirectives(text: String): String =
@@ -763,7 +763,7 @@ internal fun stripDirectives(text: String): String =
  *
  * The system prompt asks for those two and for bullet lists; bullets already render acceptably as
  * plain text lines, and headings/links/tables never appear. A real parser here would be a file.
- * ponytail: replace with a proper block parser the day the widget directives (`[[rooms]]`) port —
+ * replace with a proper block parser the day the widget directives (`[[rooms]]`) port —
  * they need one anyway, and doing it twice is the waste.
  */
 private fun chatMarkdown(
@@ -833,7 +833,7 @@ private fun SnapshotStateList<ChatMessage>.settle(index: Int) {
     if (current.text.isEmpty()) removeAt(index) else this[index] = current.copy(streaming = false)
 }
 
-// ponytail: one runnable check instead of a test module — the markdown scanner is the only branchy
+// one runnable check instead of a test module — the markdown scanner is the only branchy
 // pure function in this file, and every way it can break is "index arithmetic ate a character".
 internal fun floatingChatSelfCheck() {
     fun flat(s: String) = chatMarkdown(s, Color.Red).text

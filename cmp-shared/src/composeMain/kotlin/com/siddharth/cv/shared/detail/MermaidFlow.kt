@@ -229,7 +229,7 @@ private class FlowLayout(
 /**
  * Box size per node: the measured label plus padding, floored at [NODE_MIN_W].
  *
- * ponytail: a rhombus that truly circumscribes a tw x th box needs 2*tw by 2*th, which looks absurd
+ * a rhombus that truly circumscribes a tw x th box needs 2*tw by 2*th, which looks absurd
  * next to the boxes. 1.45/1.7 clips the very corners of a wide diamond label. No real diagram uses
  * `{}` yet; widen the factors if one ever does.
  */
@@ -594,7 +594,7 @@ internal fun packLabelRows(spans: List<Pair<Float, Float>>): List<Int> {
  * strictly increasing (`f'` has no real roots), so bisection inverts it — and `f(0.5) = 0.5`, which
  * is why a single-row band lands exactly where it always did.
  *
- * ponytail: 16 steps is ~1e-5 of a rank gap, far under a pixel. Closed form exists (it's a depressed
+ * 16 steps is ~1e-5 of a rank gap, far under a pixel. Closed form exists (it's a depressed
  * cubic); it is not more readable and this runs once per labelled edge at layout time.
  */
 private fun tForRankFraction(frac: Float): Float {
@@ -746,7 +746,7 @@ private fun DrawScope.drawArrowHead(
 // -------------------------------------------------------------------------------------------
 
 /**
- * ponytail: the rest of the layout needs a live TextMeasurer, so only the pure geometry can be
+ * the rest of the layout needs a live TextMeasurer, so only the pure geometry can be
  * checked without a Compose frame. That is also the part that was wrong. Called from
  * `mermaidLayoutSelfCheck()`, so it needs no extra wiring in `Prerender.kt`.
  */

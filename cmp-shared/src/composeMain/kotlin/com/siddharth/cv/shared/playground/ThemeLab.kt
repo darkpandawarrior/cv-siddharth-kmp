@@ -123,7 +123,7 @@ val themeLabSeeds: List<ThemeSeed> =
  * `projectColors()` lets them: `muted` in particular is a WCAG-AA-audited value and re-deriving it
  * per seed would quietly move a contrast floor. Same mechanism, same omissions.
  *
- * ponytail: multiplicative shading, not an HSL/Oklch round trip. It is monotone in luminance and
+ * multiplicative shading, not an HSL/Oklch round trip. It is monotone in luminance and
  * hue-preserving, which is all the ladder needs. Move to Oklch if a seed ever needs a perceptually
  * even ramp rather than a proportional one.
  */
@@ -525,7 +525,7 @@ private fun MetricColumn() {
 }
 
 // ---------------------------------------------------------------------------------------------
-// ponytail: one runnable check instead of a test module — same shape as navSelfCheck() in Nav.kt.
+// one runnable check instead of a test module — same shape as navSelfCheck() in Nav.kt.
 // Call it from selfCheck() in jvmMain/prerender/Prerender.kt; nothing in composeMain executes.
 //
 // It guards the two things a colour derivation fails at silently: a ladder that stops being a

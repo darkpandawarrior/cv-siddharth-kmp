@@ -713,7 +713,7 @@ private fun NextBuild(
 }
 
 /**
- * ponytail: the "→" is drawn, not typed. There is no system font on the wasm canvas and CvTheme
+ * the "→" is drawn, not typed. There is no system font on the wasm canvas and CvTheme
  * currently resolves to a fallback face, so an unvendored arrow glyph is a tofu risk — the same
  * reason ExpanderSection draws its chevron.
  */

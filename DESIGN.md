@@ -1,10 +1,9 @@
 # cv-siddharth-kmp DESIGN.md
 
-> Inherits: house design standard (AgentHarness skill `design-md`). This file wins on conflict.
 > Does NOT use the kmp-toolkit `designsystem` tokens: this app has its own theme, `CvTheme`, and
 > deliberately does not use `MaterialTheme.colorScheme`. The toolkit `DESIGN.md` does not apply to
 > screens here. The web twin (cv-siddharth, `src/index.css` `@theme`) is the upstream of these values.
-> Agents: read this before creating or changing UI. Values live in
+> Contributors: read this before creating or changing UI. Values live in
 > `cmp-shared/src/composeMain/kotlin/com/siddharth/cv/shared/theme/` (`CvTheme.kt`,
 > `CvComponents.kt`, `CvMotion.kt`).
 > Dial: ENERGY 5 / RHYTHM 5 / MOTION 6
@@ -111,7 +110,7 @@ for the primary CTA hover-in. Durations: fast 180, base 300, slow 600, reveal 60
 
 | Date | Change | Why | Source |
 |---|---|---|---|
-| 2026-10-09 | Initial version, distilled from the code token files and existing design docs | Establish design direction for agents | DESIGN.md rollout |
+| 2026-10-09 | Initial version, distilled from the code token files and existing design docs | Establish design direction for contributors | DESIGN.md rollout |
 
 ## Open questions
 
@@ -119,4 +118,4 @@ for the primary CTA hover-in. Durations: fast 180, base 300, slow 600, reveal 60
 
 ## Evolving this file
 
-Agents: when you change UI and find this file wrong or silent, fix it in the same change and add a Changelog row. Code token files win over this file; when they disagree, correct the doc. A user correction of a visual choice with a stated reason becomes a rule here immediately. Lessons that apply beyond this repo go to the LEARNINGS log of the `design-md` skill in AgentHarness.
+Contributors: when you change UI and find this file wrong or silent, fix it in the same change and add a Changelog row. Code token files win over this file; when they disagree, correct the doc. A user correction of a visual choice with a stated reason becomes a rule here immediately. Lessons that apply beyond this repo go to the LEARNINGS log of the `design-md` skill in AgentHarness.

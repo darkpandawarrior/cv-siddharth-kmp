@@ -189,7 +189,7 @@ private fun SectionSlot(
  * App.tsx `<Hero />`. Two columns above ~900dp (text | device), stacked below — the CSS
  * `lg:grid-cols-[1fr_280px]`.
  *
- * ponytail: the cycling `<Typewriter />` identity line is dropped. The device screen already
+ * the cycling `<Typewriter />` identity line is dropped. The device screen already
  * cross-fades every 3s, and two independent tickers in one hero read as noise rather than life.
  */
 @Composable

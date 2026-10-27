@@ -322,7 +322,7 @@ private class Parser(
         val value: StateValue =
             when (init) {
                 // The AST pins state numbers to Int; the TS keeps a double. `mutableStateOf(0.5)`
-                // therefore truncates here. ponytail: nothing in the subset animates a fractional
+                // therefore truncates here. nothing in the subset animates a fractional
                 // state var — widen StateValue if that ever stops being true.
                 is Expr.Num -> StateValue.IntValue(init.value.toInt())
                 is Expr.Bool -> StateValue.BoolValue(init.value)
@@ -1206,7 +1206,7 @@ private fun flattenNodes(nodes: List<Node>): List<Node> =
     }
 
 /**
- * ponytail: one runnable check instead of a test module — same shape as [themeLabSelfCheck]. This
+ * one runnable check instead of a test module — same shape as [themeLabSelfCheck]. This
  * is a hand-written parser sharing a contract with a TypeScript one, so the coverage is real:
  * tree shape, every [Action], both units, the interpolation split, the argument the reference
  * implementation throws away, forgiveness of garbage, and all seven presets end to end.

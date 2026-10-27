@@ -215,7 +215,7 @@ private fun fold(text: String): String =
  * An empty query matches everything with the same score, which keeps the caller's sort stable and so
  * shows the list in its declared order.
  *
- * ponytail: the subsequence walk is greedy-leftmost, so its span is not always the tightest possible
+ * the subsequence walk is greedy-leftmost, so its span is not always the tightest possible
  * one ("aa" in "a-aa"). Swap in a backwards second pass if a real query ever ranks visibly wrong;
  * with ~25 short labels it never has.
  */
@@ -527,7 +527,7 @@ private fun CommandRow(
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
 
-    // ponytail: no phantom-hover guard. The web version needs one because a stationary cursor over a
+    // no phantom-hover guard. The web version needs one because a stationary cursor over a
     // freshly-opened overlay fires a synthetic mouseenter; if that ever shows up here, gate this on a
     // first real pointer move the way CommandPalette.tsx does.
     LaunchedEffect(hovered) { if (hovered) onHover() }
@@ -593,7 +593,7 @@ private fun FooterRow(
 // ---------------------------------------------------------------------------------------------
 
 /**
- * ponytail: one runnable check instead of a test module. Everything asserted here is a property the
+ * one runnable check instead of a test module. Everything asserted here is a property the
  * UI cannot show is broken — a ranking regression looks like "the palette feels wrong", and a
  * duplicated id looks like a LazyColumn crash three screens away.
  */

@@ -84,7 +84,7 @@ val CvGutter: Dp = 24.dp
 
 /**
  * `--space-section-y: clamp(3.5rem, …, 6rem)`, taken at its midpoint.
- * ponytail: a fixed value, not a fluid-spacing helper — 16dp of drift at the extremes is not worth
+ * a fixed value, not a fluid-spacing helper — 16dp of drift at the extremes is not worth
  * a second viewport-reading API alongside [fluidSp].
  */
 val CvSectionGap: Dp = 72.dp
@@ -751,7 +751,7 @@ fun StatusDot(modifier: Modifier = Modifier) {
  * The native `<details>` equivalent — a clickable header whose chevron rotates 90° at --dur-fast,
  * with the body expanding underneath.
  *
- * ponytail: the chevron is drawn, not the "▸" glyph — there is no system font on the wasm canvas
+ * the chevron is drawn, not the "▸" glyph — there is no system font on the wasm canvas
  * and an unvendored glyph renders as tofu.
  */
 @Composable
