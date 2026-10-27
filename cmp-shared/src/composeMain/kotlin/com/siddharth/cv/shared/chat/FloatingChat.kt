@@ -724,7 +724,7 @@ private val HOME_PROMPTS =
         "How did you get GPS accuracy to 95%?",
         "Which project should I look at first?",
         "Tell me about the Compose migration",
-        "How did you cut crashes by 80%?",
+        "How did you cut crashes by 85%?",
         "What are you building in Kotlin Multiplatform?",
     )
 

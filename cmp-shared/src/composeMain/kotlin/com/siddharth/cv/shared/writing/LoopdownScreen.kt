@@ -347,7 +347,7 @@ private val SeriesProject: Map<String, NamedLink> =
     mapOf(
         "sensors-who-lie" to
             NamedLink("Built in: Doori's location engine", "#project/doori"),
-        "the-coroutine-court" to NamedLink("From: the -80% crashes work", "#work"),
+        "the-coroutine-court" to NamedLink("From: the -85% crashes work", "#work"),
         "the-night-shift" to NamedLink("From: the 50%→95% GPS work", "#work"),
         "ghosts-in-the-recomposition" to NamedLink("From: the ~87% Compose migration", "#work"),
         "one-brain-two-bodies" to

@@ -212,7 +212,7 @@ val SKILLS: List<Skill> =
         Skill(
             "Crash & analytics tooling",
             Depth.Deep,
-            "Crashlytics + Sentry + Mixpanel; drove an 80% crash reduction",
+            "Crashlytics + Sentry + Mixpanel; drove an 85% crash reduction",
             listOf(
                 "crashlytics",
                 "sentry",
@@ -267,7 +267,7 @@ val SKILLS: List<Skill> =
             "Performance engineering",
             Depth.Working,
             "Compose compiler metrics run during the migration push, recomposition/stability work; " +
-                "80% crash reduction at 50k MAU",
+                "85% crash reduction at 50k MAU",
             listOf(
                 "performance",
                 "optimization",

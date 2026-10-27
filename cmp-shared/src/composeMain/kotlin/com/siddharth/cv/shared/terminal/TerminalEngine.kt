@@ -347,7 +347,7 @@ object TerminalEngine {
         t.cmd("hire", "the recruiter pitch") {
             out(
                 head("Senior Android engineer · platform owner at 50k+ MAU"),
-                TermLine("GPS 50% -> 95% · crashes -80% · ~87% of UI-layer code in Compose across ~964k LOC."),
+                TermLine("GPS 50% -> 95% · crashes -85% · ~87% of UI-layer code in Compose across ~964k LOC."),
                 dim(profile.availability),
                 dim(""),
                 hi("mailto:${profile.email}"),
@@ -445,7 +445,7 @@ object TerminalEngine {
         }
 
         t.cmd("matrix", "", hidden = true) {
-            out(hi("Wake up, Neo… the crashes are down 80%. There is no spoon, only structured concurrency."))
+            out(hi("Wake up, Neo… the crashes are down 85%. There is no spoon, only structured concurrency."))
         }
 
         t.cmd("coffee", "", hidden = true) {
