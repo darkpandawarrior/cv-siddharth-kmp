@@ -514,7 +514,7 @@ object TerminalEngine {
 }
 
 /**
- * ponytail: the whole test suite. No framework — call it from a scratch main() or a test target.
+ * the whole test suite. No framework — call it from a scratch main() or a test target.
  * Covers the four things that actually break: slug validation (both directions), completion, and
  * the clear signal.
  */

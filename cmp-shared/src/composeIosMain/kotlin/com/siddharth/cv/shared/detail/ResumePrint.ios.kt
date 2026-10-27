@@ -31,7 +31,7 @@ actual fun printResume(html: String) {
         }
     controller.printFormatter = UIMarkupTextPrintFormatter(markupText = html)
 
-    // ponytail: `presentAnimated` presents from the key window and needs no view controller,
+    // `presentAnimated` presents from the key window and needs no view controller,
     // which is why this file has no handle on one. Apple's guidance for iPad is
     // `presentFromRect`/`presentFromBarButtonItem` for a popover anchor; upgrade path if the
     // sheet ever looks unanchored on iPad is to pass the button's frame down from Compose via

@@ -63,7 +63,7 @@ import kotlin.random.Random
  * of lines, cubics and ovals — and then walked with [PathMeasure] exactly as it would have been
  * walked had the outline come from a font. The letterforms are geometric rather than Space Grotesk,
  * which reads as deliberate at this size, and the whole mark is resolution-independent and testable.
- * ponytail: if CMP ever implements real glyph outlines on skiko, swap [wordmarkStrokes] for one
+ * if CMP ever implements real glyph outlines on skiko, swap [wordmarkStrokes] for one
  * `getPathForRange` call and delete the glyph table — nothing else in this file changes.
  */
 
@@ -602,7 +602,7 @@ fun ParticleForge(modifier: Modifier = Modifier) {
     val tick = remember { mutableFloatStateOf(0f) }
     // Reused across frames — three batched drawPoints calls beat a few thousand drawCircles, and
     // clear() keeps the backing capacity so only the Offsets themselves are re-boxed.
-    // ponytail: a FloatArray-based points API would remove even those, but the only one is
+    // a FloatArray-based points API would remove even those, but the only one is
     // platform-specific (nativeCanvas), which this source set cannot see.
     val batches = remember { List(3) { ArrayList<Offset>(1024) } }
 
@@ -736,7 +736,7 @@ private suspend fun PointerInputScope.trackForgePointer(pointer: ForgePointer) {
 // ---------------------------------------------------------------------------------------------
 
 /**
- * ponytail: one runnable check instead of a test module, same shape as `labsSelfCheck`. Must be
+ * one runnable check instead of a test module, same shape as `labsSelfCheck`. Must be
  * called from `selfCheck()` in jvmMain's Prerender.kt — nothing under composeMain executes on its
  * own, so a check that isn't wired there reads as coverage it isn't.
  *

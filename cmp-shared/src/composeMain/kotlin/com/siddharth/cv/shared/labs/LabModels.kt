@@ -852,7 +852,7 @@ private const val PixelsPerReadoutUnit = 1000f
  * which is the property the zero-tolerance gate is checking. [replay] therefore reproduces exactly,
  * and [driftFrom] is the number the gate rejects on.
  *
- * ponytail: the path is recomputed per draw rather than cached against canvas size. It is 160
+ * the path is recomputed per draw rather than cached against canvas size. It is 160
  * multiply-adds; a cache invalidated on resize would be more code than the work it saves.
  */
 internal class ReplayLog(
@@ -982,7 +982,7 @@ internal fun pctOf(fraction: Double): String = "${oneDecimal(fraction * 100)}%"
 // -------------------------------------------------------------------------------------------
 
 /**
- * ponytail: one runnable check instead of a test module, matching `navSelfCheck` /
+ * one runnable check instead of a test module, matching `navSelfCheck` /
  * `mermaidParseSelfCheck`. Must be called from `selfCheck()` in jvmMain's Prerender.kt — nothing
  * under composeMain executes on its own, and a check that never runs reads as coverage it isn't.
  *

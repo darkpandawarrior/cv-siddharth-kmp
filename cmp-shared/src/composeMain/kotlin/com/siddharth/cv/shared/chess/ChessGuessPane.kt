@@ -105,7 +105,7 @@ internal fun fenPieces(fen: String): List<Char?> {
 internal fun sideToMove(fen: String): String = if (fen.split(" ").getOrNull(1) == "b") "Black" else "White"
 
 /**
- * ponytail: a fixed coprime stride instead of the web's `Math.random` step. The twin prerenders to
+ * a fixed coprime stride instead of the web's `Math.random` step. The twin prerenders to
  * static HTML, and a random first position would churn that output on every build for no reader's
  * benefit. A stride coprime with the corpus size still visits every position before repeating, and
  * the walk down from 7 always terminates because 1 is coprime with everything.
@@ -299,7 +299,7 @@ internal fun chessBoardPaneCost(): String =
 // Self-check
 // -------------------------------------------------------------------------------------------
 
-/** ponytail: one runnable check, called from [chessScreenSelfCheck]. */
+/** one runnable check, called from [chessScreenSelfCheck]. */
 // MagicNumber: assertion fixtures. detekt excludes every test source set from this rule by
 // default; these are tests that live in main source only because composeMain is `internal`
 // and this project has no commonTest. SelfCheckTest.kt now runs them from `check`.

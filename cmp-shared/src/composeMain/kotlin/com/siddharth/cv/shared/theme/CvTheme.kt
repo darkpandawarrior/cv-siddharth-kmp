@@ -197,7 +197,7 @@ private fun rememberDisplayFamily(): FontFamily =
         Font(Res.font.space_grotesk_semibold, FontWeight.SemiBold),
         Font(Res.font.space_grotesk_bold, FontWeight.Bold),
         // No Black cut is vendored; ghostNumeral asks for W900 and Skia synthesises it from Bold.
-        // ponytail: add space_grotesk_black.ttf if the synthesised weight ever reads wrong.
+        // add space_grotesk_black.ttf if the synthesised weight ever reads wrong.
         Font(Res.font.space_grotesk_bold, FontWeight.Black),
     )
 

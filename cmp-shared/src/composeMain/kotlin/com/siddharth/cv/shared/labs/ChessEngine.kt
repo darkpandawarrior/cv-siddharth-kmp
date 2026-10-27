@@ -588,7 +588,7 @@ internal class ChessSearchResult(
     /**
      * Coordinate notation ("e2a6"), not SAN.
      *
-     * ponytail: SAN needs check and mate suffixes plus full from-square disambiguation, which is a
+     * SAN needs check and mate suffixes plus full from-square disambiguation, which is a
      * second pass over the move list for every move named. The lab names exactly one move, and a
      * reader who can follow a search tree can read `e2a6`. Documented rather than half-built.
      */
@@ -620,7 +620,7 @@ private class SearchContext(
  * Captures first, promotions next. Ordering never changes which move is chosen — it only changes how
  * much alpha-beta can prune, which is why the cheapest useful ordering is the right one.
  *
- * ponytail: no MVV-LVA, no killer moves, no transposition table. Measured node counts run from a
+ * no MVV-LVA, no killer moves, no transposition table. Measured node counts run from a
  * couple of hundred at two ply to about twelve thousand at four; nothing is waiting on this.
  */
 private fun rankMove(
@@ -920,7 +920,7 @@ private const val CHECK_HEIGHT = 340f
 private const val PRUNING_FACTOR = 100
 
 /**
- * ponytail: one runnable check instead of a test module, called from [labsSelfCheck].
+ * one runnable check instead of a test module, called from [labsSelfCheck].
  *
  * Perft is not a smoke test, it is an oracle: these totals are published for all three positions and
  * every one of them is wrong by a specific amount if a specific rule is wrong. Nothing else in this

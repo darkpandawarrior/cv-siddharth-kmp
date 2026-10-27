@@ -786,7 +786,7 @@ fun ExploreSection(modifier: Modifier = Modifier) {
 // Contact (#contact)
 // ---------------------------------------------------------------------------------------------
 
-// ponytail: LocalClipboardManager, not LocalClipboard. `Clipboard.setClipEntry` needs a ClipEntry,
+// LocalClipboardManager, not LocalClipboard. `Clipboard.setClipEntry` needs a ClipEntry,
 // and there is no way to build one from a String in commonMain — every actual takes a platform type.
 // `setText(AnnotatedString)` is the only common text-write path, so the deprecation is suppressed
 // rather than worked around. Revisit when commonMain grows a String -> ClipEntry factory.

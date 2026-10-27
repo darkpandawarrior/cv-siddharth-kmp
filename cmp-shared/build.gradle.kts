@@ -55,7 +55,7 @@ kotlin {
     // iosArm64/iosSimulatorArm64 get the Compose UI (below); iosX64 is kept as a bare
     // Kotlin/Native target only — Compose Multiplatform 1.12.0-beta02 publishes no iosX64
     // artifacts (org.jetbrains.compose.{runtime,foundation,ui}), so App() can't run there.
-    // ponytail: scaffold-only until Compose ships iosX64, or drop it if Intel sim support
+    // scaffold-only until Compose ships iosX64, or drop it if Intel sim support
     // isn't actually needed.
     // No binaries.framework here: :cmp-ios is the umbrella that owns ComposeApp.framework and
     // export()s this module into it (mirrors Gaddi). Declaring a second framework with the same
@@ -174,7 +174,7 @@ kotlin {
 // Classpath is `jvmJar` + the `jvmRuntimeClasspath` configuration rather than the KotlinCompilation
 // object: both are stable public Gradle handles, and `files(TaskProvider)` carries the build
 // dependency, so no explicit dependsOn on the compile is needed.
-// ponytail: the origin defaults to the Vercel URL baked into Prerender.kt. Pass -Pprerender.origin
+// the origin defaults to the Vercel URL baked into Prerender.kt. Pass -Pprerender.origin
 // (or CV_SITE_ORIGIN) when deploying anywhere else — a wrong <link rel="canonical"> is worse than
 // none, so make this a required property the day this is deployed from CI.
 tasks.register<JavaExec>("prerenderSite") {
@@ -198,7 +198,7 @@ tasks.register<JavaExec>("prerenderSite") {
 // fails those targets with "Unresolved reference 'org'". Re-point the generated sources at
 // composeMain (which owns the resources dependency) and strip the orphaned per-target actuals
 // from the non-Compose targets.
-// ponytail: this exists only to keep the UI-less scaffold targets alive. Delete the block and
+// this exists only to keep the UI-less scaffold targets alive. Delete the block and
 // the targets together if watchOS/iosX64 are ever dropped.
 afterEvaluate {
     val nonComposeTargets =

@@ -601,7 +601,7 @@ private val MakingDanger: Color = cvColor("#ff5c5c")
  */
 private const val SINGLE_DIGIT_CENTS = 4.05
 
-// ponytail: one runnable check instead of a test module. money() is the only arithmetic on this
+// one runnable check instead of a test module. money() is the only arithmetic on this
 // page and it prints the figures the whole surface is arguing about. Driven off `spend` rather than
 // off copies of its numbers, so a regenerated corpus moves the check with it. Call it from any
 // target's main() while poking at the screen.

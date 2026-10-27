@@ -175,7 +175,7 @@ private val ThematicBreak = Regex("""^(-{3,}|\*{3,}|_{3,})$""")
 // ---------------------------------------------------------------------------------------------
 
 /**
- * ponytail: one runnable check instead of a test module, the same shape `navSelfCheck` and
+ * one runnable check instead of a test module, the same shape `navSelfCheck` and
  * `mermaidParseSelfCheck` already have. Must be called from `selfCheck()` in jvmMain's
  * Prerender.kt: nothing here runs it, and that file belongs to the spine.
  *

@@ -57,7 +57,7 @@ import kotlinx.coroutines.launch
  * analyzer as one of the things that didn't come across for exactly that reason). Building that
  * whole subsystem to carry one directive kind would be the wrong trade for what this screen needs,
  * so it owns its own request, its own directive parse ([parseJdFitDirective]) and its own card.
- * ponytail: if a widget renderer for `[[rooms]]` ever lands in the chat panel, folding this in
+ * if a widget renderer for `[[rooms]]` ever lands in the chat panel, folding this in
  * becomes cheap — not before.
  *
  * SAME OFFLINE-FIRST CONTRACT as the web build: [matchJd] renders a real scorecard in the same

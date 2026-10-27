@@ -137,7 +137,7 @@ private const val HALF: Double = 0.5
 /**
  * Runs the graph to a standstill and returns every frame of it.
  *
- * ponytail: all-pairs repulsion, O(n^2) per iteration. The constellation is thirteen nodes, so a
+ * all-pairs repulsion, O(n^2) per iteration. The constellation is thirteen nodes, so a
  * Barnes-Hut quadtree would be more code than this whole file buys back. Upgrade path if it ever
  * passes a few hundred nodes; there is no other reason to.
  *
@@ -381,7 +381,7 @@ private const val CONVERGENCE_FLOOR: Double = 0.002
 private const val MINIMUM_TRAVEL: Double = 0.05
 
 /**
- * ponytail: one runnable check instead of a test module, in the same shape as `navSelfCheck` and
+ * one runnable check instead of a test module, in the same shape as `navSelfCheck` and
  * `forgeSelfCheck`. Wire it into `selfCheck()` in jvmMain's Prerender.kt — nothing calls it
  * otherwise, and the four properties below are the entire contract the screen leans on.
  */

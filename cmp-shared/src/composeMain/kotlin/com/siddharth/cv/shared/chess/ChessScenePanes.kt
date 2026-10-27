@@ -404,7 +404,7 @@ internal fun GraveyardPane() {
         )
         Spacer(Modifier.height(10.dp))
         FlowRow(
-            // ponytail: no contentDescription here. The ranked list IS the text alternative the
+            // no contentDescription here. The ranked list IS the text alternative the
             // scene needed, so a summary on the container would only make a screen reader say it
             // twice. The arc's canvas gets one because a canvas has no text at all.
             modifier = Modifier.fillMaxWidth(),
@@ -680,7 +680,7 @@ internal fun ChessTogglePill(
 // -------------------------------------------------------------------------------------------
 
 /**
- * ponytail: one runnable check, called from [chessScreenSelfCheck]. It guards the four things here
+ * one runnable check, called from [chessScreenSelfCheck]. It guards the four things here
  * that are derivation rather than layout, every one of which fails quietly: a band whose own scale
  * has collapsed to a point, a square index that no longer maps a1 to h8, a swing ranking that
  * quietly quotes a thin platform-year, and a run sentence spliced across the handoff.

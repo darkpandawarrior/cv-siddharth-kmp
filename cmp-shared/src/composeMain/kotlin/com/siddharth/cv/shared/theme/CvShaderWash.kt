@@ -127,7 +127,7 @@ fun ShaderWash(modifier: Modifier = Modifier) {
         }
         // Gradient fallback — the same two blooms over the same ground, minus the noise. It is the
         // shader's silhouette, so a device that loses the shader loses texture, not identity.
-        // ponytail: the fallback reads cvColors while the shader hard-codes the site palette, so a
+        // the fallback reads cvColors while the shader hard-codes the site palette, so a
         // project-themed subtree would tint only here. runtimeShaderBrush's contract is exactly two
         // uniforms, so colours cannot be passed in — widen that contract if per-project ambient
         // tinting ever ships.

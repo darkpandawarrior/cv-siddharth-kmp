@@ -77,7 +77,7 @@ fun List<ChatMessage>.toWire(): List<AiMessage> =
             AiMessage(role = role, content = content)
         }
 
-// ponytail: one runnable check rather than a test module — the trimming is the only logic here,
+// one runnable check rather than a test module — the trimming is the only logic here,
 // and the two ways it has historically broken are "sent the whole session" and "replayed a long
 // assistant turn verbatim". Call from any target's main() while poking at chat.
 internal fun chatModelsSelfCheck() {

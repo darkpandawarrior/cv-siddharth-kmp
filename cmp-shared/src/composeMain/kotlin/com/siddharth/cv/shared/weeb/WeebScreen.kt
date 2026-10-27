@@ -440,7 +440,7 @@ private fun ScoreLadder() {
 private const val StarInnerRatio = 0.45f
 
 /**
- * ponytail: the stars are drawn, not typed. Neither vendored face carries U+2605, and an
+ * the stars are drawn, not typed. Neither vendored face carries U+2605, and an
  * unvendored glyph is tofu on the wasm canvas, the same reason ExpanderSection draws its chevron.
  */
 @Composable

@@ -31,7 +31,7 @@ import kotlin.math.roundToInt
  * kind. So `FitCheckScreen` (composeMain/fit) owns its own request/response cycle end to end
  * rather than routing through the chat transcript, and this is the one-directive parser that
  * decision needs.
- * ponytail: if a second directive kind ever needs parsing, promote this to the general brace-
+ * if a second directive kind ever needs parsing, promote this to the general brace-
  * counting scanner `chatBlocks.ts` has (endOfJson over any `[[name:{…}]]`) — not before.
  */
 

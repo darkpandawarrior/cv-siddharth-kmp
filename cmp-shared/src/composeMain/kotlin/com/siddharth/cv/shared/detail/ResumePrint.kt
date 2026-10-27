@@ -231,7 +231,7 @@ private fun String.esc(): String = replace("&", "&amp;").replace("<", "&lt;").re
  * Physical units (pt/mm) throughout, because this document exists only to be paginated — `px`
  * would make the type size depend on the browser's print DPI guess.
  *
- * ponytail: a system font stack, not the site's display face. Embedding a webfont as a base64
+ * a system font stack, not the site's display face. Embedding a webfont as a base64
  * data URI would cost ~80 KB in the wasm binary and buy a nicer `h1`; upgrade path is
  * Res.font + a data-URI @font-face if the typography ever matters more than the payload.
  */

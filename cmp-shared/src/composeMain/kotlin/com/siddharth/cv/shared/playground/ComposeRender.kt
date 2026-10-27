@@ -230,9 +230,9 @@ private fun RenderUnknown(name: String) {
  * because Compose modifier order is semantic and reordering would change the result.
  *
  * Unknown entries are skipped silently, matching the interpreter's contract. Anything listed in the
- * `ponytail:` note below parses but does not render.
+ * `` note below parses but does not render.
  *
- * ponytail: not mapped — border, shadow/elevation, alpha, rotate, scale, offset, weight (weight
+ * not mapped — border, shadow/elevation, alpha, rotate, scale, offset, weight (weight
  * needs a RowScope/ColumnScope receiver, so it cannot live in a scope-free helper like this one).
  * Add the scoped ones as a separate scope-aware pass if a preset ever needs them.
  */

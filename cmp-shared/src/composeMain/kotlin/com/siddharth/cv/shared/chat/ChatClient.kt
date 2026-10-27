@@ -76,7 +76,7 @@ private const val CUTOFF_DETAIL_PREFIX = "Stream closed before the completion si
  * [AiChunk.Failed.retryAfterSeconds] isn't folded in here — it's carried on [ChatUnavailable]
  * itself instead, for a caller that wants to render a countdown rather than a sentence.
  *
- * // ponytail: the old client also gave 400/413 a curated "too long" translation instead of the
+ * // the old client also gave 400/413 a curated "too long" translation instead of the
  * // server's raw schema text, keyed off the actual status code. HttpChatProvider only ever hands
  * // back the coarse Network bucket now, with no status code to key that distinction on, so a
  * // 400's detail renders as-is here — still better than the old code's generic fallback, but not

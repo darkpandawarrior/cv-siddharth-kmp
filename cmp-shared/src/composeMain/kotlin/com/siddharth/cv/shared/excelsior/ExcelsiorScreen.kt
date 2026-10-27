@@ -530,7 +530,7 @@ private fun kindTintOf(
 // ---------------------------------------------------------------------------------------------
 
 /**
- * ponytail: one runnable check instead of a test module, the same shape `navSelfCheck` and
+ * one runnable check instead of a test module, the same shape `navSelfCheck` and
  * `canonSelfCheck` already have. Must be called from `selfCheck()` in jvmMain's Prerender.kt:
  * nothing here runs it, and that file belongs to the spine.
  *

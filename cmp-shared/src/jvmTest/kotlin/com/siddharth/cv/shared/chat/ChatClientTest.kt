@@ -152,7 +152,7 @@ class ChatClientTest {
             assertEquals("origin not allowed", error.message)
             // HttpChatProvider classifies into an AiFailure bucket, not a raw status code — status
             // stays null through this path; that part of the old client's fidelity isn't restorable
-            // without HttpChatProvider itself exposing the status (see ChatClient.kt's ponytail note).
+            // without HttpChatProvider itself exposing the status (see ChatClient.kt's shortcut note).
             assertEquals(null, error.status)
         }
 
@@ -183,7 +183,7 @@ class ChatClientTest {
             // Same bucket as before (AiFailure.Network). The server's own text now flows into the
             // message again (llm-chat#54's AiChunk.Failed.detail) — the one thing NOT restored is the
             // old curated "too long" translation for 400/413 specifically, which needed the raw status
-            // code HttpChatProvider still doesn't expose (see ChatClient.kt's ponytail note).
+            // code HttpChatProvider still doesn't expose (see ChatClient.kt's shortcut note).
             val error =
                 assertFailsWithChatUnavailable {
                     streamReply(

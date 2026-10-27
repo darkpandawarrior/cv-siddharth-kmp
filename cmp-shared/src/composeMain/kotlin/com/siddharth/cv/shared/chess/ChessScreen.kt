@@ -1284,7 +1284,7 @@ internal fun Cell(
 // -------------------------------------------------------------------------------------------
 
 /**
- * ponytail: one runnable check instead of a test module, the same shape `navSelfCheck` and
+ * one runnable check instead of a test module, the same shape `navSelfCheck` and
  * `labScreenSelfCheck` already have. Must be called from `selfCheck()` in jvmMain's Prerender.kt:
  * nothing under composeMain runs on its own, and that file belongs to the spine.
  *

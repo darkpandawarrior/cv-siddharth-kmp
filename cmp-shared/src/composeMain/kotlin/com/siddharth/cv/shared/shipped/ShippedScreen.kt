@@ -749,7 +749,7 @@ private fun HowIKnow() {
 private fun ShelfFootnote() {
     Column(Modifier.pageMeasure().padding(top = 40.dp, bottom = 120.dp)) {
         Row(verticalAlignment = Alignment.Top) {
-            // ponytail: the marker is the drawn dot, not a typed bullet. Same missing-glyph reason
+            // the marker is the drawn dot, not a typed bullet. Same missing-glyph reason
             // as the star above, and the same reason ExpanderSection draws its own chevron.
             Box(Modifier.padding(top = 5.dp)) { SetUpDot() }
             Spacer(Modifier.width(10.dp))
@@ -808,7 +808,7 @@ private fun shortDate(d: String): String? {
  */
 private fun oneDecimal(v: Double): String = tenthsToString(round(v * TenthsPerUnit).toInt())
 
-// ponytail: one runnable check instead of a test module. Every one of these formatters has a branch
+// one runnable check instead of a test module. Every one of these formatters has a branch
 // or a parse in it, and all three are the kind of thing that looks right and prints wrong.
 @Suppress("MagicNumber")
 internal fun shippedFormatSelfCheck() {

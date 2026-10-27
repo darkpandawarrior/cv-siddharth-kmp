@@ -743,7 +743,7 @@ private fun CrashInstrument(
  * Doori's 46 modules as a radial graph — the one instrument with no clock at all, because the
  * React original has none either (`ModuleGraphLab.tsx` is static SVG plus a toggle).
  *
- * ponytail: the original's hover/pin highlighting is dropped. On a canvas it would be pointer-only
+ * the original's hover/pin highlighting is dropped. On a canvas it would be pointer-only
  * — invisible to a keyboard, which the SVG version at least handled with focusable groups — and the
  * claim being made here is entirely in the toggle: 0 cross-feature edges versus 78.
  */
@@ -931,7 +931,7 @@ private fun SearchTreeInstrument(
                 drawCircle(gold, radius = 4f, center = Offset(tree.nodes[0].x, tree.nodes[0].y))
 
                 if (!finished) {
-                    // ponytail: the growing edge stands in for the React lab's frontier list, which
+                    // the growing edge stands in for the React lab's frontier list, which
                     // the closed-form engine doesn't keep. The newest nodes *are* where it is
                     // expanding, so the read is the same without exposing search internals.
                     for (i in maxOf(1, revealed - 12) until revealed) {
@@ -1198,7 +1198,7 @@ private fun FanoutInstrument(
  * already landed, and pretending otherwise would misrepresent what an abstraction does. It reads as
  * "re-run checkout from here".
  *
- * ponytail: the React lab bins arrivals into four category columns (native-SDK, hosted-webview,
+ * the React lab bins arrivals into four category columns (native-SDK, hosted-webview,
  * mobile-money, catalog-only) sized by each category's real share. Those four counts live in
  * `data/projectStats.ts`, which the Kotlin generator does not emit, so this draws one shelf of every
  * cataloged gateway instead. The lost texture is real and it is named here rather than faked with
@@ -1286,7 +1286,7 @@ private fun GatewayInstrument(
                         strokeWidth = 1.4f,
                     )
                 }
-                // ponytail: "which gateway was last hit" is not closed-form, so the last 40 arrivals
+                // "which gateway was last hit" is not closed-form, so the last 40 arrivals
                 // are replayed instead. That window is exactly what a fade would have shown anyway.
                 for (i in maxOf(0, landed - GatewayFeed.GlowWindow) until landed) {
                     val age = t - (feed.spawnSeconds(i) + GatewayFeed.FallSeconds)
@@ -1779,7 +1779,7 @@ private fun ClockBurnInstrument(experiment: LabExperiment) {
 // ---------------------------------------------------------------------------------------------
 
 /**
- * ponytail: one runnable check instead of a test module, wired into `selfCheck()` in jvmMain's
+ * one runnable check instead of a test module, wired into `selfCheck()` in jvmMain's
  * Prerender.kt beside [labsSelfCheck]. Covers the three things in this file that are logic rather
  * than paint: the ambient-tap sequence, the data-driven accents, and the two "the frozen frame
  * lands somewhere worth looking at" claims that the drawing code relies on.

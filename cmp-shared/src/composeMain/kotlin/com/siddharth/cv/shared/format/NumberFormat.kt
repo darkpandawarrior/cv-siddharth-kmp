@@ -14,7 +14,7 @@ import kotlin.math.abs
 /**
  * `Number.prototype.toLocaleString()`, minus the locale.
  *
- * ponytail: no negatives in this corpus, so no sign handling. Add it the day a figure can go below
+ * no negatives in this corpus, so no sign handling. Add it the day a figure can go below
  * zero — the reversal trick would put the minus at the wrong end.
  */
 internal fun Int.grouped(): String =

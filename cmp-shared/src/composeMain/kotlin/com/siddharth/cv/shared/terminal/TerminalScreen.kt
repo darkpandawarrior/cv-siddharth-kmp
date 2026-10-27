@@ -150,7 +150,7 @@ fun TerminalScreen(modifier: Modifier = Modifier) {
     LaunchedEffect(Unit) { if (!compact) focus.requestFocus() }
     LaunchedEffect(lines.size) { listState.scrollToItem((lines.size - 1).coerceAtLeast(0)) }
 
-    // ponytail: 3-px repeating gradient instead of a per-scanline draw loop, and NO BlendMode.Screen
+    // 3-px repeating gradient instead of a per-scanline draw loop, and NO BlendMode.Screen
     // — the blend forces an offscreen layer on Skia/WebGL for a difference you cannot see at 2%
     // alpha. Swap the two-line brush below if the screen ever needs to actually brighten content.
     val scanlines =

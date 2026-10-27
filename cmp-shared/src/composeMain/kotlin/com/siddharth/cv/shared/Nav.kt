@@ -404,7 +404,7 @@ fun routeFromPath(path: String): Route = routeOrNull(path) ?: Route.Home
 val LocalNav: ProvidableCompositionLocal<CvNavState> =
     staticCompositionLocalOf { error("CvNavState not provided — the tree must be inside App()") }
 
-// ponytail: one runnable check instead of a test module — the two non-obvious behaviours are
+// one runnable check instead of a test module — the two non-obvious behaviours are
 // "home is a floor, not a second entry" and "goSection pops back to home". Call from any target's
 // main() while poking at nav.
 // LongMethod: a self-check is a list of assertions, and splitting it into four functions to satisfy

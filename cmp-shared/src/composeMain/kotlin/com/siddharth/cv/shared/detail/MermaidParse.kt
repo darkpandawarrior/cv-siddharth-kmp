@@ -220,7 +220,7 @@ private fun FlowGraph.longestPathRanks(forward: Array<MutableList<Int>>): IntArr
  *   The output is never worse than the input — and on all thirteen shipped diagrams it is the
  *   brute-forced minimum, which [mermaidLayoutSelfCheck] proves rather than assumes.
  *
- * ponytail: no dummy nodes for rank-skipping edges, so a rank-0 → rank-2 edge votes in neither
+ * no dummy nodes for rank-skipping edges, so a rank-0 → rank-2 edge votes in neither
  * band and doesn't count as crossing the rank-1 band it flies over. Real diagrams are 3-7 nodes
  * wide; add the dummy chain if one ever grows enough for that flyover to read as a crossing.
  */
@@ -532,7 +532,7 @@ private fun normalizeLabel(raw: String): String =
 // -------------------------------------------------------------------------------------------
 
 /**
- * ponytail: one runnable check instead of a test module, in the same spirit as `navSelfCheck()`.
+ * one runnable check instead of a test module, in the same spirit as `navSelfCheck()`.
  * The inputs are copied verbatim from CvProjectData.kt, because the only thing this parser has to
  * be right about is the strings the site actually ships.
  */

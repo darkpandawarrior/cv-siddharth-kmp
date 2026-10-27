@@ -29,7 +29,7 @@ actual val resumePrintSupported: Boolean = true
  * blank page. Handling both is two lines; guessing is a bug that only reproduces on one
  * browser.
  *
- * ponytail: the iframe is torn down on a 1s timer. `print()` blocks in Chrome and Firefox but
+ * the iframe is torn down on a 1s timer. `print()` blocks in Chrome and Firefox but
  * not in Safari, so removing it immediately cancels the Safari print; `onafterprint` would be
  * exact but does not fire consistently on a same-origin child frame. Upgrade path if a slow
  * machine ever loses the dialog: listen for `afterprint` on the child window and keep the
