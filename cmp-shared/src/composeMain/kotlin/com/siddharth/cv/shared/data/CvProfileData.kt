@@ -29,7 +29,7 @@ val profile =
         // recruiter can act on. profile.ts carries the same decision and the same reasoning.
         availability = "Open to remote (worldwide / India) and hybrid in Pune / Bengaluru",
         intro = """5+ years building production Android. I own the platform behind a ~964k-LOC financial SaaS app serving 50,000+ monthly users. I joined it with zero Kotlin in the codebase. ~87% of the UI layer is Compose today. Location accuracy, crash-free sessions, architecture a team can move fast in.""",
-        summary = """Senior Android Engineer, 5+ years in Kotlin. Technical owner and Product Owner of a ~964k-LOC, 50,000+ MAU financial SaaS app, inherited as Java with no Kotlin in it and now ~87% Jetpack Compose across the UI layer. Clean Architecture with MVVM/MVI, Coroutines and Flow, Hilt, Room. Hard-systems depth where it counts: staged dead-reckoning location with Kalman smoothing (GPS accuracy 50% to 95%), VAPT-grade on-device security (Android Keystore, SSL pinning), and an 80% production crash reduction at 22,000+ DAU won on the concurrency model, not defensive catches.""",
+        summary = """Senior Android Engineer, 5+ years in Kotlin. Technical owner and Product Owner of a ~964k-LOC, 50,000+ MAU financial SaaS app, inherited as Java with no Kotlin in it and now ~87% Jetpack Compose across the UI layer. Clean Architecture with MVVM/MVI, Coroutines and Flow, Hilt, Room. Hard-systems depth where it counts: staged dead-reckoning location with Kalman smoothing (GPS accuracy 50% to 95%), VAPT-grade on-device security (Android Keystore, SSL pinning), and an 85% production crash reduction at 22,000+ DAU won on the concurrency model, not defensive catches.""",
     )
 
 val education =
@@ -43,7 +43,7 @@ val metrics =
     listOf(
         Metric("50k+", "monthly active users", "22k+ daily, platform owner at Dice.tech"),
         Metric("95%", "GPS accuracy", "up from 50%, by predictive dead reckoning"),
-        Metric("80%", "crash reduction", "Crashlytics + structured concurrency fixes"),
+        Metric("85%", "crash reduction", "Crashlytics + structured concurrency fixes"),
         Metric("~87%", "UI-layer Compose", "455k of 523k UI LOC in a ~964k LOC app; per-screen parity verification"),
     )
 
@@ -105,7 +105,7 @@ val experience =
                     ),
                     ExperiencePoint(
                         label = "Crash Reduction",
-                        text = """Cut production crashes 80% via structured-concurrency fixes and dual Crashlytics + Sentry monitoring.""",
+                        text = """Cut production crashes 85% via structured-concurrency fixes and dual Crashlytics + Sentry monitoring.""",
                     ),
                     ExperiencePoint(
                         label = "Security Hardening",
@@ -211,7 +211,7 @@ val caseStudies =
         CaseStudy(
             slug = "crash-reduction",
             title = "Systematic crash triage at 50k-MAU scale",
-            metric = "-80% crashes",
+            metric = "-85% crashes",
             summary = """Systematic triage with Crashlytics turned a noisy crash feed into a fixable backlog.""",
             problem = """A fast-growing ~964k-LOC app had a crash rate hurting its Play Store rating, driven by untraceable threading bugs.""",
             approach =
@@ -220,7 +220,7 @@ val caseStudies =
                     """Reconstructed the user journey before each crash with structured breadcrumb instrumentation.""",
                     """Hunted concurrency bugs: main-thread violations, coroutine race conditions, lifecycle leaks.""",
                 ),
-            outcome = """Crashes fell 80% at 22k DAU; Play Store went 1.6★/67 reviews to 4.5★/27.3K, closing 85% of the gap to a perfect 5.0, +181% rating, 407x review volume.""",
+            outcome = """Crashes fell 85% at 22k DAU; Play Store went 1.6★/67 reviews to 4.5★/27.3K, closing 85% of the gap to a perfect 5.0, +181% rating, 407x review volume.""",
             tags = listOf("Crashlytics", "Structured concurrency", "Coroutines"),
         ),
         CaseStudy(
