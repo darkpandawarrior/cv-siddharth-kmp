@@ -42,7 +42,7 @@ val opsPerimeter: List<PerimeterEntry> = listOf(
     ),
     PerimeterEntry(
         file = "chess.ts",
-        generatedAt = "2026-10-20",
+        generatedAt = "2026-10-28",
         slaDays = 21,
         generator = "npm run gen:chess",
     ),
@@ -126,7 +126,7 @@ val opsPerimeter: List<PerimeterEntry> = listOf(
     ),
     PerimeterEntry(
         file = "writing.ts",
-        generatedAt = "2026-10-20",
+        generatedAt = "2026-10-28",
         slaDays = 21,
         generator = "npm run gen:loopdown",
     ),
@@ -173,55 +173,61 @@ val opsLeverage: List<LeverageEntry> = listOf(
 /** Pinned upstreams and how far behind each pin has fallen. `behind` is null when it could not be measured. */
 val opsDrift: List<DriftEntry> = listOf(
     DriftEntry(
-        repo = "Doori",
-        upstream = "kmp-build-logic",
-        pin = "b849f50",
-        behind = null,
-        pinnedAt = null,
-    ),
-    DriftEntry(repo = "Doori", upstream = "kmp-toolkit", pin = "a1d6e42", behind = null, pinnedAt = null),
-    DriftEntry(
         repo = "Gaddi",
         upstream = "kmp-build-logic",
         pin = "af78e20",
-        behind = 0,
+        behind = 1,
         pinnedAt = "2026-10-20",
     ),
     DriftEntry(
         repo = "Gaddi",
         upstream = "kmp-toolkit",
         pin = "59dee39",
-        behind = 0,
+        behind = 1,
         pinnedAt = "2026-10-20",
     ),
     DriftEntry(
         repo = "PaymentsLab-KMP",
         upstream = "kmp-build-logic",
         pin = "af78e20",
-        behind = 0,
+        behind = 1,
         pinnedAt = "2026-10-20",
     ),
     DriftEntry(
         repo = "PaymentsLab-KMP",
         upstream = "kmp-toolkit",
         pin = "59dee39",
-        behind = 0,
+        behind = 1,
         pinnedAt = "2026-10-20",
     ),
     DriftEntry(
         repo = "kmp-app-template",
         upstream = "kmp-build-logic",
         pin = "af78e20",
-        behind = 0,
+        behind = 1,
         pinnedAt = "2026-10-20",
     ),
     DriftEntry(
         repo = "kmp-app-template",
         upstream = "kmp-toolkit",
         pin = "59dee39",
-        behind = 0,
+        behind = 1,
+        pinnedAt = "2026-10-20",
+    ),
+    DriftEntry(
+        repo = "Candidai",
+        upstream = "kmp-build-logic",
+        pin = "af78e20",
+        behind = 1,
+        pinnedAt = "2026-10-20",
+    ),
+    DriftEntry(
+        repo = "Candidai",
+        upstream = "kmp-toolkit",
+        pin = "59dee39",
+        behind = 1,
         pinnedAt = "2026-10-20",
     ),
 )
 
-val opsGeneratedAt: String = "2026-10-20"
+val opsGeneratedAt: String = "2026-10-28"
