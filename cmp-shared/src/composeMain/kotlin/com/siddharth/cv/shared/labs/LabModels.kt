@@ -128,7 +128,7 @@ internal val cvLabs: List<LabExperiment> =
         LabExperiment(
             id = "crashes",
             label = "Crash Triage",
-            metric = "-80%",
+            metric = "-85%",
             group = LabGroup.Production,
             caption =
                 "A production crash feed doesn't arrive labelled — it arrives as noise. Turn " +
@@ -138,7 +138,7 @@ internal val cvLabs: List<LabExperiment> =
                 "Crash traces fall down the canvas as dots. Unclustered they pile into one " +
                     "undifferentiated slab. Clustered, each trace steers into one of five root-cause bins " +
                     "— main-thread I/O, coroutine race, lifecycle leak, bitmap OOM, OEM quirk — and the " +
-                    "first two bins together hold about 80% of the feed.",
+                    "first two bins together hold about 85% of the feed.",
         ),
         LabExperiment(
             id = "modules",
@@ -436,15 +436,15 @@ internal class CrashFeed(
 
         /**
          * Cumulative, not per-cause: main-thread I/O takes everything below 0.50 and the coroutine
-         * race everything up to 0.80, so the top two sum to exactly 80% — which is how the -80%
+         * race everything up to 0.85, so the top two sum to exactly 85% — which is how the -85%
          * actually happened once those two clusters were fixed. Do not smooth this out; the skew
          * *is* the lesson. One entry shorter than [crashCauses]: the long tail is whatever is left.
          */
-        private val CumulativeCauseShares = floatArrayOf(0.50f, 0.80f, 0.92f, 0.98f)
+        private val CumulativeCauseShares = floatArrayOf(0.50f, 0.85f, 0.93f, 0.98f)
 
         /**
          * Real feeds are two bugs and a long tail. The top two — main-thread I/O and coroutine race
-         * — sum to exactly 80%, which is how -80% actually happened once those two clusters got
+         * — sum to exactly 85%, which is how -85% actually happened once those two clusters got
          * fixed. Do not smooth this out; the skew *is* the lesson.
          */
         fun pickCause(roll: Float): Int =
@@ -1066,7 +1066,7 @@ private fun checkCrashFeed() {
     check(deep > 2048) { "a long run wraps the ring" }
     check(crashCauses.indices.sumOf { feed.binCount(it, deep) } == deep) { "wrapped bins still conserve" }
     val share = feed.topTwoSharePercent(deep)
-    check(share in 76..84) { "top two clusters are ~80% of the feed, was $share%" }
+    check(share in 81..89) { "top two clusters are ~85% of the feed, was $share%" }
     check(CrashFeed.pickCause(0f) == 0 && CrashFeed.pickCause(0.99f) == crashCauses.lastIndex) {
         "the skew covers both ends"
     }
