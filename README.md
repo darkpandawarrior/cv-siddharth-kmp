@@ -38,7 +38,7 @@ open cmp-ios/iosApp.xcodeproj                    # iOS, arm64 and simulator-arm6
 
 `prerenderSite` is the task you deploy. It runs the distribution, then writes an `index.html` for each route, plus `sitemap.xml` and `robots.txt`, from the same Kotlin data the app draws. The crawlable pages and the canvas cannot disagree without someone editing `data/`. Pass `-Pprerender.origin=https://...` (or set `CV_SITE_ORIGIN`) when deploying anywhere but the default origin, because the canonical links and sitemap depend on it.
 
-CI runs `./gradlew assemble check` on a macOS runner, since the iOS targets need Xcode. The latest run on `main` passed on 2026-11-06.
+CI runs `./gradlew assemble check` on a `macos-14` runner, since the iOS targets need Xcode. The last completed green run on `main` was 2026-10-28. The run for the 2026-11-06 push was cancelled by the workflow's concurrency rule, so it says nothing either way.
 
 ## Toolchain
 
@@ -49,7 +49,7 @@ grep -E '^(kotlin|compose-multiplatform|agp|ktor|coil) =' gradle/libs.versions.t
 grep -o 'gradle-[0-9.a-z-]*-bin' gradle/wrapper/gradle-wrapper.properties
 ```
 
-Today that prints Kotlin 2.5.0-Beta2, Compose Multiplatform 1.13.0-beta02, AGP 9.6.0-alpha03, Ktor 3.6.0, Coil 3.6.3 and Gradle 9.9.0-rc-1, with `compileSdk` 37 and `minSdk` 26. The earlier README had badges for older versions of all of them, which is the reason there are no badges now.
+Today that prints Kotlin 2.5.0-Beta2, Compose Multiplatform 1.13.0-beta02, AGP 9.6.0-alpha03, Ktor 3.6.0, Coil 3.6.3 and Gradle 9.9.0-rc-1, with `compileSdk` 37 and `minSdk` 26.
 
 Dependencies beyond Compose itself are coroutines, kotlinx-serialization, Ktor's client and Coil. There is no navigation library, no DI framework, no diagram library and no markdown parser. Routing, the Mermaid layout, the SkSL background shader, the SSE reader behind the chat and the chat's markdown are written on Compose and Ktor primitives.
 
