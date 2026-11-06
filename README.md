@@ -38,7 +38,7 @@ open cmp-ios/iosApp.xcodeproj                    # iOS, arm64 and simulator-arm6
 
 `prerenderSite` is the task you deploy. It runs the distribution, then writes an `index.html` for each route, plus `sitemap.xml` and `robots.txt`, from the same Kotlin data the app draws. The crawlable pages and the canvas cannot disagree without someone editing `data/`. Pass `-Pprerender.origin=https://...` (or set `CV_SITE_ORIGIN`) when deploying anywhere but the default origin, because the canonical links and sitemap depend on it.
 
-CI runs `./gradlew assemble check` on a `macos-14` runner, since the iOS targets need Xcode. The last completed green run on `main` was 2026-10-28. The run for the 2026-11-06 push was cancelled by the workflow's concurrency rule, so it says nothing either way.
+CI runs `./gradlew assemble check` on a `macos-14` runner, since the iOS targets need Xcode. The last completed green run on `main` was 2026-10-28. The run for the 2026-11-06 push was cancelled before it finished, so it says nothing either way.
 
 ## Toolchain
 
