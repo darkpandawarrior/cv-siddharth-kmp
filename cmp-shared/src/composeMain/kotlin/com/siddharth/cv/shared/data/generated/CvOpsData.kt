@@ -90,7 +90,7 @@ val opsPerimeter: List<PerimeterEntry> = listOf(
     ),
     PerimeterEntry(
         file = "repoStats.ts",
-        generatedAt = "2026-09-23",
+        generatedAt = "2026-11-06",
         slaDays = 30,
         generator = "npm run gen:repo-stats",
     ),
@@ -230,4 +230,4 @@ val opsDrift: List<DriftEntry> = listOf(
     ),
 )
 
-val opsGeneratedAt: String = "2026-10-28"
+val opsGeneratedAt: String = "2026-11-06"
