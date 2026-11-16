@@ -30,7 +30,7 @@ data class DriftEntry(
 val opsPerimeter: List<PerimeterEntry> = listOf(
     PerimeterEntry(
         file = "anthology.ts",
-        generatedAt = "2026-10-20",
+        generatedAt = "2026-11-13",
         slaDays = 21,
         generator = "npm run gen:anthology",
     ),
@@ -54,7 +54,7 @@ val opsPerimeter: List<PerimeterEntry> = listOf(
     ),
     PerimeterEntry(
         file = "history.ts",
-        generatedAt = "2026-10-20",
+        generatedAt = "2026-11-13",
         slaDays = 21,
         generator = "npm run gen:history",
     ),
@@ -78,7 +78,7 @@ val opsPerimeter: List<PerimeterEntry> = listOf(
     ),
     PerimeterEntry(
         file = "projectStats.ts",
-        generatedAt = "2026-10-20",
+        generatedAt = "2026-11-13",
         slaDays = 21,
         generator = "npm run gen:stats",
     ),
@@ -90,7 +90,7 @@ val opsPerimeter: List<PerimeterEntry> = listOf(
     ),
     PerimeterEntry(
         file = "repoStats.ts",
-        generatedAt = "2026-11-06",
+        generatedAt = "2026-11-13",
         slaDays = 30,
         generator = "npm run gen:repo-stats",
     ),
@@ -114,7 +114,7 @@ val opsPerimeter: List<PerimeterEntry> = listOf(
     ),
     PerimeterEntry(
         file = "weeb.ts",
-        generatedAt = "2026-10-20",
+        generatedAt = "2026-11-13",
         slaDays = 21,
         generator = "npm run gen:weeb",
     ),
@@ -230,4 +230,4 @@ val opsDrift: List<DriftEntry> = listOf(
     ),
 )
 
-val opsGeneratedAt: String = "2026-11-06"
+val opsGeneratedAt: String = "2026-11-13"
