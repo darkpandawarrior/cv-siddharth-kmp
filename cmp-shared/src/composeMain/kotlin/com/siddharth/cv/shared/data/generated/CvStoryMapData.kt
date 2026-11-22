@@ -173,7 +173,7 @@ val storyMapNodes: List<StoryMapNode> = listOf(
     ),
     StoryMapNode(
         id = "chat",
-        label = "Ask about my work",
+        label = "Ask my AI",
         sub = "knows all of this",
         x = 0.24,
         y = 0.46,
@@ -194,7 +194,7 @@ val storyMapNodes: List<StoryMapNode> = listOf(
     StoryMapNode(
         id = "oss",
         label = "Open source",
-        sub = "27 merged upstream",
+        sub = "32 merged upstream",
         x = 0.3162,
         y = 0.3044,
         r = 12.0,
