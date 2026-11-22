@@ -78,7 +78,7 @@ data class WeebDivergenceRow(
 
 /** The anime and manga ledger behind /weeb. Every figure on that page renders from here. */
 val weeb: WeebData = WeebData(
-    generatedAt = "2026-10-20",
+    generatedAt = "2026-11-20",
     anime = WeebAnime(
         total = 479,
         matched = 467,
@@ -118,6 +118,15 @@ val weeb: WeebData = WeebData(
             status = "NOT_YET_RELEASED",
         ),
         WeebStale(
+            name = "Frieren: Beyond Journey’s End",
+            title = "Sousou no Frieren: ●● no Mahou Part 2",
+            romaji = "Sousou no Frieren: ●● no Mahou Part 2",
+            english = null,
+            sequel = "Sousou no Frieren: ●● no Mahou Part 3",
+            year = 2026,
+            status = "FINISHED",
+        ),
+        WeebStale(
             name = "Grand Blue",
             title = "Grand Blue Dreaming",
             romaji = "Grand Blue",
@@ -132,15 +141,6 @@ val weeb: WeebData = WeebData(
             romaji = "Chainsaw Man",
             english = "Chainsaw Man",
             sequel = "Chainsaw Man – The Movie: Reze Arc",
-            year = 2025,
-            status = "FINISHED",
-        ),
-        WeebStale(
-            name = "Frieren: Beyond Journey’s End",
-            title = "Sousou no Frieren: ●● no Mahou",
-            romaji = "Sousou no Frieren: ●● no Mahou",
-            english = null,
-            sequel = "Sousou no Frieren: ●● no Mahou Part 2",
             year = 2025,
             status = "FINISHED",
         ),
@@ -539,8 +539,13 @@ val weeb: WeebData = WeebData(
             WeebDivergenceRow(name = "Platinum End", mine = 5, crowd = 58, delta = 42),
             WeebDivergenceRow(name = "Ninja Kamui", mine = 5, crowd = 64, delta = 36),
             WeebDivergenceRow(name = "Highschool DxD", mine = 5, crowd = 69, delta = 31),
-            WeebDivergenceRow(name = "Bakugan", mine = 4, crowd = 53, delta = 27),
-            WeebDivergenceRow(name = "Frieren: Beyond Journey’s End", mine = 5, crowd = 73, delta = 27),
+            WeebDivergenceRow(name = "Frieren: Beyond Journey’s End", mine = 5, crowd = 71, delta = 29),
+            WeebDivergenceRow(
+                name = "Ron Kamonohashi's Forbidden Deductions",
+                mine = 5,
+                crowd = 74,
+                delta = 26,
+            ),
         ),
         bottom = listOf(
             WeebDivergenceRow(name = "Takt op. Destiny", mine = 3, crowd = 69, delta = -9),
