@@ -1,5 +1,5 @@
 [versions]
-agp = "9.6.0-alpha03"
+agp = "9.6.0-alpha05"
 detekt = "2.0.0-alpha.6"
 ktlintPlugin = "14.2.0"
 ktlintEngine = "1.7.1"
