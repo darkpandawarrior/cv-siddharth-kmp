@@ -30,7 +30,7 @@ data class DriftEntry(
 val opsPerimeter: List<PerimeterEntry> = listOf(
     PerimeterEntry(
         file = "anthology.ts",
-        generatedAt = "2026-10-20",
+        generatedAt = "2026-11-13",
         slaDays = 21,
         generator = "npm run gen:anthology",
     ),
@@ -54,7 +54,7 @@ val opsPerimeter: List<PerimeterEntry> = listOf(
     ),
     PerimeterEntry(
         file = "history.ts",
-        generatedAt = "2026-10-20",
+        generatedAt = "2026-11-13",
         slaDays = 21,
         generator = "npm run gen:history",
     ),
@@ -78,7 +78,7 @@ val opsPerimeter: List<PerimeterEntry> = listOf(
     ),
     PerimeterEntry(
         file = "projectStats.ts",
-        generatedAt = "2026-10-20",
+        generatedAt = "2026-11-13",
         slaDays = 21,
         generator = "npm run gen:stats",
     ),
@@ -90,7 +90,7 @@ val opsPerimeter: List<PerimeterEntry> = listOf(
     ),
     PerimeterEntry(
         file = "repoStats.ts",
-        generatedAt = "2026-09-23",
+        generatedAt = "2026-11-13",
         slaDays = 30,
         generator = "npm run gen:repo-stats",
     ),
@@ -114,7 +114,7 @@ val opsPerimeter: List<PerimeterEntry> = listOf(
     ),
     PerimeterEntry(
         file = "weeb.ts",
-        generatedAt = "2026-10-20",
+        generatedAt = "2026-11-13",
         slaDays = 21,
         generator = "npm run gen:weeb",
     ),
@@ -175,50 +175,50 @@ val opsDrift: List<DriftEntry> = listOf(
     DriftEntry(
         repo = "Gaddi",
         upstream = "kmp-build-logic",
-        pin = "af78e20",
-        behind = 1,
-        pinnedAt = "2026-10-20",
+        pin = "c2d31a0",
+        behind = 12,
+        pinnedAt = "2026-09-22",
     ),
     DriftEntry(
         repo = "Gaddi",
         upstream = "kmp-toolkit",
-        pin = "59dee39",
-        behind = 1,
-        pinnedAt = "2026-10-20",
+        pin = "f2c83f8",
+        behind = 0,
+        pinnedAt = "2026-10-27",
     ),
     DriftEntry(
         repo = "PaymentsLab-KMP",
         upstream = "kmp-build-logic",
-        pin = "af78e20",
-        behind = 1,
-        pinnedAt = "2026-10-20",
+        pin = "c2d31a0",
+        behind = 12,
+        pinnedAt = "2026-09-22",
     ),
     DriftEntry(
         repo = "PaymentsLab-KMP",
         upstream = "kmp-toolkit",
-        pin = "59dee39",
-        behind = 1,
-        pinnedAt = "2026-10-20",
+        pin = "f2c83f8",
+        behind = 0,
+        pinnedAt = "2026-10-27",
     ),
     DriftEntry(
         repo = "kmp-app-template",
         upstream = "kmp-build-logic",
-        pin = "af78e20",
-        behind = 1,
-        pinnedAt = "2026-10-20",
+        pin = "1b7f221",
+        behind = 30,
+        pinnedAt = "2026-09-21",
     ),
     DriftEntry(
         repo = "kmp-app-template",
         upstream = "kmp-toolkit",
-        pin = "59dee39",
-        behind = 1,
-        pinnedAt = "2026-10-20",
+        pin = "f2c83f8",
+        behind = 0,
+        pinnedAt = "2026-10-27",
     ),
     DriftEntry(
         repo = "Candidai",
         upstream = "kmp-build-logic",
         pin = "af78e20",
-        behind = 1,
+        behind = 4,
         pinnedAt = "2026-10-20",
     ),
     DriftEntry(
@@ -230,4 +230,4 @@ val opsDrift: List<DriftEntry> = listOf(
     ),
 )
 
-val opsGeneratedAt: String = "2026-10-28"
+val opsGeneratedAt: String = "2026-11-13"
