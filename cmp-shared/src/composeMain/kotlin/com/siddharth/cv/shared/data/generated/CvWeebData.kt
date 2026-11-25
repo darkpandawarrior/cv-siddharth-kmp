@@ -78,7 +78,7 @@ data class WeebDivergenceRow(
 
 /** The anime and manga ledger behind /weeb. Every figure on that page renders from here. */
 val weeb: WeebData = WeebData(
-    generatedAt = "2026-11-13",
+    generatedAt = "2026-11-16",
     anime = WeebAnime(
         total = 479,
         matched = 467,
